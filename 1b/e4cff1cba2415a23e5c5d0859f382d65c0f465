@@ -1,0 +1,142 @@
+.plan/nvidia-p2-kernel-methodology.md
+  s_b3076ab986b361::t_a07dc5dc5a38da 1-644 gitai:{"mixed_line_ranges":[],"operations":[{"operation_id":"6a333ffd98f710a67715decc","tool_type":"agent","tool_id":"apply_patch","line_ranges":[{"Range":[1,644]}]}]}
+.plan/nvidia-p1-kernel-methodology.md
+  s_b3076ab986b361::t_d893a7f08f6a7f 1-523 gitai:{"mixed_line_ranges":[],"operations":[{"operation_id":"6a333fcb98f710a67715deb1","tool_type":"agent","tool_id":"apply_patch","line_ranges":[{"Range":[1,523]}]}]}
+.plan/nvidia-p0-kernel-methodology.md
+  s_b3076ab986b361::t_c38212fb457ea3 1-462 gitai:{"mixed_line_ranges":[],"operations":[{"operation_id":"6a333f9798f710a67715de96","tool_type":"agent","tool_id":"apply_patch","line_ranges":[{"Range":[1,462]}]}]}
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "1be4cff1cba2415a23e5c5d0859f382d65c0f465",
+  "prompts": {},
+  "sessions": {
+    "s_b3076ab986b361": {
+      "agent_id": {
+        "tool": "trae",
+        "id": "6a3336ed98f710a67715dbd3",
+        "model": "gpt-5.5__dev"
+      },
+      "human_author": "Chun Liu <chun.liu@bytedance.com>"
+    }
+  },
+  "attestation_metadata": {
+    ".plan/nvidia-p0-kernel-methodology.md": [
+      {
+        "hash": "s_b3076ab986b361::t_c38212fb457ea3",
+        "line_ranges": [
+          {
+            "Range": [
+              1,
+              462
+            ]
+          }
+        ],
+        "mixed_line_ranges": [],
+        "operations": [
+          {
+            "operation_id": "6a333f9798f710a67715de96",
+            "tool_type": "agent",
+            "tool_id": "apply_patch",
+            "line_ranges": [
+              {
+                "Range": [
+                  1,
+                  462
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    ".plan/nvidia-p1-kernel-methodology.md": [
+      {
+        "hash": "s_b3076ab986b361::t_d893a7f08f6a7f",
+        "line_ranges": [
+          {
+            "Range": [
+              1,
+              523
+            ]
+          }
+        ],
+        "mixed_line_ranges": [],
+        "operations": [
+          {
+            "operation_id": "6a333fcb98f710a67715deb1",
+            "tool_type": "agent",
+            "tool_id": "apply_patch",
+            "line_ranges": [
+              {
+                "Range": [
+                  1,
+                  523
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    ".plan/nvidia-p2-kernel-methodology.md": [
+      {
+        "hash": "s_b3076ab986b361::t_a07dc5dc5a38da",
+        "line_ranges": [
+          {
+            "Range": [
+              1,
+              644
+            ]
+          }
+        ],
+        "mixed_line_ranges": [],
+        "operations": [
+          {
+            "operation_id": "6a333ffd98f710a67715decc",
+            "tool_type": "agent",
+            "tool_id": "apply_patch",
+            "line_ranges": [
+              {
+                "Range": [
+                  1,
+                  644
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "remote_transcripts": {
+    "s_b3076ab986b361": {
+      "tool": "trae",
+      "conversation_id": "6a3336ed98f710a67715dbd3",
+      "session_id": "6a3336ed98f710a67715dbd3",
+      "status": "remote_only",
+      "message": "Remote transcript resolution is not implemented yet for TRAE prompts."
+    },
+    "s_b3076ab986b361::t_a07dc5dc5a38da": {
+      "tool": "trae",
+      "conversation_id": "6a3336ed98f710a67715dbd3",
+      "session_id": "6a3336ed98f710a67715dbd3",
+      "status": "remote_only",
+      "message": "Remote transcript resolution is not implemented yet for TRAE prompts."
+    },
+    "s_b3076ab986b361::t_c38212fb457ea3": {
+      "tool": "trae",
+      "conversation_id": "6a3336ed98f710a67715dbd3",
+      "session_id": "6a3336ed98f710a67715dbd3",
+      "status": "remote_only",
+      "message": "Remote transcript resolution is not implemented yet for TRAE prompts."
+    },
+    "s_b3076ab986b361::t_d893a7f08f6a7f": {
+      "tool": "trae",
+      "conversation_id": "6a3336ed98f710a67715dbd3",
+      "session_id": "6a3336ed98f710a67715dbd3",
+      "status": "remote_only",
+      "message": "Remote transcript resolution is not implemented yet for TRAE prompts."
+    }
+  }
+}
