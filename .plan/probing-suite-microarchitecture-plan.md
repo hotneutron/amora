@@ -2,11 +2,16 @@
 
 ## Summary
 
-Build AMORA as a portable probing suite that turns real accelerator observations
-into trustworthy simulator-facing calibration data. The suite should support
-NVIDIA first, but its core design must generalize across GPUs, NPUs, TPUs, and
-other accelerators with different levels of ISA visibility, profiler support,
-timer semantics, memory hierarchy detail, and public documentation.
+Build AMORA as a portable, hardware-first probing suite. Its primary object of
+study is real accelerator behavior: what the hardware exposes through published
+facts, runtime metadata, profiler metrics, ISA/binary behavior, controlled
+probes, and measured execution. Simulators are used as assisted validation and
+calibration targets, not as the source of truth for the real machine.
+
+The suite should support NVIDIA first, but its core design must generalize
+across GPUs, NPUs, TPUs, and other accelerators with different levels of ISA
+visibility, profiler support, timer semantics, memory hierarchy detail, and
+public documentation.
 
 The core design principle is layered evidence:
 
@@ -24,7 +29,50 @@ The suite must not collapse these layers into one "parameter estimate" too
 early. A measurement can be useful even when no safe simulator scalar can be
 emitted.
 
+## Methodology Position
+
+This is a hardware-first, simulator-assisted validation methodology.
+
+Hardware-first means AMORA starts from observable accelerator behavior and keeps
+hardware evidence layered by source and semantic strength. Simulator-assisted
+validation means simulator traces, queue lengths, scheduler states, cache states,
+pipeline states, and fitted simulator parameters are used to explain, calibrate,
+and validate whether a simulator can reproduce the measured hardware behavior.
+
+AMORA can be used for:
+
+- calibrating simulator parameters and simulator-equivalent behavior,
+- validating whether a simulator reproduces observed hardware bottlenecks,
+- comparing accelerator generations under a common measurement vocabulary,
+- discovering portable and vendor-specific architectural features,
+- building backend capability maps for profilers, ISA access, timers, and
+  metadata,
+- generating hardware profiles for compiler, runtime, and kernel-tuning work,
+- sanity-checking published specifications against tool-observed behavior,
+- identifying unsupported or underconstrained simulator mappings honestly,
+- producing regression baselines for driver, firmware, compiler, and simulator
+  changes,
+- teaching and documenting accelerator behavior with reproducible probes.
+
 ## Revision History
+
+### 2026-06-18: Hardware-First Methodology Emphasis
+
+Source input:
+
+- Follow-up request to emphasize that this plan is hardware-first and
+  simulator-assisted, while also documenting use cases beyond simulator
+  parameter calibration.
+
+Major changes:
+
+- Clarified that AMORA studies real hardware first and uses simulators as
+  assisted validation and calibration targets.
+- Added a methodology-position section.
+- Added use cases for simulator calibration, simulator validation, cross-vendor
+  comparison, feature discovery, backend capability mapping, hardware profiling,
+  specification sanity checks, unsupported-mapping reporting, regression
+  baselines, and education/documentation.
 
 ### 2026-06-18: Full Measurement-Contract Rewrite
 
