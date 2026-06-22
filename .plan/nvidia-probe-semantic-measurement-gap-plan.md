@@ -38,8 +38,8 @@ Source inputs:
   `.plan/nvidia-probe-semantic-measurement-gap-plan.md`
 - NVIDIA plan reaction document:
   `.plan/20260618_nvidia-probe-semantic-measurement-gap-plan_comments.md`
-- Existing P0-P3 methodology files:
-  `.plan/nvidia-p0-kernel-methodology.md`,
+- Existing baseline and later-priority methodology files:
+  `.plan/nvidia-baseline-kernel-methodology.md`,
   `.plan/nvidia-p1-kernel-methodology.md`,
   `.plan/nvidia-p2-kernel-methodology.md`,
   `.plan/nvidia-p3-kernel-methodology.md`
@@ -69,7 +69,7 @@ Major changes:
   or reported as unsupported instead of emitting weak scalars.
 - Added compact uncertainty categories with detailed variance and fitting
   records linked from reports.
-- Added implementation phases that update the current P0 scaffolding before
+- Added implementation phases that update the current baseline scaffolding before
   expanding into P1-P3.
 
 ### 2026-06-18: Measurement-Contract Revision
@@ -890,14 +890,14 @@ Scalar policy:
 
 ## Implementation Plan
 
-### Phase N0: Bring Current P0 Scaffolding Into Layered Output
+### Phase N0: Bring Current Baseline Scaffolding Into Layered Output
 
 Files:
 
 - `amora/schemas/results.py`
 - `amora/reports/json_report.py`
 - `amora/backends/nvidia/cuda.py`
-- `amora/probes/nvidia/p0/*.py`
+- `amora/probes/nvidia/baseline/*.py`
 
 Work:
 
@@ -905,7 +905,7 @@ Work:
 - Add fit status, uncertainty category, variance, assumptions, and coupled
   parameters to simulator estimates.
 - Record binary/disassembly hashes when available.
-- Keep current P0 dry-run behavior compatible with tests.
+- Keep current baseline dry-run behavior compatible with tests.
 
 ### Phase N1: Add NVIDIA Capability And Metric Resolution
 
@@ -932,15 +932,15 @@ Files:
 
 Work:
 
-- Define SASS/PTX semantic classes for P0-P3 probes.
+- Define SASS/PTX semantic classes for baseline and later-priority probes.
 - Add verification hooks for required opcode and dependency patterns.
 - Add NVBit validation records where practical.
 
-### Phase N3: Convert P0-P3 Methodology Files
+### Phase N3: Convert Baseline And Later-Priority Methodology Files
 
 Files:
 
-- `.plan/nvidia-p0-kernel-methodology.md`
+- `.plan/nvidia-baseline-kernel-methodology.md`
 - `.plan/nvidia-p1-kernel-methodology.md`
 - `.plan/nvidia-p2-kernel-methodology.md`
 - `.plan/nvidia-p3-kernel-methodology.md`
@@ -966,7 +966,7 @@ Work:
 - Use traces to compare fitted simulator-equivalent parameters with dynamic
   simulator behavior.
 
-### Phase N5: Expand Beyond P0
+### Phase N5: Expand Beyond Baseline
 
 Work order:
 

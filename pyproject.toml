@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "amora"
+version = "0.1.0"
+description = "Automated Microarchitecture Observation and Reverse-engineering for Accelerators"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+amora = "amora.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["amora*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "cuda: requires a CUDA-capable NVIDIA GPU",
+  "ncu: requires Nsight Compute CLI",
+  "nvbit: requires NVBit",
+]

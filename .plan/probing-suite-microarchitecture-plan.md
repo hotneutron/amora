@@ -950,11 +950,11 @@ Deliver:
 - CUDA capability discovery,
 - NCU/CUPTI metric resolver,
 - NVBit/disassembly validation hooks,
-- P0 probes updated to layered evidence output.
+- baseline probes updated to layered evidence output.
 
 Acceptance:
 
-- NVIDIA P0 produces raw observations, normalized measurements, backend
+- NVIDIA baseline produces raw observations, normalized measurements, backend
   interpretations, and simulator estimates with fit metadata.
 
 ### Phase 2: Add AMD Or Second Backend
