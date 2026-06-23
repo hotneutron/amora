@@ -6,15 +6,47 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-from amora.schemas.results import ProbeResult
+from amora.schemas.results import ProbeResult, _clean
 
 
-def render_report(results: Iterable[ProbeResult], *, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
-    result_list = list(results)
+_CAPABILITIES_REF = {"$ref": "metadata.backend_capabilities"}
+
+
+def _dedupe_tool_context(
+    result: dict[str, Any],
+    capabilities_clean: Any,
+) -> dict[str, Any]:
+    """Replace duplicate tool snapshots with a `$ref` to keep reports compact."""
+
+    if capabilities_clean is None:
+        return result
+    tool_context = result.get("tool_context")
+    if not isinstance(tool_context, dict):
+        return result
+    tools = tool_context.get("tools")
+    if tools == capabilities_clean:
+        tool_context = dict(tool_context)
+        tool_context["tools"] = dict(_CAPABILITIES_REF)
+        result = dict(result)
+        result["tool_context"] = tool_context
+    return result
+
+
+def render_report(
+    results: Iterable[ProbeResult],
+    *,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    metadata = metadata or {}
+    capabilities = metadata.get("backend_capabilities") if metadata else None
+    capabilities_clean = _clean(capabilities) if capabilities is not None else None
+    rendered = [
+        _dedupe_tool_context(result.to_dict(), capabilities_clean) for result in results
+    ]
     return {
         "schema_version": 1,
-        "metadata": metadata or {},
-        "results": [result.to_dict() for result in result_list],
+        "metadata": metadata,
+        "results": rendered,
     }
 
 

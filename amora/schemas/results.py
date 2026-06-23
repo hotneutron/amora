@@ -146,6 +146,7 @@ class ProbeResult:
         backend: str = "nvidia_cuda",
         family: str = "baseline",
         tool_context: ToolContext | None = None,
+        raw_values: Mapping[str, Any] | None = None,
     ) -> "ProbeResult":
         identity = ProbeIdentity(probe_id=probe_id, backend=backend, family=family)
         return cls(
@@ -153,6 +154,7 @@ class ProbeResult:
             tool_context=tool_context or ToolContext(),
             raw_observation=RawObservation(
                 evidence_tier=EvidenceTier.UNSUPPORTED,
+                values=dict(raw_values) if raw_values else {},
                 unsupported_reason=reason,
             ),
             normalized_measurement=NormalizedMeasurement(

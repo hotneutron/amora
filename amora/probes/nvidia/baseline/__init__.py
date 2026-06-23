@@ -34,7 +34,10 @@ PROBES: dict[str, ProbeRunner] = {
     "shared_memory.analyze": run_shared_analyze,
 }
 
-IMPLEMENTED_PROBES: frozenset[str] = frozenset({"topology.device_attributes"})
+IMPLEMENTED_PROBES: frozenset[str] = frozenset({
+    "topology.device_attributes",
+    "topology.occupancy",
+})
 
 PLANNED_PROBES: tuple[str, ...] = (
     "topology.device_attributes",
