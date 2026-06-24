@@ -25,6 +25,12 @@ from amora.probes.nvidia.baseline.register_file.register_latency import (
 from amora.probes.nvidia.baseline.scheduler_policy.analyze import run as run_scheduler_analyze
 from amora.probes.nvidia.baseline.scheduler_policy.mixed_issue import run as run_mixed_issue
 from amora.probes.nvidia.baseline.scheduler_policy.ready_warps import run as run_ready_warps
+from amora.probes.nvidia.baseline.global_memory.streaming import run as run_streaming
+from amora.probes.nvidia.baseline.l2_cache.pointer_chase import run as run_l2_pointer_chase
+from amora.probes.nvidia.baseline.memory_pipeline.outstanding_requests import (
+    run as run_outstanding_requests,
+)
+from amora.probes.nvidia.baseline.synchronization.barrier_latency import run as run_barrier_latency
 from amora.probes.nvidia.baseline.shared_memory.analyze import run as run_shared_analyze
 from amora.probes.nvidia.baseline.shared_memory.bank_stride import run as run_bank_stride
 from amora.probes.nvidia.baseline.shared_memory.pointer_chase import run as run_pointer_chase
@@ -58,6 +64,11 @@ PROBES: dict[str, ProbeRunner] = {
     "register_file.register_bank_sweep": run_register_bank_sweep,
     "register_file.register_latency": run_register_latency,
     "register_file.analyze": run_register_analyze,
+    # P2 phase A (timing-first)
+    "synchronization.barrier_latency": run_barrier_latency,
+    "global_memory.streaming": run_streaming,
+    "l2_cache.pointer_chase": run_l2_pointer_chase,
+    "memory_pipeline.outstanding_requests": run_outstanding_requests,
 }
 
 IMPLEMENTED_PROBES: frozenset[str] = frozenset(PROBES)
