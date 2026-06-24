@@ -10,6 +10,7 @@ from pathlib import Path
 from amora.backends.nvidia.cuda import discover_capabilities
 from amora.probes.nvidia import baseline as baseline_probes
 from amora.reports.json_report import render_report, write_report
+from amora.reports.markdown_report import write_reports_from_json
 
 
 def _print_json(data: object) -> None:
@@ -40,6 +41,18 @@ def _cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_report(args: argparse.Namespace) -> int:
+    written = write_reports_from_json(
+        Path(args.input),
+        Path(args.out_dir),
+        vendor=args.vendor,
+        family=args.family,
+        sku=args.sku,
+    )
+    print(written)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="amora")
     subparsers = parser.add_subparsers(dest="backend")
@@ -59,6 +72,14 @@ def build_parser() -> argparse.ArgumentParser:
     target.add_argument("--all", action="store_true")
     run_parser.add_argument("--output")
     run_parser.set_defaults(func=_cmd_run)
+
+    report_parser = nvidia_sub.add_parser("report")
+    report_parser.add_argument("--input", required=True)
+    report_parser.add_argument("--out-dir", default="reports")
+    report_parser.add_argument("--vendor", default=None)
+    report_parser.add_argument("--family", default=None)
+    report_parser.add_argument("--sku", default=None)
+    report_parser.set_defaults(func=_cmd_report)
 
     return parser
 
