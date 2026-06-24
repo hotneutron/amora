@@ -8,7 +8,7 @@ def test_baseline_list_marks_all_planned_probes_with_status():
     assert {probe["probe_id"] for probe in probes} == set(baseline.PLANNED_PROBES)
     assert all(probe["runner_available"] for probe in probes)
     implemented = {probe["probe_id"] for probe in probes if probe["implemented"]}
-    assert implemented == {"topology.device_attributes", "topology.occupancy"}
+    assert implemented == set(baseline.PLANNED_PROBES)
 
 
 def test_run_all_returns_one_result_per_planned_probe_without_gpu():

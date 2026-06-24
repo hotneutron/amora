@@ -37,6 +37,12 @@ PROBES: dict[str, ProbeRunner] = {
 IMPLEMENTED_PROBES: frozenset[str] = frozenset({
     "topology.device_attributes",
     "topology.occupancy",
+    "topology.persistent_cta",
+    "arithmetic_latency.dependent_chain",
+    "arithmetic_throughput.independent_chains",
+    "shared_memory.pointer_chase",
+    "shared_memory.bank_stride",
+    "shared_memory.analyze",
 })
 
 PLANNED_PROBES: tuple[str, ...] = (
