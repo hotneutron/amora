@@ -1,0 +1,182 @@
+{
+  "family": "volta",
+  "skus": {
+    "v100-32g": {
+      "backend": "nvidia_cuda",
+      "capabilities": {
+        "backend": "nvidia_cuda",
+        "cuda_available": true,
+        "devices": [
+          {
+            "driver_version": "535.261.03",
+            "index": 0,
+            "name": "Tesla V100-SXM2-32GB",
+            "uuid": "GPU-c4ef444c-e2c7-3bbe-8441-45d607d9d3a7"
+          }
+        ],
+        "gpu_available": true,
+        "tools": {
+          "cuobjdump": {
+            "available": true,
+            "error": null,
+            "name": "cuobjdump",
+            "path": "/usr/bin/cuobjdump",
+            "version": "cuobjdump: NVIDIA (R) fat binary listing tool"
+          },
+          "ncu": {
+            "available": true,
+            "error": null,
+            "name": "ncu",
+            "path": "/usr/bin/ncu",
+            "version": "NVIDIA (R) Nsight Compute Command Line Profiler"
+          },
+          "nvcc": {
+            "available": true,
+            "error": null,
+            "name": "nvcc",
+            "path": "/usr/bin/nvcc",
+            "version": "nvcc: NVIDIA (R) Cuda compiler driver"
+          },
+          "nvdisasm": {
+            "available": true,
+            "error": null,
+            "name": "nvdisasm",
+            "path": "/usr/bin/nvdisasm",
+            "version": "nvdisasm: NVIDIA (R) CUDA disassembler"
+          },
+          "nvidia-smi": {
+            "available": true,
+            "error": "ERROR: Option --version is not recognized. Please run 'nvidia-smi -h'.",
+            "name": "nvidia-smi",
+            "path": "/usr/bin/nvidia-smi",
+            "version": "ERROR: Option --version is not recognized. Please run 'nvidia-smi -h'."
+          }
+        },
+        "unsupported_reasons": []
+      },
+      "counts": {
+        "evidence_tier": {
+          "coupled_inference": 1,
+          "direct_metadata": 2,
+          "timing_direct": 5
+        },
+        "fit_status": {
+          "direct": 4,
+          "uniquely_identified": 4
+        },
+        "launch_mode": {
+          "analysis": 1,
+          "kernel": 5,
+          "metadata": 1,
+          "planning": 1
+        }
+      },
+      "device_count": 1,
+      "driver_version": "535.261.03",
+      "generated_at": "2026-06-24T06:32Z",
+      "outcomes": [
+        {
+          "fit": "direct",
+          "measurement": "_object_ (device_index, device_name, driver_version, uuid)",
+          "mode": "metadata",
+          "probe_id": "topology.device_attributes",
+          "tier": "direct_metadata"
+        },
+        {
+          "fit": "direct",
+          "measurement": "_object_ (block_sizes, dynamic_shared_memory_bytes, point_count, registers_per_thread, sweep_points)",
+          "mode": "planning",
+          "probe_id": "topology.occupancy",
+          "tier": "direct_metadata"
+        },
+        {
+          "fit": "uniquely_identified",
+          "measurement": "13 blocks",
+          "mode": "kernel",
+          "probe_id": "topology.persistent_cta",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "direct",
+          "measurement": "4.376 cycles_per_op",
+          "mode": "kernel",
+          "probe_id": "arithmetic_latency.dependent_chain",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "uniquely_identified",
+          "measurement": "2.1097 cycles_per_op",
+          "mode": "kernel",
+          "probe_id": "arithmetic_throughput.independent_chains",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "direct",
+          "measurement": "26.9988 cycles",
+          "mode": "kernel",
+          "probe_id": "shared_memory.pointer_chase",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "uniquely_identified",
+          "measurement": "32 banks",
+          "mode": "kernel",
+          "probe_id": "shared_memory.bank_stride",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "uniquely_identified",
+          "measurement": "_object_ (bank_count, bank_serialization_factor, shared_load_latency_cycles)",
+          "mode": "analysis",
+          "probe_id": "shared_memory.analyze",
+          "tier": "coupled_inference"
+        }
+      ],
+      "primary_device": "Tesla V100-SXM2-32GB",
+      "probe_count": 8,
+      "probe_ids": [
+        "topology.device_attributes",
+        "topology.occupancy",
+        "topology.persistent_cta",
+        "arithmetic_latency.dependent_chain",
+        "arithmetic_throughput.independent_chains",
+        "shared_memory.pointer_chase",
+        "shared_memory.bank_stride",
+        "shared_memory.analyze"
+      ],
+      "probes_file": "probes-v100-32g.md",
+      "scalars": [
+        {
+          "probe_id": "topology.persistent_cta",
+          "unit": "blocks",
+          "value": 13
+        },
+        {
+          "probe_id": "arithmetic_latency.dependent_chain",
+          "unit": "cycles_per_op",
+          "value": 4.376
+        },
+        {
+          "probe_id": "arithmetic_throughput.independent_chains",
+          "unit": "cycles_per_op",
+          "value": 2.1097
+        },
+        {
+          "probe_id": "shared_memory.pointer_chase",
+          "unit": "cycles",
+          "value": 26.9988
+        },
+        {
+          "probe_id": "shared_memory.bank_stride",
+          "unit": "banks",
+          "value": 32
+        }
+      ],
+      "schema_version": 1,
+      "sku": "v100-32g",
+      "source_json": "/tmp/amora-v100.json",
+      "source_sha256": "ab843a4936992c408c899e0448b1e918aeaf3a63631d9ca7a9d4851adf9cda95"
+    }
+  },
+  "vendor": "nvidia"
+}
