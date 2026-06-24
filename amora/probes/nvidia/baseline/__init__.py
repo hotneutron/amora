@@ -36,6 +36,9 @@ from amora.probes.nvidia.baseline.memory_pipeline.outstanding_requests import (
     run as run_outstanding_requests,
 )
 from amora.probes.nvidia.baseline.synchronization.barrier_latency import run as run_barrier_latency
+from amora.probes.nvidia.baseline.synchronization.fence_latency import run as run_fence_latency
+from amora.probes.nvidia.baseline.tensor_core.mma_latency import run as run_mma_latency
+from amora.probes.nvidia.baseline.tensor_core.mma_throughput import run as run_mma_throughput
 from amora.probes.nvidia.baseline.shared_memory.analyze import run as run_shared_analyze
 from amora.probes.nvidia.baseline.shared_memory.bank_stride import run as run_bank_stride
 from amora.probes.nvidia.baseline.shared_memory.pointer_chase import run as run_pointer_chase
@@ -80,6 +83,10 @@ PROBES: dict[str, ProbeRunner] = {
     "global_memory.partition_sweep": run_partition_sweep,
     "global_memory.row_policy_sweep": run_row_policy_sweep,
     "global_memory.analyze": run_gmem_analyze,
+    # P2 phase C (tensor core + fence)
+    "tensor_core.mma_latency": run_mma_latency,
+    "tensor_core.mma_throughput": run_mma_throughput,
+    "synchronization.fence_latency": run_fence_latency,
 }
 
 IMPLEMENTED_PROBES: frozenset[str] = frozenset(PROBES)
