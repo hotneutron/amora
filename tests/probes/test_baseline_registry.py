@@ -23,15 +23,23 @@ def test_run_all_returns_one_result_per_planned_probe_without_gpu():
     assert len(results) == len(baseline.PLANNED_PROBES)
     assert {result.identity.probe_id for result in results} == set(baseline.PLANNED_PROBES)
     by_id = {result.identity.probe_id: result for result in results}
-    # Implemented CPU-only probes do not require a GPU and stay non-unsupported.
+    # CPU-only probes do not require a GPU and stay non-unsupported.
     assert by_id["topology.occupancy"].raw_observation.evidence_tier.value == "direct_metadata"
-    # The kernel-bound probes remain unsupported but now register their CUDA source hash.
+    # Kernel-bound probes remain unsupported without a GPU but register their CUDA source hash.
     kernel_probe_ids = {
         "topology.persistent_cta",
         "arithmetic_latency.dependent_chain",
         "arithmetic_throughput.independent_chains",
         "shared_memory.pointer_chase",
         "shared_memory.bank_stride",
+        # P1 kernel-bound probes
+        "l1_cache.pointer_chase",
+        "l1_cache.working_set",
+        "l1_cache.conflict_sets",
+        "scheduler_policy.ready_warps",
+        "scheduler_policy.mixed_issue",
+        "register_file.register_bank_sweep",
+        "register_file.register_latency",
     }
     for probe_id in kernel_probe_ids:
         result = by_id[probe_id]
@@ -40,3 +48,29 @@ def test_run_all_returns_one_result_per_planned_probe_without_gpu():
         assert registered is not None
         assert registered["kind"] == "cuda_source"
         assert len(registered["sha256"]) == 64
+    # Analyzers degrade to unsupported when their kernel inputs are unavailable.
+    analyzer_ids = {
+        "shared_memory.analyze",
+        "l1_cache.analyze",
+        "scheduler_policy.analyze",
+        "register_file.analyze",
+    }
+    for probe_id in analyzer_ids:
+        assert by_id[probe_id].raw_observation.evidence_tier.value == "unsupported"
+
+
+def test_p1_probe_groups_are_registered():
+    ids = set(baseline.PLANNED_PROBES)
+    expected_p1 = {
+        "l1_cache.pointer_chase",
+        "l1_cache.working_set",
+        "l1_cache.conflict_sets",
+        "l1_cache.analyze",
+        "scheduler_policy.ready_warps",
+        "scheduler_policy.mixed_issue",
+        "scheduler_policy.analyze",
+        "register_file.register_bank_sweep",
+        "register_file.register_latency",
+        "register_file.analyze",
+    }
+    assert expected_p1 <= ids

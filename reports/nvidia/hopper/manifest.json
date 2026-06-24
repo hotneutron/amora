@@ -92,24 +92,27 @@
       },
       "counts": {
         "evidence_tier": {
-          "coupled_inference": 1,
+          "coupled_inference": 4,
           "direct_metadata": 2,
-          "timing_direct": 5
+          "timing_direct": 12
         },
         "fit_status": {
-          "direct": 4,
+          "behavioral_only": 2,
+          "conditionally_identified": 2,
+          "direct": 5,
+          "underconstrained": 5,
           "uniquely_identified": 4
         },
         "launch_mode": {
-          "analysis": 1,
-          "kernel": 5,
+          "analysis": 4,
+          "kernel": 12,
           "metadata": 1,
           "planning": 1
         }
       },
       "device_count": 7,
       "driver_version": "595.71.05",
-      "generated_at": "2026-06-24T02:08Z",
+      "generated_at": "2026-06-24T07:05Z",
       "outcomes": [
         {
           "fit": "direct",
@@ -148,7 +151,7 @@
         },
         {
           "fit": "direct",
-          "measurement": "29.0129 cycles",
+          "measurement": "29.0146 cycles",
           "mode": "kernel",
           "probe_id": "shared_memory.pointer_chase",
           "tier": "timing_direct"
@@ -166,10 +169,80 @@
           "mode": "analysis",
           "probe_id": "shared_memory.analyze",
           "tier": "coupled_inference"
+        },
+        {
+          "fit": "direct",
+          "measurement": "70.6121 cycles",
+          "mode": "kernel",
+          "probe_id": "l1_cache.pointer_chase",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "underconstrained",
+          "measurement": "_object_",
+          "mode": "kernel",
+          "probe_id": "l1_cache.working_set",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "underconstrained",
+          "measurement": "\u2014",
+          "mode": "kernel",
+          "probe_id": "l1_cache.conflict_sets",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "underconstrained",
+          "measurement": "_object_ (l1_effective_capacity_kb, l1_hit_latency_cycles)",
+          "mode": "analysis",
+          "probe_id": "l1_cache.analyze",
+          "tier": "coupled_inference"
+        },
+        {
+          "fit": "conditionally_identified",
+          "measurement": "16 warps",
+          "mode": "kernel",
+          "probe_id": "scheduler_policy.ready_warps",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "behavioral_only",
+          "measurement": "single_issue_like",
+          "mode": "kernel",
+          "probe_id": "scheduler_policy.mixed_issue",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "behavioral_only",
+          "measurement": "_object_ (issue_saturation_warps, mixed_issue_class, peak_ops_per_cycle)",
+          "mode": "analysis",
+          "probe_id": "scheduler_policy.analyze",
+          "tier": "coupled_inference"
+        },
+        {
+          "fit": "underconstrained",
+          "measurement": "16 accumulators",
+          "mode": "kernel",
+          "probe_id": "register_file.register_bank_sweep",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "conditionally_identified",
+          "measurement": "2.3606 cycles",
+          "mode": "kernel",
+          "probe_id": "register_file.register_latency",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "underconstrained",
+          "measurement": "_object_ (operand_delivery_differential_cycles, operand_delivery_plateau_accumulators)",
+          "mode": "analysis",
+          "probe_id": "register_file.analyze",
+          "tier": "coupled_inference"
         }
       ],
       "primary_device": "NVIDIA H100 80GB HBM3",
-      "probe_count": 8,
+      "probe_count": 18,
       "probe_ids": [
         "topology.device_attributes",
         "topology.occupancy",
@@ -178,7 +251,17 @@
         "arithmetic_throughput.independent_chains",
         "shared_memory.pointer_chase",
         "shared_memory.bank_stride",
-        "shared_memory.analyze"
+        "shared_memory.analyze",
+        "l1_cache.pointer_chase",
+        "l1_cache.working_set",
+        "l1_cache.conflict_sets",
+        "l1_cache.analyze",
+        "scheduler_policy.ready_warps",
+        "scheduler_policy.mixed_issue",
+        "scheduler_policy.analyze",
+        "register_file.register_bank_sweep",
+        "register_file.register_latency",
+        "register_file.analyze"
       ],
       "probes_file": "probes-h100-80g.md",
       "scalars": [
@@ -200,18 +283,48 @@
         {
           "probe_id": "shared_memory.pointer_chase",
           "unit": "cycles",
-          "value": 29.0129
+          "value": 29.0146
         },
         {
           "probe_id": "shared_memory.bank_stride",
           "unit": "banks",
           "value": 32
+        },
+        {
+          "probe_id": "l1_cache.pointer_chase",
+          "unit": "cycles",
+          "value": 70.6121
+        },
+        {
+          "probe_id": "l1_cache.conflict_sets",
+          "unit": "ways",
+          "value": null
+        },
+        {
+          "probe_id": "scheduler_policy.ready_warps",
+          "unit": "warps",
+          "value": 16
+        },
+        {
+          "probe_id": "scheduler_policy.mixed_issue",
+          "unit": null,
+          "value": "single_issue_like"
+        },
+        {
+          "probe_id": "register_file.register_bank_sweep",
+          "unit": "accumulators",
+          "value": 16
+        },
+        {
+          "probe_id": "register_file.register_latency",
+          "unit": "cycles",
+          "value": 2.3606
         }
       ],
       "schema_version": 1,
       "sku": "h100-80g",
-      "source_json": "/tmp/amora_baseline.json",
-      "source_sha256": "4b163db65f7977afc1276c0f5442e9aacd5470b817d69534024929071a8b1e9e"
+      "source_json": "/tmp/amora_p0p1.json",
+      "source_sha256": "15bc518a53fde892848dfb6075afaf888e1c34d3e782366ecec96abe46d554bb"
     }
   },
   "vendor": "nvidia"

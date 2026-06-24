@@ -601,7 +601,10 @@ def _build_vendor_summary(vendor: str, vendor_dir: Path) -> str:
                 cells = []
                 for pid in probes:
                     entry = per_sku[sku].get(pid)
-                    cells.append(_fmt_scalar(entry[0]) if entry else "—")
+                    if entry is None or entry[0] is None:
+                        cells.append("—")
+                    else:
+                        cells.append(_fmt_scalar(entry[0]))
                 lines.append(f"| `{sku}` | " + " | ".join(cells) + " |")
             lines.append("")
     return "\n".join(lines)

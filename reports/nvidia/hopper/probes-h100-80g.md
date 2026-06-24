@@ -1,14 +1,14 @@
 # nvidia / hopper / h100-80g — Probe Results
 
-- Generated: 2026-06-24T02:08Z
-- Device: NVIDIA H100 80GB HBM3  ·  Backend: `nvidia_cuda`  ·  Probes: 8
-- `fit_status`: `direct`=4, `uniquely_identified`=4
+- Generated: 2026-06-24T07:05Z
+- Device: NVIDIA H100 80GB HBM3  ·  Backend: `nvidia_cuda`  ·  Probes: 18
+- `fit_status`: `behavioral_only`=2, `conditionally_identified`=2, `direct`=5, `underconstrained`=5, `uniquely_identified`=4
 - Back to [family index](README.md)
 
 <a id="contents"></a>
 ## Contents
 
-[topology.device_attributes](#topologydevice_attributes) · [topology.occupancy](#topologyoccupancy) · [topology.persistent_cta](#topologypersistent_cta) · [arithmetic_latency.dependent_chain](#arithmetic_latencydependent_chain) · [arithmetic_throughput.independent_chains](#arithmetic_throughputindependent_chains) · [shared_memory.pointer_chase](#shared_memorypointer_chase) · [shared_memory.bank_stride](#shared_memorybank_stride) · [shared_memory.analyze](#shared_memoryanalyze)
+[topology.device_attributes](#topologydevice_attributes) · [topology.occupancy](#topologyoccupancy) · [topology.persistent_cta](#topologypersistent_cta) · [arithmetic_latency.dependent_chain](#arithmetic_latencydependent_chain) · [arithmetic_throughput.independent_chains](#arithmetic_throughputindependent_chains) · [shared_memory.pointer_chase](#shared_memorypointer_chase) · [shared_memory.bank_stride](#shared_memorybank_stride) · [shared_memory.analyze](#shared_memoryanalyze) · [l1_cache.pointer_chase](#l1_cachepointer_chase) · [l1_cache.working_set](#l1_cacheworking_set) · [l1_cache.conflict_sets](#l1_cacheconflict_sets) · [l1_cache.analyze](#l1_cacheanalyze) · [scheduler_policy.ready_warps](#scheduler_policyready_warps) · [scheduler_policy.mixed_issue](#scheduler_policymixed_issue) · [scheduler_policy.analyze](#scheduler_policyanalyze) · [register_file.register_bank_sweep](#register_fileregister_bank_sweep) · [register_file.register_latency](#register_fileregister_latency) · [register_file.analyze](#register_fileanalyze)
 
 ---
 
@@ -1015,7 +1015,7 @@
 | simulator_param | `max_resident_ctas_per_sm` = 8 ctas |
 | concept | `cuda_resident_blocks_per_sm` |
 
-- binary_hash: `e4a1a6a98d4be60f7ba9cb1a99eca5dd297db31a35b1aec38b5b1477d40eb3a8`
+- binary_hash: `63a05dac0b90b9e0249635f5d7de57915abc85c61ba4fd9d78d7c732f4f732a1`
 - launch.extras: `{"busy_cycles": 200000}`
 - interpretation: peak resident CTAs per SM under the configured launch shape
 - mapping_contract: observed peak block residency under busy-spin → simulator max_resident_ctas_per_sm
@@ -1029,7 +1029,7 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `elapsed_ms` | 0.2341 | ms |
+| `elapsed_ms` | 0.1866 | ms |
 | `mean_resident_blocks_per_sm` | 7.7576 | — |
 | `multi_processor_count` | 132 | — |
 | `peak_resident_blocks_per_sm` | 8 | — |
@@ -1039,11 +1039,11 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | e4a1a6a98d4be60f7ba9cb1a99eca5dd297db31a35b1aec38b5b1477d40eb3a8 |
+| `binary_sha256` | 63a05dac0b90b9e0249635f5d7de57915abc85c61ba4fd9d78d7c732f4f732a1 |
 | `blocks_launched` | 1024 |
 | `busy_cycles` | 200000 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
-| `elapsed_ms` | 0.2341 |
+| `elapsed_ms` | 0.1866 |
 | `mean_resident_blocks_per_sm` | 7.7576 |
 | `multi_processor_count` | 132 |
 | `peak_resident_blocks_per_sm` | 8 |
@@ -1070,7 +1070,7 @@
 | simulator_param | `fp32_fma_pipeline_depth` = 4.377 cycles_per_op |
 | concept | `fp32_fma_dependent_pipeline_latency` |
 
-- binary_hash: `461c002961ccdc412339006fbcb02df0d06db1adc681cf1c24b69edb1f551f5b`
+- binary_hash: `4fbcd8154347573ed0323ef8220ca7fc7aa7fde79d57e6f47f4b6b6b9bbeb732`
 - interpretation: cycles between issue and writeback for a dependent FMA
 - mapping_contract: dependent FMA cycles-per-op → simulator FP32 FMA latency depth
 
@@ -1091,7 +1091,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 461c002961ccdc412339006fbcb02df0d06db1adc681cf1c24b69edb1f551f5b |
+| `binary_sha256` | 4fbcd8154347573ed0323ef8220ca7fc7aa7fde79d57e6f47f4b6b6b9bbeb732 |
 | `chain_length` | 4096 |
 | `cycles_max` | 17928 |
 | `cycles_median` | 17928 |
@@ -1120,7 +1120,7 @@
 | simulator_param | `fp32_fma_throughput` = 1.1471 cycles_per_op |
 | concept | `fp32_fma_independent_pipeline_throughput` |
 
-- binary_hash: `e306faa94179246819f25beca85ba0293c339a357ee69403a0dd4fa9f005a42c`
+- binary_hash: `e30d16ab2f4848347d3522bb4049e1b971f4be2e2e4c201e68e70af66f25b5aa`
 - interpretation: effective FMA cycles-per-op once ILP saturates the FP32 pipe
 - mapping_contract: independent FMA cycles-per-op → simulator FP32 FMA throughput
 
@@ -1142,15 +1142,15 @@
 | key | value |
 | --- | --- |
 | `approx_fma_per_cycle_per_sm` | 13.5256 |
-| `binary_sha256` | e306faa94179246819f25beca85ba0293c339a357ee69403a0dd4fa9f005a42c |
+| `binary_sha256` | e30d16ab2f4848347d3522bb4049e1b971f4be2e2e4c201e68e70af66f25b5aa |
 | `blocks` | 16 |
 | `chain_length` | 4096 |
-| `cycles_max` | 18796 |
+| `cycles_max` | 18797 |
 | `cycles_median` | 18794 |
 | `cycles_min` | 18722 |
 | `cycles_per_fma_per_thread` | 1.1471 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
-| `elapsed_ms` | 0.0186 |
+| `elapsed_ms` | 0.0183 |
 | `independent_chains` | 4 |
 | `multi_processor_count` | 132 |
 | `threads` | 128 |
@@ -1171,11 +1171,11 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[1024, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `direct` |
-| measurement | `shared_memory_load_latency` = 29.0129 cycles |
-| simulator_param | `shared_memory_load_latency_cycles` = 29.0129 cycles |
+| measurement | `shared_memory_load_latency` = 29.0146 cycles |
+| simulator_param | `shared_memory_load_latency_cycles` = 29.0146 cycles |
 | concept | `shared_memory_load_to_use_latency` |
 
-- binary_hash: `4cb33d67af504991941a0d9efc32a6172a78839e66ad2f769f029fa8c4efeb55`
+- binary_hash: `18d423cc6c50bfb2c83d570fe14887d712fa4e8437883055c251c34c79d07662`
 - interpretation: LDS dependent-load latency in cycles
 - mapping_contract: dependent shared-memory chase cycles-per-load → simulator shared-mem latency
 
@@ -1189,19 +1189,19 @@
 | key | value | unit |
 | --- | --- | --- |
 | `chase_len` | 4096 | — |
-| `cycles_median` | 118837 | — |
-| `cycles_per_load` | 29.0129 | cycles |
+| `cycles_median` | 118844 | — |
+| `cycles_per_load` | 29.0146 | cycles |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 4cb33d67af504991941a0d9efc32a6172a78839e66ad2f769f029fa8c4efeb55 |
+| `binary_sha256` | 18d423cc6c50bfb2c83d570fe14887d712fa4e8437883055c251c34c79d07662 |
 | `chase_len` | 4096 |
-| `cycles_max` | 118850 |
-| `cycles_median` | 118837 |
-| `cycles_min` | 118836 |
-| `cycles_per_load` | 29.0129 |
+| `cycles_max` | 118865 |
+| `cycles_median` | 118844 |
+| `cycles_min` | 118844 |
+| `cycles_per_load` | 29.0146 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
 | `repeats` | 64 |
 
@@ -1225,7 +1225,7 @@
 | simulator_param | `shared_memory_banks` = 32 banks |
 | concept | `shared_memory_bank_count` |
 
-- binary_hash: `969c2ac25a4a2f7d292f972c4f62860b533cdd9b1d161034bf181efb19591295`
+- binary_hash: `0506f91b97f22a88b65d8356ffd1228b3da9b20693f5848125c312d42653da96`
 - interpretation: shared-memory bank count inferred from cycles-per-access vs stride curve
 - mapping_contract: bank-stride sweep peak conflict factor → simulator shared-memory bank count
 
@@ -1238,16 +1238,16 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `full_conflict_cycles_per_access` | 65.5015 | cycles |
+| `full_conflict_cycles_per_access` | 65.4795 | cycles |
 | `inferred_bank_count` | 32 | — |
-| `no_conflict_cycles_per_access` | 7.0952 | cycles |
+| `no_conflict_cycles_per_access` | 6.8857 | cycles |
 | `sweep_points` | 12 | — |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 969c2ac25a4a2f7d292f972c4f62860b533cdd9b1d161034bf181efb19591295 |
+| `binary_sha256` | 0506f91b97f22a88b65d8356ffd1228b3da9b20693f5848125c312d42653da96 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
 | `inner_loops` | 4096 |
 
@@ -1255,18 +1255,18 @@
 
 | conflict_factor | cycles_median | cycles_per_access | stride |
 | --- | --- | --- | --- |
-| 1 | 29062 | 7.0952 | 1 |
-| 2 | 29318 | 7.1577 | 2 |
-| 1 | 29062 | 7.0952 | 3 |
-| 4 | 39814 | 9.7202 | 4 |
-| 1 | 29062 | 7.0952 | 5 |
-| 1 | 29062 | 7.0952 | 7 |
-| 8 | 71686 | 17.5015 | 8 |
-| 1 | 29062 | 7.0952 | 11 |
-| 16 | 137222 | 33.5015 | 16 |
-| 1 | 29062 | 7.0952 | 17 |
-| 32 | 268294 | 65.5015 | 32 |
-| 1 | 29062 | 7.0952 | 33 |
+| 1 | 28204 | 6.8857 | 1 |
+| 2 | 28588 | 6.9795 | 2 |
+| 1 | 28204 | 6.8857 | 3 |
+| 4 | 40748 | 9.9482 | 4 |
+| 1 | 28204 | 6.8857 | 5 |
+| 1 | 28204 | 6.8857 | 7 |
+| 8 | 72492 | 17.6982 | 8 |
+| 1 | 28204 | 6.8857 | 11 |
+| 16 | 137132 | 33.4795 | 16 |
+| 1 | 28204 | 6.8857 | 17 |
+| 32 | 268204 | 65.4795 | 32 |
+| 1 | 28204 | 6.8857 | 33 |
 
 ### Registered source
 
@@ -1301,8 +1301,8 @@
 ```json
 {
   "bank_count": 32,
-  "bank_serialization_factor": 9.231804600293154,
-  "shared_load_latency_cycles": 29.0129
+  "bank_serialization_factor": 9.50949068359063,
+  "shared_load_latency_cycles": 29.0146
 }
 ```
 
@@ -1311,8 +1311,8 @@
 | key | value | unit |
 | --- | --- | --- |
 | `bank_count` | 32 | — |
-| `bank_serialization_factor` | 9.2318 | — |
-| `shared_load_latency_cycles` | 29.0129 | — |
+| `bank_serialization_factor` | 9.50949 | — |
+| `shared_load_latency_cycles` | 29.0146 | — |
 
 ### Raw values
 
@@ -1320,10 +1320,10 @@
 
 ```json
 {
-  "binary_sha256": "969c2ac25a4a2f7d292f972c4f62860b533cdd9b1d161034bf181efb19591295",
-  "full_conflict_cycles_per_access": 65.5015,
+  "binary_sha256": "0506f91b97f22a88b65d8356ffd1228b3da9b20693f5848125c312d42653da96",
+  "full_conflict_cycles_per_access": 65.4795,
   "inferred_bank_count": 32,
-  "no_conflict_cycles_per_access": 7.0952
+  "no_conflict_cycles_per_access": 6.8857
 }
 ```
 
@@ -1334,8 +1334,8 @@
 ```json
 {
   "bank_count": 32,
-  "bank_serialization_factor": 9.231804600293154,
-  "shared_load_latency_cycles": 29.0129
+  "bank_serialization_factor": 9.50949068359063,
+  "shared_load_latency_cycles": 29.0146
 }
 ```
 
@@ -1345,8 +1345,681 @@
 
 ```json
 {
-  "binary_sha256": "4cb33d67af504991941a0d9efc32a6172a78839e66ad2f769f029fa8c4efeb55",
-  "cycles_per_load": 29.0129
+  "binary_sha256": "18d423cc6c50bfb2c83d570fe14887d712fa4e8437883055c251c34c79d07662",
+  "cycles_per_load": 29.0146
+}
+```
+
+</details>
+
+[↑ contents](#contents)
+
+---
+
+## l1_cache.pointer_chase
+
+| field | value |
+| --- | --- |
+| launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
+| evidence_tier | `timing_direct` |
+| fit_status | `direct` |
+| measurement | `l1_hit_load_latency` = 70.6121 cycles |
+| simulator_param | `l1_latency` = 70.6121 cycles |
+| concept | `l1_path_hit_latency` |
+
+- binary_hash: `aea1c593856320979dc411cf66981a009cb13437e410ceff83a5256d388dc94b`
+- interpretation: dependent-load latency for an L1-resident working set in cycles
+- mapping_contract: dependent L1-hit chase cycles-per-load → simulator L1 hit latency
+
+**assumptions:**
+
+- single-thread dependent pointer chase over a randomized ring sized to fit L1
+- a DRAM-resident ring is timed as a control; L1-hit regime requires small << large
+- median cycles-per-load reported across N launches
+
+### Metrics
+
+| key | value | unit |
+| --- | --- | --- |
+| `dram_cycles_per_load` | 318.102 | cycles |
+| `hit_to_dram_ratio` | 4.50492 | — |
+| `l1_hit_cycles_per_load` | 70.6121 | cycles |
+
+### Raw values
+
+| key | value |
+| --- | --- |
+| `binary_sha256` | aea1c593856320979dc411cf66981a009cb13437e410ceff83a5256d388dc94b |
+| `device_name` | NVIDIA H100 80GB HBM3 |
+| `dram_cycles_per_load` | 318.102 |
+| `l1_hit_cycles_per_load` | 70.6121 |
+| `large_kb` | 8192 |
+| `repeats` | 64 |
+| `small_kb` | 16 |
+| `steps` | 4096 |
+
+### Registered source
+
+- path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/l1_cache/pointer_chase.cu`
+- bytes: `5643`  ·  sha256: `198f6a1e50bc281f93330623a68670586bd6f83f49dab47b704c831b35c3edff`
+
+[↑ contents](#contents)
+
+---
+
+## l1_cache.working_set
+
+| field | value |
+| --- | --- |
+| launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
+| evidence_tier | `timing_direct` |
+| fit_status | `underconstrained` |
+| measurement | `l1_effective_capacity` = _object_ |
+| simulator_param | `l1d_cache_capacity` = _object_ |
+| concept | `l1_effective_capacity_knee` |
+
+- binary_hash: `7369adb033f38fdbe48c0ee7a5fc5f0047e9666f09a77d78446f2a72866f747e`
+- interpretation: effective L1 capacity bounded by the first latency knee in the working-set sweep
+- mapping_contract: working-set latency knee → simulator L1 capacity range
+
+**assumptions:**
+
+- dependent pointer-chase latency swept across geometric working-set sizes
+- first >40% latency jump marks the effective L1 capacity knee
+- capacity is reported as a bounded range, not an exact scalar
+
+### Measurement value
+
+```json
+{}
+```
+
+### Metrics
+
+| key | value | unit |
+| --- | --- | --- |
+| `sweep_points` | 13 | — |
+
+### Raw values
+
+| key | value |
+| --- | --- |
+| `binary_sha256` | 7369adb033f38fdbe48c0ee7a5fc5f0047e9666f09a77d78446f2a72866f747e |
+| `device_name` | NVIDIA H100 80GB HBM3 |
+| `repeats` | 32 |
+| `steps` | 4096 |
+
+#### `sweep` (13 rows)
+
+| cycles_per_load | working_set_kb |
+| --- | --- |
+| 47.3457 | 4 |
+| 55.3892 | 8 |
+| 70.6113 | 16 |
+| 86.2441 | 24 |
+| 101.236 | 32 |
+| 128.86 | 48 |
+| 151.066 | 64 |
+| 202.88 | 128 |
+| 238.593 | 256 |
+| 264.456 | 512 |
+| 275.795 | 1024 |
+| 311.615 | 4096 |
+| 353.435 | 16384 |
+
+### Registered source
+
+- path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/l1_cache/working_set.cu`
+- bytes: `4223`  ·  sha256: `0bdfc85ec29e0f1847fd8bca024ae2637a57427be3c0796383ed180cc75987b6`
+
+[↑ contents](#contents)
+
+---
+
+## l1_cache.conflict_sets
+
+| field | value |
+| --- | --- |
+| launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
+| evidence_tier | `timing_direct` |
+| fit_status | `underconstrained` |
+| measurement | `l1_effective_associativity` = — |
+| simulator_param | `l1d_cache_assoc` = — |
+| concept | `l1_effective_associativity` |
+
+- binary_hash: `75786b9d9ba51b01fccc2e935eea020724418cb77c755dab4d86fa208568f54f`
+- interpretation: effective L1 associativity bounded by the conflict-set latency knee
+- mapping_contract: conflict-set latency knee → simulator L1 associativity (bounded)
+
+**assumptions:**
+
+- ring of same-set lines grown one way at a time at a fixed power-of-two stride
+- latency knee marks where the conflict set exceeds the effective associativity
+- associativity is bounded: indexing/replacement/hashing can mimic the same curve
+
+### Metrics
+
+| key | value | unit |
+| --- | --- | --- |
+| `stride_bytes` | 4096 | — |
+| `sweep_points` | 24 | — |
+
+### Raw values
+
+| key | value |
+| --- | --- |
+| `binary_sha256` | 75786b9d9ba51b01fccc2e935eea020724418cb77c755dab4d86fa208568f54f |
+| `device_name` | NVIDIA H100 80GB HBM3 |
+| `steps` | 4096 |
+| `stride_bytes` | 4096 |
+
+#### `sweep` (24 rows)
+
+| cycles_per_load | ways |
+| --- | --- |
+| 39.7166 | 1 |
+| 39.7744 | 2 |
+| 39.8391 | 3 |
+| 39.9028 | 4 |
+| 39.969 | 5 |
+| 40.0269 | 6 |
+| 40.084 | 7 |
+| 40.146 | 8 |
+| 40.2 | 9 |
+| 40.2578 | 10 |
+| 40.322 | 11 |
+| 40.3867 | 12 |
+| 40.4504 | 13 |
+| 40.5088 | 14 |
+| 40.5642 | 15 |
+| 40.6252 | 16 |
+| 40.6831 | 17 |
+| 40.7385 | 18 |
+| 40.8005 | 19 |
+| 40.8665 | 20 |
+| 40.9336 | 21 |
+| 40.99 | 22 |
+| 41.0476 | 23 |
+| 41.1116 | 24 |
+
+### Registered source
+
+- path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/l1_cache/conflict_sets.cu`
+- bytes: `4359`  ·  sha256: `a1c9a63a7abe678c35db2a1c1f96e95658eb687a8d6b157b54981d06b72ee984`
+
+[↑ contents](#contents)
+
+---
+
+## l1_cache.analyze
+
+| field | value |
+| --- | --- |
+| launch | `analysis`  — |
+| evidence_tier | `coupled_inference` |
+| fit_status | `underconstrained` |
+| measurement | `l1_cache_summary` = _object_ (l1_effective_capacity_kb, l1_hit_latency_cycles) |
+| simulator_param | `l1d_cache_summary` = _object_ (l1_effective_capacity_kb, l1_hit_latency_cycles) |
+| concept | `l1_cache_summary` |
+
+- interpretation: merged L1 path characterization from latency, capacity, and conflict probes
+- mapping_contract: cross-probe L1 summary for simulator L1 cache model parameters
+
+**assumptions:**
+
+- merges L1 hit latency, capacity knee, and associativity knee
+- merged fit status is the weakest of the contributing probe fits
+
+### Measurement value
+
+```json
+{
+  "l1_effective_capacity_kb": {},
+  "l1_hit_latency_cycles": 70.6072
+}
+```
+
+### Metrics
+
+| key | value | unit |
+| --- | --- | --- |
+| `l1_effective_capacity_kb` | `{}` | — |
+| `l1_hit_latency_cycles` | 70.6072 | — |
+
+### Raw values
+
+<details><summary><code>conflict_sets</code> (JSON)</summary>
+
+```json
+{
+  "binary_sha256": "75786b9d9ba51b01fccc2e935eea020724418cb77c755dab4d86fa208568f54f"
+}
+```
+
+</details>
+
+<details><summary><code>derived</code> (JSON)</summary>
+
+```json
+{
+  "l1_effective_capacity_kb": {},
+  "l1_hit_latency_cycles": 70.6072
+}
+```
+
+</details>
+
+<details><summary><code>pointer_chase</code> (JSON)</summary>
+
+```json
+{
+  "binary_sha256": "aea1c593856320979dc411cf66981a009cb13437e410ceff83a5256d388dc94b",
+  "l1_hit_cycles_per_load": 70.6072
+}
+```
+
+</details>
+
+<details><summary><code>working_set</code> (JSON)</summary>
+
+```json
+{
+  "binary_sha256": "7369adb033f38fdbe48c0ee7a5fc5f0047e9666f09a77d78446f2a72866f747e",
+  "effective_capacity": {}
+}
+```
+
+</details>
+
+[↑ contents](#contents)
+
+---
+
+## scheduler_policy.ready_warps
+
+| field | value |
+| --- | --- |
+| launch | `kernel`  grid=[1, 1, 1] block=[1024, 1, 1] |
+| evidence_tier | `timing_direct` |
+| fit_status | `conditionally_identified` |
+| measurement | `issue_saturation_warps` = 16 warps |
+| simulator_param | `gpgpu_num_sched_per_core` = 16 warps |
+| concept | `scheduler_issue_scaling` |
+
+- binary_hash: `5a65abee5f03e65c0424e0c8f0ef7ab60a5c3110c9fb5b566e6351698d7f595a`
+- interpretation: ready-warp count at which issue throughput saturates on one SM
+- mapping_contract: issue-scaling saturation knee → simulator scheduler issue capacity (conditional)
+
+**assumptions:**
+
+- one CTA on one SM runs N independent dependent-FMA warps (no memory)
+- saturation warp count = smallest warp count reaching 95% of peak ops/cycle
+- scheduler policy name is behavioral; only issue scaling is reported
+
+### Metrics
+
+| key | value | unit |
+| --- | --- | --- |
+| `peak_ops_per_cycle` | 106.352 | ops/cycle |
+| `saturation_warps` | 16 | — |
+| `sweep_points` | 32 | — |
+
+### Raw values
+
+| key | value |
+| --- | --- |
+| `binary_sha256` | 5a65abee5f03e65c0424e0c8f0ef7ab60a5c3110c9fb5b566e6351698d7f595a |
+| `chain_length` | 2048 |
+| `device_name` | NVIDIA H100 80GB HBM3 |
+
+#### `sweep` (32 rows)
+
+| cycles_median | ops_per_cycle | warps |
+| --- | --- | --- |
+| 9096 | 7.2049 | 1 |
+| 9096 | 14.4099 | 2 |
+| 9096 | 21.6148 | 3 |
+| 9096 | 28.8197 | 4 |
+| 9228 | 35.5093 | 5 |
+| 9227 | 42.6158 | 6 |
+| 9227 | 49.7184 | 7 |
+| 9227 | 56.8211 | 8 |
+| 9615 | 61.3441 | 9 |
+| 9613 | 68.1743 | 10 |
+| 9626 | 74.8905 | 11 |
+| 9486 | 82.9045 | 12 |
+| 10358 | 82.2522 | 13 |
+| 10357 | 88.5878 | 14 |
+| 10348 | 94.9981 | 15 |
+| 10357 | 101.243 | 16 |
+| 12575 | 88.5974 | 17 |
+| 12577 | 93.7941 | 18 |
+| 12578 | 98.997 | 19 |
+| 12581 | 104.183 | 20 |
+| 14897 | 92.3848 | 21 |
+| 14898 | 96.7776 | 22 |
+| 14896 | 101.19 | 23 |
+| 14903 | 105.54 | 24 |
+| 17287 | 94.7764 | 25 |
+| 17292 | 98.539 | 26 |
+| 17306 | 102.246 | 27 |
+| 17292 | 106.119 | 28 |
+| 19710 | 96.4254 | 29 |
+| 19714 | 99.7301 | 30 |
+| 19710 | 103.075 | 31 |
+| 19719 | 106.352 | 32 |
+
+### Registered source
+
+- path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/scheduler_policy/ready_warps.cu`
+- bytes: `4167`  ·  sha256: `66e8d665ec60350e3c5fa942833f7065db231c1fd1ca64eb36650e36571860de`
+
+[↑ contents](#contents)
+
+---
+
+## scheduler_policy.mixed_issue
+
+| field | value |
+| --- | --- |
+| launch | `kernel`  grid=[1, 1, 1] block=[256, 1, 1] |
+| evidence_tier | `timing_direct` |
+| fit_status | `behavioral_only` |
+| measurement | `mixed_issue_overlap` = single_issue_like |
+| simulator_param | `gpgpu_dual_issue_diff_exec_units` = single_issue_like |
+| concept | `mixed_pipeline_issue_overlap` |
+
+- binary_hash: `4826d4e62529a9a8c1404c12e237a322565b36f4b206c901dd1d0c6096e2038e`
+- interpretation: FP32/INT pipe overlap classified from mixed vs single-pipe throughput
+- mapping_contract: mixed/single-pipe overlap ratio → simulator dual-issue behavioral class
+
+**assumptions:**
+
+- independent FP32 (FMA) and INT (MAD) streams run alone and interleaved
+- overlap_ratio = mixed / max(fp32, int); higher means more pipe overlap
+- mixed-issue capability is a behavioral class, not a named policy
+
+### Metrics
+
+| key | value | unit |
+| --- | --- | --- |
+| `fp32_ops_per_cycle` | 115.387 | ops/cycle |
+| `int_ops_per_cycle` | 483.215 | ops/cycle |
+| `mixed_ops_per_cycle` | 178.178 | ops/cycle |
+| `overlap_ratio` | 0.368734 | — |
+
+### Raw values
+
+| key | value |
+| --- | --- |
+| `binary_sha256` | 4826d4e62529a9a8c1404c12e237a322565b36f4b206c901dd1d0c6096e2038e |
+| `chain_length` | 2048 |
+| `device_name` | NVIDIA H100 80GB HBM3 |
+| `fp32_ops_per_cycle` | 115.387 |
+| `int_ops_per_cycle` | 483.215 |
+| `mixed_ops_per_cycle` | 178.178 |
+| `warps` | 8 |
+
+### Registered source
+
+- path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/scheduler_policy/mixed_issue.cu`
+- bytes: `5669`  ·  sha256: `7ed20977f0719cdb66f2939d1f30f8d2004ff321fa5dab14bdb86a39940fc8e7`
+
+[↑ contents](#contents)
+
+---
+
+## scheduler_policy.analyze
+
+| field | value |
+| --- | --- |
+| launch | `analysis`  — |
+| evidence_tier | `coupled_inference` |
+| fit_status | `behavioral_only` |
+| measurement | `scheduler_summary` = _object_ (issue_saturation_warps, mixed_issue_class, peak_ops_per_cycle) |
+| simulator_param | `gpgpu_scheduler_summary` = _object_ (issue_saturation_warps, mixed_issue_class, peak_ops_per_cycle) |
+| concept | `scheduler_summary` |
+
+- interpretation: scheduler issue scaling and pipe-overlap behavior on one SM
+- mapping_contract: cross-probe scheduler summary for simulator scheduler model (behavioral)
+
+**assumptions:**
+
+- combines ready-warp issue saturation with mixed-issue overlap class
+- scheduler policy reported as a behavioral class with a conditional issue-capacity value
+
+### Measurement value
+
+```json
+{
+  "issue_saturation_warps": 16,
+  "mixed_issue_class": "single_issue_like",
+  "peak_ops_per_cycle": 106.4112
+}
+```
+
+### Metrics
+
+| key | value | unit |
+| --- | --- | --- |
+| `issue_saturation_warps` | 16 | — |
+| `mixed_issue_class` | single_issue_like | — |
+| `peak_ops_per_cycle` | 106.411 | — |
+
+### Raw values
+
+<details><summary><code>derived</code> (JSON)</summary>
+
+```json
+{
+  "issue_saturation_warps": 16,
+  "mixed_issue_class": "single_issue_like",
+  "peak_ops_per_cycle": 106.4112
+}
+```
+
+</details>
+
+<details><summary><code>mixed_issue</code> (JSON)</summary>
+
+```json
+{
+  "binary_sha256": "4826d4e62529a9a8c1404c12e237a322565b36f4b206c901dd1d0c6096e2038e",
+  "overlap_class": "single_issue_like",
+  "overlap_ratio": 0.36873402237142205
+}
+```
+
+</details>
+
+<details><summary><code>ready_warps</code> (JSON)</summary>
+
+```json
+{
+  "binary_sha256": "5a65abee5f03e65c0424e0c8f0ef7ab60a5c3110c9fb5b566e6351698d7f595a",
+  "saturation_warps": 16
+}
+```
+
+</details>
+
+[↑ contents](#contents)
+
+---
+
+## register_file.register_bank_sweep
+
+| field | value |
+| --- | --- |
+| launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
+| evidence_tier | `timing_direct` |
+| fit_status | `underconstrained` |
+| measurement | `operand_delivery_plateau` = 16 accumulators |
+| simulator_param | `gpgpu_num_reg_banks` = 16 accumulators |
+| concept | `register_bank_operand_delivery` |
+
+- binary_hash: `d87426f5daf1450c015a3c0c78d8bfbd62c3517f32bbb7790b9bd6e08e11c9c8`
+- interpretation: operand-delivery throughput plateau across register-pressure widths
+- mapping_contract: operand-width plateau → simulator register-bank pressure (candidate, multi-fit)
+
+**assumptions:**
+
+- operand-width sweep of independent FMA accumulators (register pressure proxy)
+- CUDA approximation of the SASS-controlled register sweep; bank count is not uniquely identified
+- plateau width marks where added ILP stops improving cycles-per-op
+
+### Metrics
+
+| key | value | unit |
+| --- | --- | --- |
+| `ilp_plateau_width` | 16 | accumulators |
+| `sweep_points` | 8 | — |
+
+### Raw values
+
+| key | value |
+| --- | --- |
+| `binary_sha256` | d87426f5daf1450c015a3c0c78d8bfbd62c3517f32bbb7790b9bd6e08e11c9c8 |
+| `chain_length` | 2048 |
+| `device_name` | NVIDIA H100 80GB HBM3 |
+
+#### `sweep` (8 rows)
+
+| cycles_per_op | width |
+| --- | --- |
+| 4.8789 | 1 |
+| 2.6265 | 2 |
+| 1.9596 | 3 |
+| 1.501 | 4 |
+| 1.334 | 6 |
+| 1.2505 | 8 |
+| 1.167 | 12 |
+| 1.1252 | 16 |
+
+### Registered source
+
+- path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/register_file/register_bank_sweep.cu`
+- bytes: `4516`  ·  sha256: `7aa75fca4c6681820fe6c22be0b38aee5698824f1639b55dbcc13ccfbed950a5`
+
+[↑ contents](#contents)
+
+---
+
+## register_file.register_latency
+
+| field | value |
+| --- | --- |
+| launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
+| evidence_tier | `timing_direct` |
+| fit_status | `conditionally_identified` |
+| measurement | `operand_delivery_differential_latency` = 2.3606 cycles |
+| simulator_param | `max_latency_regular_register_file_latency` = 2.3606 cycles |
+| concept | `register_operand_delivery_latency` |
+
+- binary_hash: `67595a7ac5ed5219f1337b3cd1c638c9753514e314b3c4b87bab7c8313166a8b`
+- interpretation: extra per-op cost of tight RAW dependence attributable to operand delivery
+- mapping_contract: RAW-distance differential cycles → simulator operand-delivery latency (conditional)
+
+**assumptions:**
+
+- same-register (RAW distance 1) vs rotating-register (relaxed RAW) chains of equal length
+- differential cycles-per-op isolates operand-delivery cost from absolute arithmetic latency
+- operand-collector parameters stay conditional: scoreboard/bank effects are entangled
+
+### Metrics
+
+| key | value | unit |
+| --- | --- | --- |
+| `differential_cycles_per_op` | 2.3606 | cycles |
+| `rotating_reg_cycles_per_op` | 2.0789 | cycles |
+| `same_reg_cycles_per_op` | 4.4395 | cycles |
+
+### Raw values
+
+| key | value |
+| --- | --- |
+| `binary_sha256` | 67595a7ac5ed5219f1337b3cd1c638c9753514e314b3c4b87bab7c8313166a8b |
+| `chain_length` | 4096 |
+| `device_name` | NVIDIA H100 80GB HBM3 |
+| `differential_cycles_per_op` | 2.3606 |
+| `rot_depth` | 8 |
+| `rotating_reg_cycles_per_op` | 2.0789 |
+| `same_reg_cycles_per_op` | 4.4395 |
+
+### Registered source
+
+- path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/register_file/register_latency.cu`
+- bytes: `4327`  ·  sha256: `e19a118fab98c5f6a260b19f5d10357e42bade8a5c98e02080c3560932c19975`
+
+[↑ contents](#contents)
+
+---
+
+## register_file.analyze
+
+| field | value |
+| --- | --- |
+| launch | `analysis`  — |
+| evidence_tier | `coupled_inference` |
+| fit_status | `underconstrained` |
+| measurement | `register_file_summary` = _object_ (operand_delivery_differential_cycles, operand_delivery_plateau_accumulators) |
+| simulator_param | `register_file_summary` = _object_ (operand_delivery_differential_cycles, operand_delivery_plateau_accumulators) |
+| concept | `register_file_summary` |
+
+- interpretation: merged register-bank pressure and operand-delivery differential latency
+- mapping_contract: cross-probe register-file summary for simulator operand-delivery model (candidate)
+
+**assumptions:**
+
+- keeps register-bank evidence (plateau) separate from operand-delivery latency (differential)
+- bank count remains a candidate; differential latency remains conditional
+
+### Measurement value
+
+```json
+{
+  "operand_delivery_differential_cycles": 2.3606,
+  "operand_delivery_plateau_accumulators": 16
+}
+```
+
+### Metrics
+
+| key | value | unit |
+| --- | --- | --- |
+| `operand_delivery_differential_cycles` | 2.3606 | — |
+| `operand_delivery_plateau_accumulators` | 16 | — |
+
+### Raw values
+
+<details><summary><code>derived</code> (JSON)</summary>
+
+```json
+{
+  "operand_delivery_differential_cycles": 2.3606,
+  "operand_delivery_plateau_accumulators": 16
+}
+```
+
+</details>
+
+<details><summary><code>register_bank_sweep</code> (JSON)</summary>
+
+```json
+{
+  "binary_sha256": "d87426f5daf1450c015a3c0c78d8bfbd62c3517f32bbb7790b9bd6e08e11c9c8",
+  "ilp_plateau_width": 16
+}
+```
+
+</details>
+
+<details><summary><code>register_latency</code> (JSON)</summary>
+
+```json
+{
+  "binary_sha256": "67595a7ac5ed5219f1337b3cd1c638c9753514e314b3c4b87bab7c8313166a8b",
+  "differential_cycles_per_op": 2.3606
 }
 ```
 
