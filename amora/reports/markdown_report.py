@@ -199,8 +199,9 @@ def _render_values(values: dict[str, Any]) -> list[str]:
 
 _VENDOR_BY_BACKEND = {"nvidia_cuda": "nvidia"}
 
-# (regex on device name) -> (family, model-slug)
-_MODEL_PATTERNS = [
+# (regex on device name) -> (family, model_or_fn)
+# model_or_fn can be a static slug string or a callable(re.Match) -> str
+_MODEL_PATTERNS: list[tuple[re.Pattern[str], tuple[str, str]] | tuple[re.Pattern[str], str, object]] = [
     (re.compile(r"\bB300\b", re.I), ("blackwell-ultra", "b300")),
     (re.compile(r"\bGB300\b", re.I), ("blackwell-ultra", "gb300")),
     (re.compile(r"\bGB200\b", re.I), ("blackwell", "gb200")),
@@ -218,6 +219,17 @@ _MODEL_PATTERNS = [
     (re.compile(r"\bA30\b", re.I), ("ampere", "a30")),
     (re.compile(r"\bA10\b", re.I), ("ampere", "a10")),
     (re.compile(r"\bT4\b", re.I), ("turing", "t4")),
+    # GeForce consumer cards — family resolved by model generation
+    (re.compile(r"\bRTX\s+50(\d{2})(?:\s*(Ti(?:\s*Super)?|Super))?\b", re.I), "blackwell",
+     lambda m: f"rtx-50{m.group(1)}{'-' + m.group(2).lower().replace(' ','-') if m.group(2) else ''}"),
+    (re.compile(r"\bRTX\s+40(\d{2})(?:\s*(Ti(?:\s*Super)?|Super))?\b", re.I), "ada",
+     lambda m: f"rtx-40{m.group(1)}{'-' + m.group(2).lower().replace(' ','-') if m.group(2) else ''}"),
+    (re.compile(r"\bRTX\s+30(\d{2})(?:\s*(Ti|Super))?\b", re.I), "ampere",
+     lambda m: f"rtx-30{m.group(1)}{'-' + m.group(2).lower() if m.group(2) else ''}"),
+    (re.compile(r"\bRTX\s+20(\d{2})(?:\s*(Ti|Super))?\b", re.I), "turing",
+     lambda m: f"rtx-20{m.group(1)}{'-' + m.group(2).lower() if m.group(2) else ''}"),
+    (re.compile(r"\bGTX\s+16(\d{2})(?:\s*(Ti|Super))?\b", re.I), "turing",
+     lambda m: f"gtx-16{m.group(1)}{'-' + m.group(2).lower() if m.group(2) else ''}"),
 ]
 
 _MEM_PATTERN = re.compile(r"(\d+)\s*GB", re.I)
@@ -236,8 +248,16 @@ def _primary_device_name(report: dict[str, Any]) -> str:
 
 
 def derive_family_model(name: str) -> tuple[str, str]:
-    for pattern, (family, model) in _MODEL_PATTERNS:
-        if pattern.search(name):
+    for entry in _MODEL_PATTERNS:
+        pattern = entry[0]
+        m = pattern.search(name)
+        if m:
+            if isinstance(entry[1], tuple):
+                family, model = entry[1]  # type: ignore[assignment]
+            else:
+                family = entry[1]
+                model_fn = entry[2]
+                model = model_fn(m) if callable(model_fn) else str(model_fn)
             return family, model
     slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
     return "unknown", (slug or "unknown")
