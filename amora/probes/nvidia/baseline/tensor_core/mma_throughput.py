@@ -13,7 +13,7 @@ from pathlib import Path
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation
-from amora.probes.nvidia.baseline._sources import apply_sass_gating, source_descriptor
+from amora.probes.nvidia.baseline._sources import apply_sass_gating, collect_ncu_metrics, source_descriptor
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -72,6 +72,15 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             )
         ]
 
+    ncu_record = collect_ncu_metrics(
+        capabilities,
+        SOURCE,
+        ["tensor_pipe_active"],
+        kernel_name="amora_tc_mma_throughput",
+        role="validation",
+        aggregate="max",
+    )
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
@@ -79,6 +88,8 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     }
     if sass is not None:
         values["sass"] = sass.to_dict()
+    if ncu_record is not None:
+        values["ncu"] = ncu_record
     initiation_interval = round(1.0 / mma_per_cycle, 4) if mma_per_cycle > 0 else None
     assumptions = [
         "independent wmma::mma_sync accumulators (FP16 m16n16k16) expose ILP to saturate the tensor pipe",
@@ -117,6 +128,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                     "nvidia_backend": "independent FP16 16x16x16 MMA throughput in MMA-ops per cycle per warp",
                     "mma_shape": payload["mma_shape"],
                 },
+                metric_resolver=ncu_record or {},
                 sass_validation=sass.to_dict() if sass else {},
                 downgrade_reason=downgrade_reason,
             ),

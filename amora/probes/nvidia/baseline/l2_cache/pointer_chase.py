@@ -13,7 +13,7 @@ from pathlib import Path
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation
-from amora.probes.nvidia.baseline._sources import apply_sass_gating, source_descriptor
+from amora.probes.nvidia.baseline._sources import apply_sass_gating, collect_ncu_metrics, source_descriptor
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -80,6 +80,15 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             )
         ]
 
+    ncu_record = collect_ncu_metrics(
+        capabilities,
+        SOURCE,
+        ["l2_sector_hits"],
+        kernel_name="amora_l2_pointer_chase",
+        role="validation",
+        aggregate="max",
+    )
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
@@ -87,6 +96,8 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     }
     if sass is not None:
         values["sass"] = sass.to_dict()
+    if ncu_record is not None:
+        values["ncu"] = ncu_record
     assumptions = [
         "single-thread dependent pointer chase over a randomized ring sized to exceed L1 but fit L2",
         "a DRAM-resident ring is timed as a control; L2-hit regime requires l2 << dram",
@@ -130,6 +141,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                     "dram_control_cycles_per_load": dram_cpl,
                     "l2_hit_regime_confirmed": hit_regime,
                 },
+                metric_resolver=ncu_record or {},
                 sass_validation=sass.to_dict() if sass else {},
                 downgrade_reason=downgrade_reason
                 if downgrade_reason is not None

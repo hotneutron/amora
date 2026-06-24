@@ -12,11 +12,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from amora.backends.nvidia.cuda import NvidiaCapabilities
-from amora.backends.nvidia.metrics import MetricResolver
-from amora.backends.nvidia.ncu_run import NcuUnavailable, run_kernel_profiled
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation
-from amora.probes.nvidia.baseline._sources import apply_sass_gating, source_descriptor
+from amora.probes.nvidia.baseline._sources import apply_sass_gating, collect_ncu_metrics, source_descriptor
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -43,42 +41,6 @@ EXPECTATION = SassExpectation(
 
 def _tool_context(capabilities: NvidiaCapabilities) -> ToolContext:
     return ToolContext(tools=capabilities.to_dict())
-
-
-def _collect_counter(capabilities: NvidiaCapabilities, logical: str) -> dict | None:
-    """Collect a DRAM byte counter via NCU (corroboration role)."""
-
-    resolver = MetricResolver(supported_metrics=capabilities.ncu_metrics)
-    resolution = resolver.resolve(logical)
-    if not resolution.available or not resolution.selected_name:
-        return None
-    try:
-        ncu = run_kernel_profiled(
-            SOURCE,
-            capabilities=capabilities,
-            metrics=(resolution.selected_name,),
-            kernel_name="amora_icn_injection_rate",
-            launch_count=64,  # cover warm-up + all offered-load launches
-        )
-    except NcuUnavailable:
-        return None
-    max_value = None
-    if resolution.selected_name in ncu.metrics:
-        max_value = float(ncu.metrics[resolution.selected_name])
-    for row in ncu.raw_rows:
-        raw = (row.get(resolution.selected_name) or "").strip().replace(",", "")
-        try:
-            v = float(raw)
-        except ValueError:
-            continue
-        max_value = v if max_value is None else max(max_value, v)
-    return {
-        "metric": resolution.selected_name,
-        "logical": logical,
-        "role": "corroboration",
-        "value": max_value,
-        "launches_profiled": len(ncu.raw_rows),
-    }
 
 
 def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
@@ -114,7 +76,14 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
         ]
 
     # NCU DRAM read bytes (best effort) corroborate that the sweep is DRAM-bound.
-    ncu_record = _collect_counter(capabilities, "dram_bytes_read")
+    ncu_record = collect_ncu_metrics(
+        capabilities,
+        SOURCE,
+        ["dram_bytes_read"],
+        kernel_name="amora_icn_injection_rate",
+        role="primary",
+        aggregate="sum",
+    )
 
     values = {
         "registered_source": src_descriptor,

@@ -13,7 +13,7 @@ from pathlib import Path
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation
-from amora.probes.nvidia.baseline._sources import apply_sass_gating, source_descriptor
+from amora.probes.nvidia.baseline._sources import apply_sass_gating, collect_ncu_metrics, source_descriptor
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -75,6 +75,15 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             )
         ]
 
+    ncu_record = collect_ncu_metrics(
+        capabilities,
+        SOURCE,
+        ["dram_bytes_read", "dram_bytes_write"],
+        kernel_name="amora_stream_copy",
+        role="primary",
+        aggregate="sum",
+    )
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
@@ -82,6 +91,8 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     }
     if sass is not None:
         values["sass"] = sass.to_dict()
+    if ncu_record is not None:
+        values["ncu"] = ncu_record
     derived = {
         "read_gbps": read_gbps,
         "write_gbps": write_gbps,
@@ -93,6 +104,27 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
         "best-of-N CUDA-event timing; bandwidth is bounded by clock variation",
         "copy moves 2x bytes (read+write); reported as achieved sustained GB/s",
     ]
+    metrics = {
+        "read_gbps": read_gbps,
+        "write_gbps": write_gbps,
+        "copy_gbps": copy_gbps,
+        "peak_gbps": peak,
+    }
+    units = {
+        "read_gbps": "GB/s",
+        "write_gbps": "GB/s",
+        "copy_gbps": "GB/s",
+        "peak_gbps": "GB/s",
+    }
+    if (
+        ncu_record is not None
+        and ncu_record["values"].get("dram_bytes_read") is not None
+        and ncu_record["values"].get("dram_bytes_write") is not None
+    ):
+        metrics["dram_bytes_read"] = ncu_record["values"]["dram_bytes_read"]
+        metrics["dram_bytes_write"] = ncu_record["values"]["dram_bytes_write"]
+        units["dram_bytes_read"] = "bytes"
+        units["dram_bytes_write"] = "bytes"
     return [
         ProbeResult(
             identity=ProbeIdentity(
@@ -105,18 +137,8 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             raw_observation=RawObservation(
                 evidence_tier=EvidenceTier.TIMING_DIRECT,
                 values=values,
-                metrics={
-                    "read_gbps": read_gbps,
-                    "write_gbps": write_gbps,
-                    "copy_gbps": copy_gbps,
-                    "peak_gbps": peak,
-                },
-                units={
-                    "read_gbps": "GB/s",
-                    "write_gbps": "GB/s",
-                    "copy_gbps": "GB/s",
-                    "peak_gbps": "GB/s",
-                },
+                metrics=metrics,
+                units=units,
                 source="amora.probes.nvidia.baseline.global_memory.streaming",
             ),
             normalized_measurement=NormalizedMeasurement(
@@ -132,6 +154,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 interpretation={
                     "nvidia_backend": "sustained DRAM/HBM bandwidth per traffic class from streaming kernels",
                 },
+                metric_resolver=ncu_record or {},
                 sass_validation=sass.to_dict() if sass else {},
                 downgrade_reason=downgrade_reason,
             ),

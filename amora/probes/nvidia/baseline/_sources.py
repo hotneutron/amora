@@ -81,3 +81,57 @@ def apply_sass_gating(sass, expectation, fit: FitStatus, uncertainty: Uncertaint
             f"SASS validation downgrade: {sass.reason}",
         )
     return decision, fit, uncertainty, None
+
+
+def collect_ncu_metrics(capabilities, source, logical_names, *, kernel_name, role="validation",
+                        launch_count=8, aggregate="max", args=()):
+    """Collect one or more logical NCU metrics for ``source`` (best effort).
+
+    Resolves each logical name against the host's supported metric set, runs the
+    driver once under NCU collecting the resolved counters, and returns a record
+    dict ``{"role", "values": {logical: number}, "resolved": {logical: metric}}``
+    or ``None`` when NCU / no metric is available (timing-only fallback).
+
+    ``aggregate`` chooses how to fold multiple profiled launch rows per metric:
+    "max" (default) or "sum".
+    """
+
+    # Lazy imports keep probes importable when NCU tooling is absent.
+    from amora.backends.nvidia.metrics import MetricResolver
+    from amora.backends.nvidia.ncu_run import NcuUnavailable, run_kernel_profiled
+
+    resolver = MetricResolver(supported_metrics=getattr(capabilities, "ncu_metrics", frozenset()))
+    resolved: dict[str, str] = {}
+    for logical in logical_names:
+        res = resolver.resolve(logical)
+        if res.available and res.selected_name:
+            resolved[logical] = res.selected_name
+    if not resolved:
+        return None
+    try:
+        ncu = run_kernel_profiled(
+            source,
+            capabilities=capabilities,
+            metrics=tuple(resolved.values()),
+            kernel_name=kernel_name,
+            launch_count=launch_count,
+            args=args,
+        )
+    except NcuUnavailable:
+        return None
+
+    def _fold(metric: str):
+        vals = []
+        for row in ncu.raw_rows:
+            raw = (row.get(metric) or "").strip().replace(",", "")
+            try:
+                vals.append(float(raw))
+            except ValueError:
+                continue
+        if not vals:
+            v = ncu.metrics.get(metric)
+            return v
+        return sum(vals) if aggregate == "sum" else max(vals)
+
+    values = {logical: _fold(metric) for logical, metric in resolved.items()}
+    return {"role": role, "values": values, "resolved": resolved, "launches_profiled": len(ncu.raw_rows)}
