@@ -175,3 +175,33 @@ def collect_stall_attribution(capabilities, source, *, kernel_name, launch_count
         "stalls": stalls,
         "resolved": record["resolved"],
     }
+
+
+def feature_gate(capabilities, probe_id, feature, *, tool_context):
+    """Return an unsupported ProbeResult list when ``feature`` is absent, else None.
+
+    Uses the curated published-facts table. When the device is in the table and
+    lacks the feature, the probe is gated out cleanly (e.g. TMA on pre-Hopper).
+    When the device is unknown the gate *allows* the probe (returns None) so an
+    unseen GPU relies on the probe's own evidence rather than being mis-gated.
+    """
+
+    from amora.backends.nvidia.archinfo import facts_for_capabilities, supports_feature
+    from amora.schemas.results import ProbeResult
+
+    supported = supports_feature(capabilities, feature)
+    if supported is False:
+        facts = facts_for_capabilities(capabilities)
+        arch = f"{facts.family}/{facts.model}" if facts else "this device"
+        return [
+            ProbeResult.unsupported(
+                probe_id,
+                f"{feature} is not available on {arch} (compute capability "
+                f"{facts.compute_capability[0]}.{facts.compute_capability[1]})"
+                if facts else f"{feature} is not available on this device",
+                tool_context=tool_context,
+                raw_values={"required_feature": feature,
+                            "arch_facts": facts.to_dict() if facts else None},
+            )
+        ]
+    return None

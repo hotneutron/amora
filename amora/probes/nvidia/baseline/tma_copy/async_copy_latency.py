@@ -15,7 +15,7 @@ from pathlib import Path
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation
-from amora.probes.nvidia.baseline._sources import apply_sass_gating, source_descriptor
+from amora.probes.nvidia.baseline._sources import apply_sass_gating, feature_gate, source_descriptor
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -47,6 +47,9 @@ def _tool_context(capabilities: NvidiaCapabilities) -> ToolContext:
 
 def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     src_descriptor = source_descriptor(SOURCE)
+    gated = feature_gate(capabilities, PROBE_ID, "async_copy", tool_context=_tool_context(capabilities))
+    if gated is not None:
+        return gated
     try:
         result = run_kernel(SOURCE, capabilities=capabilities, timeout=60, expectation=EXPECTATION)
     except CudaUnavailable as exc:

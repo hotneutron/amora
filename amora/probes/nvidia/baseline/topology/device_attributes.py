@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from amora.backends.nvidia.cuda import NvidiaCapabilities
+from amora.backends.nvidia.archinfo import facts_for_capabilities
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -65,6 +66,15 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
         return _unsupported(capabilities)
 
     values = _device_values(capabilities)
+    facts = facts_for_capabilities(capabilities)
+    interpretation: dict[str, Any] = {
+        "nvidia_backend": "device identity is available; resource limits need CUDA API helper in the next cutline"
+    }
+    if facts is not None:
+        # Trust-and-verify anchor: attach the curated published facts so probes
+        # and reports can cross-check runtime metadata against known specs.
+        values = {**values, "published_facts": facts.to_dict()}
+        interpretation["published_facts"] = facts.to_dict()
     results = [
         ProbeResult(
             identity=ProbeIdentity(probe_id=PROBE_ID),
@@ -82,14 +92,13 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 fit_status=FitStatus.DIRECT,
                 uncertainty=UncertaintyCategory.STABLE_SCALAR,
                 assumptions=[
-                    "nvidia-smi identity metadata is treated as direct runtime metadata"
+                    "nvidia-smi identity metadata is treated as direct runtime metadata",
+                    "published_facts are curated trust-and-verify anchors, not runtime measurements",
                 ],
             ),
             backend_interpretation=BackendInterpretation(
                 concept="runtime_visible_device_identity",
-                interpretation={
-                    "nvidia_backend": "device identity is available; resource limits need CUDA API helper in the next cutline"
-                },
+                interpretation=interpretation,
             ),
             simulator_estimate=SimulatorEstimate(
                 parameter="device_identity",

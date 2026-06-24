@@ -181,14 +181,30 @@ with a registered source hash; analyzers degrade cleanly).
 - `.plan/` — design notes and methodology (P0–P3)
 - `docs/` — vendor research and developer guides
 
+## Published Facts & Capability Gating
+
+`amora/backends/nvidia/archinfo.py` holds a curated, per-architecture
+published-facts table (compute capability, SM count, L2 size, memory bandwidth,
+shared-memory per SM, and feature flags such as `tensor_core` / `async_copy` /
+`tma` / `fp8`), keyed by device-name patterns. It serves two purposes:
+
+- **Trust-and-verify anchors**: `topology.device_attributes` attaches the
+  matching published facts so runtime metadata can be cross-checked against
+  known specs.
+- **Capability gating**: `feature_gate(...)` lets architecture-specific probes
+  return a clean `unsupported` result on hardware that lacks a feature (e.g. the
+  `tma_copy.*` async-copy probes gate out on pre-Ampere parts) with the
+  compute-capability reason recorded. Unknown devices are *allowed* (the probe
+  falls back to its own evidence) rather than mis-gated.
+
 ## Next Implementation Steps
 
-1. Add a curated published-facts table (per-arch SM/cache/bandwidth specs) to
-   anchor metadata probes with trust-and-verify cross-checks.
-2. Extend the report SUMMARY with cross-SKU trend deltas once a second
+1. Extend the report SUMMARY with cross-SKU trend deltas once a second
    architecture (beyond H100/V100) is profiled.
-3. Wire simulator traces as the target side of the mapping contracts so
+2. Wire simulator traces as the target side of the mapping contracts so
    bounded/behavioral P3 fits (partition, address mapping) can be promoted to
    uniquely-identified.
-4. Add architecture gating by compute capability so Hopper-only probes (TMA,
-   some MMA shapes) downgrade cleanly on older arches.
+3. Query compute capability directly from the CUDA runtime (rather than
+   inferring it from the device name) to harden gating on unrecognized SKUs.
+4. Broaden the published-facts table as new architectures (Blackwell Ultra,
+   Rubin) are validated.
