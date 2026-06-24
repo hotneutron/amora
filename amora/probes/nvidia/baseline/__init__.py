@@ -39,6 +39,12 @@ from amora.probes.nvidia.baseline.synchronization.barrier_latency import run as 
 from amora.probes.nvidia.baseline.synchronization.fence_latency import run as run_fence_latency
 from amora.probes.nvidia.baseline.tensor_core.mma_latency import run as run_mma_latency
 from amora.probes.nvidia.baseline.tensor_core.mma_throughput import run as run_mma_throughput
+from amora.probes.nvidia.baseline.tma_copy.analyze import run as run_tma_analyze
+from amora.probes.nvidia.baseline.tma_copy.async_copy_latency import run as run_async_copy_latency
+from amora.probes.nvidia.baseline.tma_copy.tma_transfer_sweep import run as run_tma_transfer_sweep
+from amora.probes.nvidia.baseline.interconnect.address_mapping import run as run_address_mapping
+from amora.probes.nvidia.baseline.interconnect.analyze import run as run_icn_analyze
+from amora.probes.nvidia.baseline.interconnect.injection_rate import run as run_injection_rate
 from amora.probes.nvidia.baseline.shared_memory.analyze import run as run_shared_analyze
 from amora.probes.nvidia.baseline.shared_memory.bank_stride import run as run_bank_stride
 from amora.probes.nvidia.baseline.shared_memory.pointer_chase import run as run_pointer_chase
@@ -87,6 +93,13 @@ PROBES: dict[str, ProbeRunner] = {
     "tensor_core.mma_latency": run_mma_latency,
     "tensor_core.mma_throughput": run_mma_throughput,
     "synchronization.fence_latency": run_fence_latency,
+    # P3 phase D (TMA / async copy + interconnect)
+    "tma_copy.async_copy_latency": run_async_copy_latency,
+    "tma_copy.tma_transfer_sweep": run_tma_transfer_sweep,
+    "tma_copy.analyze": run_tma_analyze,
+    "interconnect.injection_rate": run_injection_rate,
+    "interconnect.address_mapping": run_address_mapping,
+    "interconnect.analyze": run_icn_analyze,
 }
 
 IMPLEMENTED_PROBES: frozenset[str] = frozenset(PROBES)
