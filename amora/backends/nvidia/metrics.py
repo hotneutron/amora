@@ -56,7 +56,7 @@ class MetricResolver:
                 reason="unknown logical metric",
             )
         for candidate in candidates:
-            if candidate in self.supported_metrics:
+            if self._is_supported(candidate):
                 return MetricResolution(
                     logical_name=logical_name,
                     selected_name=candidate,
@@ -70,3 +70,18 @@ class MetricResolver:
             available=False,
             reason="no candidate metric supported",
         )
+
+    def _is_supported(self, candidate: str) -> bool:
+        """Match a suffixed candidate against the supported set.
+
+        ``ncu --query-metrics`` reports *base* metric names without the trailing
+        rollup suffix (``.sum`` / ``.avg`` / ``.max`` / ...). A candidate like
+        ``smsp__inst_executed.sum`` is supported when its base
+        (``smsp__inst_executed``) is in the discovered set. Exact matches are
+        also accepted for sets that include suffixes.
+        """
+
+        if candidate in self.supported_metrics:
+            return True
+        base = candidate.rsplit(".", 1)[0]
+        return base in self.supported_metrics
