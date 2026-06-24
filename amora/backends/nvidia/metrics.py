@@ -70,6 +70,32 @@ class MetricResolver:
             "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_elapsed",
             "sm__inst_executed_pipe_tensor.sum",
         ),
+        # Warp-issue stall reasons (CUPTI-derived; scheduler / memory probes).
+        # NCU exposes these as a percentage of issue-stall cycles (.pct).
+        "stall_long_scoreboard": (
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct",
+        ),
+        "stall_short_scoreboard": (
+            "smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct",
+        ),
+        "stall_wait": (
+            "smsp__warp_issue_stalled_wait_per_warp_active.pct",
+        ),
+        "stall_barrier": (
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct",
+        ),
+        "stall_lg_throttle": (
+            "smsp__warp_issue_stalled_lg_throttle_per_warp_active.pct",
+        ),
+        "stall_mio_throttle": (
+            "smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct",
+        ),
+        "stall_math_pipe_throttle": (
+            "smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct",
+        ),
+        "stall_not_selected": (
+            "smsp__warp_issue_stalled_not_selected_per_warp_active.pct",
+        ),
     }
 
     def resolve(self, logical_name: str) -> MetricResolution:

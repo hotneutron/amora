@@ -135,3 +135,43 @@ def collect_ncu_metrics(capabilities, source, logical_names, *, kernel_name, rol
 
     values = {logical: _fold(metric) for logical, metric in resolved.items()}
     return {"role": role, "values": values, "resolved": resolved, "launches_profiled": len(ncu.raw_rows)}
+
+
+_STALL_LOGICALS = (
+    "stall_long_scoreboard",
+    "stall_short_scoreboard",
+    "stall_wait",
+    "stall_barrier",
+    "stall_lg_throttle",
+    "stall_mio_throttle",
+    "stall_math_pipe_throttle",
+    "stall_not_selected",
+)
+
+
+def collect_stall_attribution(capabilities, source, *, kernel_name, launch_count=4, args=()):
+    """Collect NCU warp-issue stall metrics and attribute the dominant reason.
+
+    These ``smsp__warp_issue_stalled_*_per_warp_active`` metrics are the
+    CUPTI/PC-sampling-derived stall reasons NCU surfaces. Returns a record
+    ``{"role":"stall_attribution","dominant_stall","stalls":{reason:value}}`` or
+    ``None`` when NCU/the metrics are unavailable. Best effort; never raises.
+    """
+
+    record = collect_ncu_metrics(
+        capabilities, source, _STALL_LOGICALS,
+        kernel_name=kernel_name, role="stall_attribution",
+        launch_count=launch_count, aggregate="max", args=args,
+    )
+    if record is None:
+        return None
+    stalls = {k.replace("stall_", ""): v for k, v in record["values"].items() if v is not None}
+    if not stalls:
+        return None
+    dominant = max(stalls, key=lambda k: stalls[k])
+    return {
+        "role": "stall_attribution",
+        "dominant_stall": dominant,
+        "stalls": stalls,
+        "resolved": record["resolved"],
+    }

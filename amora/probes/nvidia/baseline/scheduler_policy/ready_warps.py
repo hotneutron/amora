@@ -15,6 +15,7 @@ from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation
 from amora.probes.nvidia.baseline._sources import (
     apply_sass_gating,
+    collect_stall_attribution,
     downgrade_fit,
     soften_uncertainty,
     source_descriptor,
@@ -103,6 +104,8 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             )
         ]
 
+    stall_record = collect_stall_attribution(capabilities, SOURCE, kernel_name="amora_sched_ready_warps")
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
@@ -110,6 +113,8 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     }
     if sass is not None:
         values["sass"] = sass.to_dict()
+    if stall_record is not None:
+        values["stall_attribution"] = stall_record
     assumptions = [
         "one CTA on one SM runs N independent dependent-FMA warps (no memory)",
         "saturation warp count = smallest warp count reaching 95% of peak ops/cycle",
@@ -148,6 +153,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 interpretation={
                     "nvidia_backend": "ready-warp count at which issue throughput saturates on one SM",
                     "peak_ops_per_cycle": peak_ipc,
+                    **({"dominant_stall": stall_record["dominant_stall"]} if stall_record else {}),
                 },
                 sass_validation=sass.to_dict() if sass else {},
                 downgrade_reason=downgrade_reason,

@@ -15,7 +15,7 @@ from pathlib import Path
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation
-from amora.probes.nvidia.baseline._sources import apply_sass_gating, source_descriptor
+from amora.probes.nvidia.baseline._sources import apply_sass_gating, collect_stall_attribution, source_descriptor
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -95,6 +95,8 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             )
         ]
 
+    stall_record = collect_stall_attribution(capabilities, SOURCE, kernel_name="amora_mem_outstanding")
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
@@ -102,6 +104,8 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     }
     if sass is not None:
         values["sass"] = sass.to_dict()
+    if stall_record is not None:
+        values["stall_attribution"] = stall_record
     assumptions = [
         "each thread issues a swept number of independent global loads before consuming them",
         "a single wave of blocks is launched so throughput is bound by outstanding-request capacity",
@@ -139,6 +143,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 interpretation={
                     "nvidia_backend": "in-flight independent loads at which memory throughput saturates",
                     "saturation_knee_loads": knee,
+                    **({"dominant_stall": stall_record["dominant_stall"]} if stall_record else {}),
                 },
                 sass_validation=sass.to_dict() if sass else {},
                 downgrade_reason=downgrade_reason
