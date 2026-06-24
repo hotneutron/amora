@@ -25,8 +25,13 @@ from amora.probes.nvidia.baseline.register_file.register_latency import (
 from amora.probes.nvidia.baseline.scheduler_policy.analyze import run as run_scheduler_analyze
 from amora.probes.nvidia.baseline.scheduler_policy.mixed_issue import run as run_mixed_issue
 from amora.probes.nvidia.baseline.scheduler_policy.ready_warps import run as run_ready_warps
+from amora.probes.nvidia.baseline.global_memory.analyze import run as run_gmem_analyze
+from amora.probes.nvidia.baseline.global_memory.partition_sweep import run as run_partition_sweep
+from amora.probes.nvidia.baseline.global_memory.row_policy_sweep import run as run_row_policy_sweep
 from amora.probes.nvidia.baseline.global_memory.streaming import run as run_streaming
 from amora.probes.nvidia.baseline.l2_cache.pointer_chase import run as run_l2_pointer_chase
+from amora.probes.nvidia.baseline.memory_pipeline.analyze import run as run_mempipe_analyze
+from amora.probes.nvidia.baseline.memory_pipeline.lane_patterns import run as run_lane_patterns
 from amora.probes.nvidia.baseline.memory_pipeline.outstanding_requests import (
     run as run_outstanding_requests,
 )
@@ -69,6 +74,12 @@ PROBES: dict[str, ProbeRunner] = {
     "global_memory.streaming": run_streaming,
     "l2_cache.pointer_chase": run_l2_pointer_chase,
     "memory_pipeline.outstanding_requests": run_outstanding_requests,
+    # P2 phase B (NCU counters)
+    "memory_pipeline.lane_patterns": run_lane_patterns,
+    "memory_pipeline.analyze": run_mempipe_analyze,
+    "global_memory.partition_sweep": run_partition_sweep,
+    "global_memory.row_policy_sweep": run_row_policy_sweep,
+    "global_memory.analyze": run_gmem_analyze,
 }
 
 IMPLEMENTED_PROBES: frozenset[str] = frozenset(PROBES)

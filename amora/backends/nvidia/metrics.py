@@ -43,6 +43,33 @@ class MetricResolver:
         "shared_conflicts": (
             "l1tex__data_bank_conflicts_pipe_lsu_mem_shared.sum",
         ),
+        # Global-memory request / sector behavior (memory_pipeline).
+        "global_load_requests": (
+            "l1tex__t_requests_pipe_lsu_mem_global_op_ld.sum",
+        ),
+        "global_load_sectors": (
+            "l1tex__t_sectors_pipe_lsu_mem_global_op_ld.sum",
+        ),
+        # DRAM traffic (global_memory).
+        "dram_bytes_read": (
+            "dram__bytes_read.sum",
+        ),
+        "dram_bytes_write": (
+            "dram__bytes_write.sum",
+        ),
+        "dram_throughput": (
+            "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+            "dram__throughput.avg",
+        ),
+        # L2 sector hits (l2_cache / global_memory).
+        "l2_sector_hits": (
+            "lts__t_sectors_lookup_hit.sum",
+        ),
+        # Tensor-pipe utilization (tensor_core).
+        "tensor_pipe_active": (
+            "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_elapsed",
+            "sm__inst_executed_pipe_tensor.sum",
+        ),
     }
 
     def resolve(self, logical_name: str) -> MetricResolution:
