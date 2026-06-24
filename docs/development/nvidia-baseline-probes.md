@@ -2,10 +2,10 @@
 
 ## Current State
 
-The NVIDIA probe suite now implements the full baseline (P0) plus P1 probe
-families. All 18 probes are registered and kernel-backed where the methodology
-requires hardware timing; CPU-only probes (metadata/planning) and cross-probe
-analyzers run without a kernel.
+The NVIDIA probe suite implements the full P0 + P1 + P2 + P3 probe set — 36
+probes — folded into the `baseline/` tree. All kernel-bound probes are validated
+with opcode-level SASS checks, and probes with a direct counter contract collect
+NCU counters in a separate profiler pass.
 
 Implemented building blocks:
 
@@ -13,50 +13,59 @@ Implemented building blocks:
 - layered result schemas (`ProbeResult` with four evidence layers),
 - JSON report rendering and a per-vendor Markdown report generator,
 - NVIDIA capability discovery (`nvcc`, `nvidia-smi`, `ncu`, `nvdisasm`,
-  `cuobjdump`),
+  `cuobjdump`) including the supported NCU metric set,
 - a shared CUDA build + launch helper (`amora/backends/nvidia/runner.py`) that
-  compiles each probe's `.cu` driver and parses its JSON stdout,
-- registered CUDA source hashes for every kernel-bound probe,
-- non-hardware unit tests plus opt-in CUDA smoke tests.
+  compiles each probe's `.cu` driver, parses its JSON stdout, and optionally
+  validates the kernel's SASS,
+- SASS validation (`amora/backends/nvidia/sass.py`): per-probe opcode
+  expectations with reject / downgrade / pass gating,
+- NCU counter collection (`amora/backends/nvidia/ncu_run.py`): separate
+  profiler pass, CSV parsing, metric-resolver-driven requests,
+- registered CUDA source + disassembly hashes for every kernel-bound probe,
+- non-hardware unit tests plus opt-in CUDA/NCU smoke tests.
 
 Each kernel-bound probe ships a `.cu` (device kernel + host driver that prints a
 single JSON line) and a `.py` wrapper that maps the payload into the four-layer
 result with a methodology-faithful fit status. On hosts without CUDA the probe
 returns a structured `unsupported` result that still registers its source hash.
 
-## Probe Families
+## Probe Families (36 probes)
 
-### P0 — baseline
+- **P0 baseline** — `topology` (device_attributes, occupancy, persistent_cta),
+  `arithmetic_latency.dependent_chain`,
+  `arithmetic_throughput.independent_chains`,
+  `shared_memory` (pointer_chase, bank_stride, analyze).
+- **P1 caches / scheduler / register file** — `l1_cache` (pointer_chase,
+  working_set, conflict_sets, analyze), `scheduler_policy` (ready_warps,
+  mixed_issue, analyze), `register_file` (register_bank_sweep, register_latency,
+  analyze).
+- **P2 memory / tensor / sync** — `memory_pipeline` (lane_patterns,
+  outstanding_requests, analyze), `l2_cache.pointer_chase`, `global_memory`
+  (streaming, partition_sweep, row_policy_sweep, analyze), `tensor_core`
+  (mma_latency, mma_throughput), `synchronization` (barrier_latency,
+  fence_latency).
+- **P3 transfer / interconnect** — `tma_copy` (async_copy_latency,
+  tma_transfer_sweep, analyze), `interconnect` (injection_rate, address_mapping,
+  analyze).
 
-| probe_id | mode | notes |
-| --- | --- | --- |
-| `topology.device_attributes` | metadata | nvidia-smi device identity |
-| `topology.occupancy` | planning | launch-shape cross-product, no kernel |
-| `topology.persistent_cta` | kernel | resident CTAs/SM via `%smid` + busy-spin |
-| `arithmetic_latency.dependent_chain` | kernel | FP32 FMA dependent latency |
-| `arithmetic_throughput.independent_chains` | kernel | FP32 FMA ILP throughput |
-| `shared_memory.pointer_chase` | kernel | shared-load latency |
-| `shared_memory.bank_stride` | kernel | bank-conflict stride sweep |
-| `shared_memory.analyze` | analysis | merges pointer-chase + bank-stride |
+Per the P1–P3 methodologies, many probes intentionally report bounded,
+conditional, or behavioral fit statuses rather than exact scalars (cache
+capacity/associativity, scheduler policy, register-bank count, partition/row
+mapping, async-copy/interconnect behavior).
 
-### P1 — caches, scheduler, register file
+### Validation
 
-| probe_id | mode | notes |
-| --- | --- | --- |
-| `l1_cache.pointer_chase` | kernel | L1-hit latency with a DRAM control |
-| `l1_cache.working_set` | kernel | capacity knee from a working-set sweep |
-| `l1_cache.conflict_sets` | kernel | effective associativity (bounded) |
-| `l1_cache.analyze` | analysis | merged L1 cache summary |
-| `scheduler_policy.ready_warps` | kernel | issue-scaling saturation point |
-| `scheduler_policy.mixed_issue` | kernel | FP32/INT pipe-overlap class |
-| `scheduler_policy.analyze` | analysis | scheduler behavioral summary |
-| `register_file.register_bank_sweep` | kernel | operand-width plateau (candidate) |
-| `register_file.register_latency` | kernel | RAW-distance differential latency |
-| `register_file.analyze` | analysis | register-file summary |
-
-Per the P1 methodology, several probes intentionally report bounded,
-conditional, or behavioral fit statuses rather than exact scalars (capacity,
-associativity, scheduler policy, register-bank count, operand-delivery cost).
+- **SASS**: every kernel-bound probe declares a `SassExpectation` (required and
+  forbidden opcodes, optional dependency) matched to its kernel — e.g. FFMA for
+  arithmetic, LDS for shared memory, LDG for L1/global, HMMA for tensor core,
+  LDGSTS for async copy, BAR/MEMBAR for sync. A missing required opcode or a
+  forbidden opcode rejects the measurement; a low count or unconfirmed
+  dependency downgrades the fit one notch.
+- **NCU**: probes with a direct counter contract (e.g.
+  `memory_pipeline.lane_patterns` for sectors-per-request,
+  `shared_memory.bank_stride` for shared conflicts) collect counters in a
+  separate profiler pass as primary or validation evidence; missing/locked-down
+  NCU degrades cleanly to timing-only.
 
 ## Commands
 
