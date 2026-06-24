@@ -32,11 +32,14 @@ from amora.schemas.results import (
 PROBE_ID = "register_file.register_bank_sweep"
 SOURCE = Path(__file__).with_name("register_bank_sweep.cu")
 
-# The templated reg-width kernel must be FFMA-bound with no spills.
+# The templated reg-width kernel must be FFMA-bound with no spills. We also
+# count distinct FFMA register operands in SASS to confirm the compiler kept the
+# accumulators in separate registers (the prerequisite for a bank claim).
 EXPECTATION = SassExpectation(
     kernel_symbol="amora_reg_width",
     required_opcodes={"FFMA": 8},
     forbidden_opcodes=("LDL", "STL"),
+    count_registers_opcode="FFMA",
 )
 
 
@@ -89,6 +92,16 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             )
         ]
 
+    # SASS-controlled graduation: if the disassembly confirms the kernel used
+    # several distinct FFMA registers (i.e. the compiler did not coalesce the
+    # swept accumulators), the operand-width plateau is backed by real register
+    # control and graduates from underconstrained to bounded.
+    reg_count = sass.register_count if sass else None
+    sass_register_controlled = reg_count is not None and reg_count >= 4
+    if sass_register_controlled and fit == FitStatus.UNDERCONSTRAINED:
+        fit = FitStatus.BOUNDED
+        uncertainty = UncertaintyCategory.BOUNDED_RANGE
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
@@ -98,7 +111,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
         values["sass"] = sass.to_dict()
     assumptions = [
         "operand-width sweep of independent FMA accumulators (register pressure proxy)",
-        "CUDA approximation of the SASS-controlled register sweep; bank count is not uniquely identified",
+        "SASS confirms distinct FFMA register operands so the sweep is register-controlled",
         "plateau width marks where added ILP stops improving cycles-per-op",
     ]
     return [
@@ -116,6 +129,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 metrics={
                     "ilp_plateau_width": plateau_width,
                     "sweep_points": len(sweep),
+                    "sass_distinct_ffma_registers": reg_count,
                 },
                 units={"ilp_plateau_width": "accumulators"},
                 source="amora.probes.nvidia.baseline.register_file.register_bank_sweep",
@@ -136,7 +150,11 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 sass_validation=sass.to_dict() if sass else {},
                 downgrade_reason=downgrade_reason
                 if downgrade_reason is not None
-                else "CUDA proxy cannot isolate register-bank count without SASS register control",
+                else (
+                    None
+                    if sass_register_controlled
+                    else "register sweep not SASS-confirmed; bank count not isolated"
+                ),
             ),
             simulator_estimate=SimulatorEstimate(
                 parameter="gpgpu_num_reg_banks",

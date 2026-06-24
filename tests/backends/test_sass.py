@@ -87,3 +87,14 @@ def test_validate_downgrade_on_low_count():
     assert v.validated is True  # present, just low
     assert gate_decision(v, exp) == "downgrade"
     assert any(viol.startswith("low FFMA") for viol in v.violations)
+
+
+def test_count_distinct_registers_via_expectation():
+    exp = SassExpectation(
+        kernel_symbol="amora_baseline_fp32_dependent_chain",
+        required_opcodes={"FFMA": 4},
+        count_registers_opcode="FFMA",
+    )
+    v = validate_sass(FFMA_SASS, exp)
+    # FFMA operands in the fixture use registers R0,R4,R5,R6,R7,R8 -> 6 distinct.
+    assert v.register_count == 6

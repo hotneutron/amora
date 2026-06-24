@@ -44,6 +44,9 @@ class SassExpectation:
     require_dependency: bool = False
     # Opcode family whose register dataflow defines the dependency chain.
     dependency_opcode: str | None = None
+    # When set, count distinct register operands of this opcode family and
+    # record it on the validation (used by the SASS-controlled register sweep).
+    count_registers_opcode: str | None = None
 
 
 @dataclass(frozen=True)
@@ -57,6 +60,7 @@ class SassValidation:
     violations: list[str]
     dependency_confirmed: bool | None
     reason: str | None = None
+    register_count: int | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -67,6 +71,7 @@ class SassValidation:
             "violations": list(self.violations),
             "dependency_confirmed": self.dependency_confirmed,
             "reason": self.reason,
+            "register_count": self.register_count,
         }
 
 
@@ -186,6 +191,15 @@ def validate_sass(
     validated = not hard_violation
     reason = "; ".join(violations) if violations else None
 
+    register_count: int | None = None
+    if expectation.count_registers_opcode:
+        fam = _opcode_family(expectation.count_registers_opcode)
+        regs: set[int] = set()
+        for f, operands in ordered:
+            if f == fam:
+                regs.update(operands)
+        register_count = len(regs)
+
     return SassValidation(
         validated=validated,
         disassembly_hash=disassembly_hash,
@@ -194,6 +208,7 @@ def validate_sass(
         violations=violations,
         dependency_confirmed=dependency_confirmed,
         reason=reason,
+        register_count=register_count,
     )
 
 
