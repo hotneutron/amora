@@ -116,7 +116,7 @@
       },
       "device_count": 7,
       "driver_version": "595.71.05",
-      "generated_at": "2026-06-24T10:30Z",
+      "generated_at": "2026-06-24T10:38Z",
       "outcomes": [
         {
           "fit": "direct",
@@ -148,7 +148,7 @@
         },
         {
           "fit": "uniquely_identified",
-          "measurement": "1.147 cycles_per_op",
+          "measurement": "1.1471 cycles_per_op",
           "mode": "kernel",
           "probe_id": "arithmetic_throughput.independent_chains",
           "tier": "timing_direct"
@@ -176,7 +176,7 @@
         },
         {
           "fit": "direct",
-          "measurement": "70.6064 cycles",
+          "measurement": "70.6096 cycles",
           "mode": "kernel",
           "probe_id": "l1_cache.pointer_chase",
           "tier": "timing_direct"
@@ -260,7 +260,7 @@
         },
         {
           "fit": "bounded",
-          "measurement": "329.897 cycles",
+          "measurement": "327.709 cycles",
           "mode": "kernel",
           "probe_id": "l2_cache.pointer_chase",
           "tier": "timing_direct"
@@ -295,7 +295,7 @@
         },
         {
           "fit": "bounded",
-          "measurement": "1.75855 ratio",
+          "measurement": "1.75696 ratio",
           "mode": "kernel",
           "probe_id": "global_memory.row_policy_sweep",
           "tier": "timing_direct"
@@ -309,35 +309,35 @@
         },
         {
           "fit": "uniquely_identified",
-          "measurement": "24.4648 cycles_per_op",
+          "measurement": "24.4668 cycles_per_op",
           "mode": "kernel",
           "probe_id": "tensor_core.mma_latency",
           "tier": "timing_direct"
         },
         {
           "fit": "uniquely_identified",
-          "measurement": "0.1599 mma/cycle",
+          "measurement": "0.1598 mma/cycle",
           "mode": "kernel",
           "probe_id": "tensor_core.mma_throughput",
           "tier": "timing_direct"
         },
         {
           "fit": "conditionally_identified",
-          "measurement": "923.901 cycles",
+          "measurement": "929.878 cycles",
           "mode": "kernel",
           "probe_id": "synchronization.fence_latency",
           "tier": "timing_direct"
         },
         {
           "fit": "conditionally_identified",
-          "measurement": "722.125 cycles",
+          "measurement": "723.984 cycles",
           "mode": "kernel",
           "probe_id": "tma_copy.async_copy_latency",
           "tier": "timing_direct"
         },
         {
           "fit": "bounded",
-          "measurement": "37.39 GB/s",
+          "measurement": "37.48 GB/s",
           "mode": "kernel",
           "probe_id": "tma_copy.tma_transfer_sweep",
           "tier": "timing_direct"
@@ -351,7 +351,7 @@
         },
         {
           "fit": "bounded",
-          "measurement": "3084.05 GB/s",
+          "measurement": "3084.61 GB/s",
           "mode": "kernel",
           "probe_id": "interconnect.injection_rate",
           "tier": "timing_direct"
@@ -426,7 +426,7 @@
         {
           "probe_id": "arithmetic_throughput.independent_chains",
           "unit": "cycles_per_op",
-          "value": 1.147
+          "value": 1.1471
         },
         {
           "probe_id": "shared_memory.pointer_chase",
@@ -441,7 +441,7 @@
         {
           "probe_id": "l1_cache.pointer_chase",
           "unit": "cycles",
-          "value": 70.6064
+          "value": 70.6096
         },
         {
           "probe_id": "l1_cache.conflict_sets",
@@ -476,7 +476,7 @@
         {
           "probe_id": "l2_cache.pointer_chase",
           "unit": "cycles",
-          "value": 329.8965
+          "value": 327.7095
         },
         {
           "probe_id": "memory_pipeline.outstanding_requests",
@@ -496,37 +496,37 @@
         {
           "probe_id": "global_memory.row_policy_sweep",
           "unit": "ratio",
-          "value": 1.758550244164688
+          "value": 1.7569616849652698
         },
         {
           "probe_id": "tensor_core.mma_latency",
           "unit": "cycles_per_op",
-          "value": 24.4648
+          "value": 24.4668
         },
         {
           "probe_id": "tensor_core.mma_throughput",
           "unit": "mma/cycle",
-          "value": 0.1599
+          "value": 0.1598
         },
         {
           "probe_id": "synchronization.fence_latency",
           "unit": "cycles",
-          "value": 923.9006
+          "value": 929.8779
         },
         {
           "probe_id": "tma_copy.async_copy_latency",
           "unit": "cycles",
-          "value": 722.125
+          "value": 723.9844
         },
         {
           "probe_id": "tma_copy.tma_transfer_sweep",
           "unit": "GB/s",
-          "value": 37.39
+          "value": 37.48
         },
         {
           "probe_id": "interconnect.injection_rate",
           "unit": "GB/s",
-          "value": 3084.05
+          "value": 3084.61
         },
         {
           "probe_id": "interconnect.address_mapping",
@@ -537,7 +537,7 @@
       "schema_version": 1,
       "sku": "h100-80g",
       "source_json": "/tmp/amora_full.json",
-      "source_sha256": "df7aa03c8f2d117107b4f1fcad571faf0ad7ae40c56ea2c89fb43bf36f464f49"
+      "source_sha256": "43132cbdfdf711974bd093800970a85389d00d63ed4c22bed97e9aeb044040ca"
     }
   },
   "vendor": "nvidia"

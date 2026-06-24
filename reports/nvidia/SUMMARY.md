@@ -19,31 +19,31 @@ Per family, one table per probe group. Rows are SKUs; columns are the scalar pro
 
 | sku | arithmetic_latency.dependent_chain (cycles_per_op) | arithmetic_throughput.independent_chains (cycles_per_op) | scheduler_policy.mixed_issue | scheduler_policy.ready_warps (warps) | topology.persistent_cta (blocks) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `h100-80g` | 4.377 | 1.147 | single_issue_like | 16 | 8 |
+| `h100-80g` | 4.377 | 1.1471 | single_issue_like | 16 | 8 |
 
 #### Register, Tensor & Sync
 
 | sku | register_file.register_bank_sweep (accumulators) | register_file.register_latency (cycles) | synchronization.barrier_latency (cycles) | synchronization.fence_latency (cycles) | tensor_core.mma_latency (cycles_per_op) | tensor_core.mma_throughput (mma/cycle) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `h100-80g` | 16 | 2.3606 | 45.2683 | 923.901 | 24.4648 | 0.1599 |
+| `h100-80g` | 16 | 2.3606 | 45.2683 | 929.878 | 24.4668 | 0.1598 |
 
 #### On-chip Memory
 
 | sku | l1_cache.conflict_sets (ways) | l1_cache.pointer_chase (cycles) | l2_cache.pointer_chase (cycles) | shared_memory.bank_stride (banks) | shared_memory.pointer_chase (cycles) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `h100-80g` | — | 70.6064 | 329.897 | 32 | 29.0146 |
+| `h100-80g` | — | 70.6096 | 327.709 | 32 | 29.0146 |
 
 #### Global Memory & DRAM
 
 | sku | global_memory.partition_sweep | global_memory.row_policy_sweep (ratio) | memory_pipeline.lane_patterns (sectors/request) | memory_pipeline.outstanding_requests (loads) |
 | --- | ---: | ---: | ---: | ---: |
-| `h100-80g` | balanced | 1.75855 | 32 | 4 |
+| `h100-80g` | balanced | 1.75696 | 32 | 4 |
 
 #### Transfer & Interconnect
 
 | sku | interconnect.address_mapping | interconnect.injection_rate (GB/s) | tma_copy.async_copy_latency (cycles) | tma_copy.tma_transfer_sweep (GB/s) |
 | --- | ---: | ---: | ---: | ---: |
-| `h100-80g` | uniform | 3084.05 | 722.125 | 37.39 |
+| `h100-80g` | uniform | 3084.61 | 723.984 | 37.48 |
 
 ### volta
 

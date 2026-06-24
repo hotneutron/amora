@@ -1,6 +1,6 @@
 # nvidia / hopper / h100-80g — Probe Results
 
-- Generated: 2026-06-24T10:30Z
+- Generated: 2026-06-24T10:38Z
 - Device: NVIDIA H100 80GB HBM3  ·  Backend: `nvidia_cuda`  ·  Probes: 36
 - `fit_status`: `behavioral_only`=6, `bounded`=9, `conditionally_identified`=4, `direct`=6, `underconstrained`=4, `uniquely_identified`=7
 - Back to [family index](README.md)
@@ -1029,7 +1029,7 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `elapsed_ms` | 0.1854 | ms |
+| `elapsed_ms` | 0.1838 | ms |
 | `mean_resident_blocks_per_sm` | 7.7576 | — |
 | `multi_processor_count` | 132 | — |
 | `peak_resident_blocks_per_sm` | 8 | — |
@@ -1043,7 +1043,7 @@
 | `blocks_launched` | 1024 |
 | `busy_cycles` | 200000 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
-| `elapsed_ms` | 0.1854 |
+| `elapsed_ms` | 0.1838 |
 | `mean_resident_blocks_per_sm` | 7.7576 |
 | `multi_processor_count` | 132 |
 | `peak_resident_blocks_per_sm` | 8 |
@@ -1189,8 +1189,8 @@
 | launch | `kernel`  grid=[16, 1, 1] block=[128, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `uniquely_identified` |
-| measurement | `fp32_fma_throughput` = 1.147 cycles_per_op |
-| simulator_param | `fp32_fma_throughput` = 1.147 cycles_per_op |
+| measurement | `fp32_fma_throughput` = 1.1471 cycles_per_op |
+| simulator_param | `fp32_fma_throughput` = 1.1471 cycles_per_op |
 | concept | `fp32_fma_independent_pipeline_throughput` |
 
 - binary_hash: `e30d16ab2f4848347d3522bb4049e1b971f4be2e2e4c201e68e70af66f25b5aa`
@@ -1206,24 +1206,24 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `approx_fma_per_cycle_per_sm` | 13.527 | fma/cycle/sm |
-| `cycles_median` | 18792 | — |
-| `cycles_per_fma_per_thread` | 1.147 | cycles |
+| `approx_fma_per_cycle_per_sm` | 13.5256 | fma/cycle/sm |
+| `cycles_median` | 18794 | — |
+| `cycles_per_fma_per_thread` | 1.1471 | cycles |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
-| `approx_fma_per_cycle_per_sm` | 13.527 |
+| `approx_fma_per_cycle_per_sm` | 13.5256 |
 | `binary_sha256` | e30d16ab2f4848347d3522bb4049e1b971f4be2e2e4c201e68e70af66f25b5aa |
 | `blocks` | 16 |
 | `chain_length` | 4096 |
-| `cycles_max` | 18800 |
-| `cycles_median` | 18792 |
+| `cycles_max` | 18797 |
+| `cycles_median` | 18794 |
 | `cycles_min` | 18723 |
-| `cycles_per_fma_per_thread` | 1.147 |
+| `cycles_per_fma_per_thread` | 1.1471 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
-| `elapsed_ms` | 0.0219 |
+| `elapsed_ms` | 0.0177 |
 | `independent_chains` | 4 |
 | `multi_processor_count` | 132 |
 | `threads` | 128 |
@@ -1310,9 +1310,9 @@
 | --- | --- |
 | `binary_sha256` | 18d423cc6c50bfb2c83d570fe14887d712fa4e8437883055c251c34c79d07662 |
 | `chase_len` | 4096 |
-| `cycles_max` | 118864 |
+| `cycles_max` | 119123 |
 | `cycles_median` | 118844 |
-| `cycles_min` | 118844 |
+| `cycles_min` | 118843 |
 | `cycles_per_load` | 29.0146 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
 | `repeats` | 64 |
@@ -1580,8 +1580,8 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `direct` |
-| measurement | `l1_hit_load_latency` = 70.6064 cycles |
-| simulator_param | `l1_latency` = 70.6064 cycles |
+| measurement | `l1_hit_load_latency` = 70.6096 cycles |
+| simulator_param | `l1_latency` = 70.6096 cycles |
 | concept | `l1_path_hit_latency` |
 
 - binary_hash: `aea1c593856320979dc411cf66981a009cb13437e410ceff83a5256d388dc94b`
@@ -1598,9 +1598,9 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `dram_cycles_per_load` | 317.913 | cycles |
-| `hit_to_dram_ratio` | 4.50261 | — |
-| `l1_hit_cycles_per_load` | 70.6064 | cycles |
+| `dram_cycles_per_load` | 318.032 | cycles |
+| `hit_to_dram_ratio` | 4.50409 | — |
+| `l1_hit_cycles_per_load` | 70.6096 | cycles |
 
 ### Raw values
 
@@ -1608,8 +1608,8 @@
 | --- | --- |
 | `binary_sha256` | aea1c593856320979dc411cf66981a009cb13437e410ceff83a5256d388dc94b |
 | `device_name` | NVIDIA H100 80GB HBM3 |
-| `dram_cycles_per_load` | 317.913 |
-| `l1_hit_cycles_per_load` | 70.6064 |
+| `dram_cycles_per_load` | 318.032 |
+| `l1_hit_cycles_per_load` | 70.6096 |
 | `large_kb` | 8192 |
 | `repeats` | 64 |
 | `small_kb` | 16 |
@@ -1709,19 +1709,19 @@
 
 | cycles_per_load | working_set_kb |
 | --- | --- |
-| 47.3445 | 4 |
-| 55.3855 | 8 |
-| 70.6023 | 16 |
-| 86.2405 | 24 |
-| 101.234 | 32 |
-| 128.858 | 48 |
-| 151.028 | 64 |
-| 202.841 | 128 |
-| 238.55 | 256 |
-| 264.518 | 512 |
-| 275.923 | 1024 |
-| 311.678 | 4096 |
-| 353.11 | 16384 |
+| 47.3457 | 4 |
+| 55.3884 | 8 |
+| 70.6052 | 16 |
+| 86.238 | 24 |
+| 101.226 | 32 |
+| 128.841 | 48 |
+| 151.029 | 64 |
+| 202.849 | 128 |
+| 238.502 | 256 |
+| 264.541 | 512 |
+| 275.813 | 1024 |
+| 311.675 | 4096 |
+| 353.01 | 16384 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -1814,28 +1814,28 @@
 | --- | --- |
 | 39.7166 | 1 |
 | 39.7749 | 2 |
-| 39.8389 | 3 |
-| 39.9028 | 4 |
-| 39.968 | 5 |
-| 40.0259 | 6 |
-| 40.0828 | 7 |
-| 40.1453 | 8 |
-| 40.2 | 9 |
-| 40.2573 | 10 |
-| 40.3213 | 11 |
-| 40.3867 | 12 |
-| 40.4504 | 13 |
-| 40.5081 | 14 |
-| 40.564 | 15 |
-| 40.6245 | 16 |
-| 40.6824 | 17 |
-| 40.7385 | 18 |
-| 40.8005 | 19 |
-| 40.8665 | 20 |
-| 40.9324 | 21 |
-| 40.9888 | 22 |
-| 41.0471 | 23 |
-| 41.1108 | 24 |
+| 39.8396 | 3 |
+| 39.9036 | 4 |
+| 39.9683 | 5 |
+| 40.0271 | 6 |
+| 40.0842 | 7 |
+| 40.1458 | 8 |
+| 40.2009 | 9 |
+| 40.259 | 10 |
+| 40.3225 | 11 |
+| 40.3875 | 12 |
+| 40.4521 | 13 |
+| 40.5085 | 14 |
+| 40.5652 | 15 |
+| 40.6262 | 16 |
+| 40.6848 | 17 |
+| 40.7407 | 18 |
+| 40.802 | 19 |
+| 40.8674 | 20 |
+| 40.9348 | 21 |
+| 40.9917 | 22 |
+| 41.0474 | 23 |
+| 41.1121 | 24 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -1909,7 +1909,7 @@
 ```json
 {
   "l1_effective_capacity_kb": {},
-  "l1_hit_latency_cycles": 70.6077
+  "l1_hit_latency_cycles": 70.6584
 }
 ```
 
@@ -1918,7 +1918,7 @@
 | key | value | unit |
 | --- | --- | --- |
 | `l1_effective_capacity_kb` | `{}` | — |
-| `l1_hit_latency_cycles` | 70.6077 | — |
+| `l1_hit_latency_cycles` | 70.6584 | — |
 
 ### Raw values
 
@@ -1937,7 +1937,7 @@
 ```json
 {
   "l1_effective_capacity_kb": {},
-  "l1_hit_latency_cycles": 70.6077
+  "l1_hit_latency_cycles": 70.6584
 }
 ```
 
@@ -1948,7 +1948,7 @@
 ```json
 {
   "binary_sha256": "aea1c593856320979dc411cf66981a009cb13437e410ceff83a5256d388dc94b",
-  "l1_hit_cycles_per_load": 70.6077
+  "l1_hit_cycles_per_load": 70.6584
 }
 ```
 
@@ -1994,7 +1994,7 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `peak_ops_per_cycle` | 106.352 | ops/cycle |
+| `peak_ops_per_cycle` | 106.406 | ops/cycle |
 | `saturation_warps` | 16 | — |
 | `sweep_points` | 32 | — |
 
@@ -2014,34 +2014,34 @@
 | 9096 | 14.4099 | 2 |
 | 9096 | 21.6148 | 3 |
 | 9096 | 28.8197 | 4 |
-| 9228 | 35.5093 | 5 |
-| 9227 | 42.6158 | 6 |
+| 9227 | 35.5132 | 5 |
+| 9228 | 42.6112 | 6 |
 | 9228 | 49.713 | 7 |
-| 9227 | 56.8211 | 8 |
-| 9618 | 61.325 | 9 |
-| 9865 | 66.4328 | 10 |
-| 9579 | 75.258 | 11 |
-| 9486 | 82.9045 | 12 |
-| 10338 | 82.4113 | 13 |
-| 10370 | 88.4768 | 14 |
-| 10366 | 94.8331 | 15 |
-| 10370 | 101.116 | 16 |
-| 12567 | 88.6538 | 17 |
-| 12592 | 93.6823 | 18 |
-| 12579 | 98.9891 | 19 |
-| 12582 | 104.174 | 20 |
-| 14891 | 92.422 | 21 |
-| 14888 | 96.8426 | 22 |
+| 9228 | 56.8149 | 8 |
+| 9865 | 59.7896 | 9 |
+| 9618 | 68.1389 | 10 |
+| 9626 | 74.8905 | 11 |
+| 9865 | 79.7194 | 12 |
+| 10356 | 82.2681 | 13 |
+| 10356 | 88.5964 | 14 |
+| 10354 | 94.943 | 15 |
+| 10346 | 101.351 | 16 |
+| 12574 | 88.6044 | 17 |
+| 12581 | 93.7642 | 18 |
+| 12550 | 99.2178 | 19 |
+| 12581 | 104.183 | 20 |
+| 14902 | 92.3538 | 21 |
+| 14884 | 96.8686 | 22 |
 | 14889 | 101.238 | 23 |
-| 14907 | 105.512 | 24 |
+| 14902 | 105.547 | 24 |
 | 17288 | 94.7709 | 25 |
 | 17296 | 98.5162 | 26 |
-| 17305 | 102.252 | 27 |
-| 17302 | 106.058 | 28 |
-| 19708 | 96.4352 | 29 |
-| 19723 | 99.6846 | 30 |
-| 19710 | 103.075 | 31 |
-| 19719 | 106.352 | 32 |
+| 17306 | 102.246 | 27 |
+| 17305 | 106.039 | 28 |
+| 19722 | 96.3667 | 29 |
+| 19714 | 99.7301 | 30 |
+| 19713 | 103.06 | 31 |
+| 19709 | 106.406 | 32 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -2097,11 +2097,11 @@
     "barrier": 0.0,
     "lg_throttle": 0.0,
     "long_scoreboard": 0.0,
-    "math_pipe_throttle": 1.1,
-    "mio_throttle": 0.19,
-    "not_selected": 1.39,
-    "short_scoreboard": 3.33,
-    "wait": 37.99
+    "math_pipe_throttle": 0.95,
+    "mio_throttle": 0.1,
+    "not_selected": 1.4,
+    "short_scoreboard": 3.61,
+    "wait": 38.54
   }
 }
 ```
@@ -2149,7 +2149,7 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `fp32_ops_per_cycle` | 115.387 | ops/cycle |
+| `fp32_ops_per_cycle` | 115.412 | ops/cycle |
 | `int_ops_per_cycle` | 483.215 | ops/cycle |
 | `mixed_ops_per_cycle` | 178.178 | ops/cycle |
 | `overlap_ratio` | 0.368734 | — |
@@ -2161,7 +2161,7 @@
 | `binary_sha256` | 4826d4e62529a9a8c1404c12e237a322565b36f4b206c901dd1d0c6096e2038e |
 | `chain_length` | 2048 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
-| `fp32_ops_per_cycle` | 115.387 |
+| `fp32_ops_per_cycle` | 115.412 |
 | `int_ops_per_cycle` | 483.215 |
 | `mixed_ops_per_cycle` | 178.178 |
 | `warps` | 8 |
@@ -2220,10 +2220,10 @@
     "barrier": 0.0,
     "lg_throttle": 0.0,
     "long_scoreboard": 0.0,
-    "math_pipe_throttle": 4.21,
+    "math_pipe_throttle": 4.2,
     "mio_throttle": 0.0,
-    "not_selected": 10.47,
-    "short_scoreboard": 1.0,
+    "not_selected": 10.51,
+    "short_scoreboard": 1.12,
     "wait": 34.99
   }
 }
@@ -2272,7 +2272,7 @@
 {
   "issue_saturation_warps": 16,
   "mixed_issue_class": "single_issue_like",
-  "peak_ops_per_cycle": 106.4274
+  "peak_ops_per_cycle": 106.4058
 }
 ```
 
@@ -2282,7 +2282,7 @@
 | --- | --- | --- |
 | `issue_saturation_warps` | 16 | — |
 | `mixed_issue_class` | single_issue_like | — |
-| `peak_ops_per_cycle` | 106.427 | — |
+| `peak_ops_per_cycle` | 106.406 | — |
 
 ### Raw values
 
@@ -2292,7 +2292,7 @@
 {
   "issue_saturation_warps": 16,
   "mixed_issue_class": "single_issue_like",
-  "peak_ops_per_cycle": 106.4274
+  "peak_ops_per_cycle": 106.4058
 }
 ```
 
@@ -2710,10 +2710,10 @@
 
 ```json
 {
-  "copy_gbps": 2900.88,
-  "peak_gbps": 3140.04,
-  "read_gbps": 3061.54,
-  "write_gbps": 3140.04
+  "copy_gbps": 2906.91,
+  "peak_gbps": 3138.27,
+  "read_gbps": 3094.29,
+  "write_gbps": 3138.27
 }
 ```
 
@@ -2721,24 +2721,24 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `copy_gbps` | 2900.88 | GB/s |
-| `dram_bytes_read` | 3.22139e+09 | bytes |
-| `dram_bytes_write` | 3.10255e+09 | bytes |
-| `peak_gbps` | 3140.04 | GB/s |
-| `read_gbps` | 3061.54 | GB/s |
-| `write_gbps` | 3140.04 | GB/s |
+| `copy_gbps` | 2906.91 | GB/s |
+| `dram_bytes_read` | 3.22138e+09 | bytes |
+| `dram_bytes_write` | 3.10194e+09 | bytes |
+| `peak_gbps` | 3138.27 | GB/s |
+| `read_gbps` | 3094.29 | GB/s |
+| `write_gbps` | 3138.27 | GB/s |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
 | `binary_sha256` | cdebd98312f31519f81f9dde721a59205bf713a99250e0bfdbcf43e28d19460b |
-| `copy_gbps` | 2900.88 |
+| `copy_gbps` | 2906.91 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
 | `iters` | 5 |
-| `read_gbps` | 3061.54 |
+| `read_gbps` | 3094.29 |
 | `working_set_mb` | 512 |
-| `write_gbps` | 3140.04 |
+| `write_gbps` | 3138.27 |
 
 <details><summary><code>ncu</code> (JSON)</summary>
 
@@ -2751,8 +2751,8 @@
   },
   "role": "primary",
   "values": {
-    "dram_bytes_read": 3221385728.0,
-    "dram_bytes_write": 3102554112.0
+    "dram_bytes_read": 3221377280.0,
+    "dram_bytes_write": 3101942272.0
   }
 }
 ```
@@ -2814,8 +2814,8 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `bounded` |
-| measurement | `l2_hit_load_latency` = 329.897 cycles |
-| simulator_param | `l2_latency` = 329.897 cycles |
+| measurement | `l2_hit_load_latency` = 327.709 cycles |
+| simulator_param | `l2_latency` = 327.709 cycles |
 | concept | `l2_hit_latency` |
 
 - binary_hash: `8d6ad27fcbe7009059299109b14e3bf004478562d72c76abac457afc77d95657`
@@ -2832,9 +2832,9 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `dram_cycles_per_load` | 645.877 | cycles |
-| `hit_to_dram_ratio` | 1.95782 | — |
-| `l2_hit_cycles_per_load` | 329.897 | cycles |
+| `dram_cycles_per_load` | 643.166 | cycles |
+| `hit_to_dram_ratio` | 1.96261 | — |
+| `l2_hit_cycles_per_load` | 327.709 | cycles |
 
 ### Raw values
 
@@ -2842,9 +2842,9 @@
 | --- | --- |
 | `binary_sha256` | 8d6ad27fcbe7009059299109b14e3bf004478562d72c76abac457afc77d95657 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
-| `dram_cycles_per_load` | 645.877 |
+| `dram_cycles_per_load` | 643.166 |
 | `dram_kb` | 131072 |
-| `l2_hit_cycles_per_load` | 329.897 |
+| `l2_hit_cycles_per_load` | 327.709 |
 | `l2_kb` | 4096 |
 | `repeats` | 64 |
 | `steps` | 4096 |
@@ -2859,7 +2859,7 @@
   },
   "role": "validation",
   "values": {
-    "l2_sector_hits": 71445.0
+    "l2_sector_hits": 62703.0
   }
 }
 ```
@@ -2954,12 +2954,12 @@
 
 | bytes_per_cycle | in_flight |
 | --- | --- |
-| 622.469 | 1 |
-| 1167.9 | 2 |
-| 1615.29 | 4 |
-| 1422.13 | 8 |
-| 1202.34 | 16 |
-| 1187.35 | 32 |
+| 622.79 | 1 |
+| 1176.38 | 2 |
+| 1613.93 | 4 |
+| 1433.22 | 8 |
+| 1228.88 | 16 |
+| 1192.71 | 32 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -3019,12 +3019,12 @@
   "stalls": {
     "barrier": 0.0,
     "lg_throttle": 0.0,
-    "long_scoreboard": 35.0,
-    "math_pipe_throttle": 7.32,
+    "long_scoreboard": 34.78,
+    "math_pipe_throttle": 7.37,
     "mio_throttle": 0.0,
-    "not_selected": 15.99,
+    "not_selected": 16.11,
     "short_scoreboard": 0.08,
-    "wait": 20.43
+    "wait": 20.47
   }
 }
 ```
@@ -3278,9 +3278,9 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `bandwidth_ratio` | 1.0082 | — |
-| `max_gbps` | 3102.71 | GB/s |
-| `min_gbps` | 3077.46 | GB/s |
+| `bandwidth_ratio` | 1.01034 | — |
+| `max_gbps` | 3093.75 | GB/s |
+| `min_gbps` | 3062.09 | GB/s |
 | `partition_camping_class` | balanced | — |
 
 ### Raw values
@@ -3295,12 +3295,12 @@
 
 | gbps | offset_kb |
 | --- | --- |
-| 3094.86 | 0 |
-| 3095.06 | 256 |
-| 3102.71 | 512 |
-| 3098.32 | 768 |
-| 3077.46 | 1024 |
-| 3090.92 | 1536 |
+| 3062.09 | 0 |
+| 3088.22 | 256 |
+| 3086.71 | 512 |
+| 3093.75 | 768 |
+| 3093.38 | 1024 |
+| 3084.65 | 1536 |
 
 <details><summary><code>ncu</code> (JSON)</summary>
 
@@ -3310,7 +3310,7 @@
   "logical": "dram_bytes_read",
   "metric": "dram__bytes_read.sum",
   "role": "corroboration",
-  "value": 536908032.0
+  "value": 536900864.0
 }
 ```
 
@@ -3375,8 +3375,8 @@
 | launch | `kernel`  — |
 | evidence_tier | `timing_direct` |
 | fit_status | `bounded` |
-| measurement | `row_locality_sensitivity` = 1.75855 ratio |
-| simulator_param | `dram_row_policy_class` = 1.75855 ratio |
+| measurement | `row_locality_sensitivity` = 1.75696 ratio |
+| simulator_param | `dram_row_policy_class` = 1.75696 ratio |
 | concept | `dram_row_locality` |
 
 - binary_hash: `eff230df9f9dd83883c5a742f90c4c94c4b2d51b3ab45063bcdc60b00d4c7752`
@@ -3393,9 +3393,9 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `best_gbps` | 1962.63 | GB/s |
-| `row_locality_sensitivity` | 1.75855 | — |
-| `worst_gbps` | 1116.05 | GB/s |
+| `best_gbps` | 1960.33 | GB/s |
+| `row_locality_sensitivity` | 1.75696 | — |
+| `worst_gbps` | 1115.75 | GB/s |
 
 ### Raw values
 
@@ -3409,10 +3409,10 @@
 
 | gbps | stride |
 | --- | --- |
-| 1931.19 | 1 |
-| 1962.63 | 8 |
-| 1393.37 | 64 |
-| 1116.05 | 512 |
+| 1928.53 | 1 |
+| 1960.33 | 8 |
+| 1393.72 | 64 |
+| 1115.75 | 512 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -3499,8 +3499,8 @@
 ```json
 {
   "partition_class": "balanced",
-  "peak_gbps": 3126.58,
-  "row_locality_sensitivity": 1.7644318869099738
+  "peak_gbps": 3131.25,
+  "row_locality_sensitivity": 1.7555613268376555
 }
 ```
 
@@ -3509,8 +3509,8 @@
 | key | value | unit |
 | --- | --- | --- |
 | `partition_class` | balanced | — |
-| `peak_gbps` | 3126.58 | — |
-| `row_locality_sensitivity` | 1.76443 | — |
+| `peak_gbps` | 3131.25 | — |
+| `row_locality_sensitivity` | 1.75556 | — |
 
 ### Raw values
 
@@ -3519,8 +3519,8 @@
 ```json
 {
   "partition_class": "balanced",
-  "peak_gbps": 3126.58,
-  "row_locality_sensitivity": 1.7644318869099738
+  "peak_gbps": 3131.25,
+  "row_locality_sensitivity": 1.7555613268376555
 }
 ```
 
@@ -3542,7 +3542,7 @@
 ```json
 {
   "binary_sha256": "eff230df9f9dd83883c5a742f90c4c94c4b2d51b3ab45063bcdc60b00d4c7752",
-  "row_locality_sensitivity": 1.7644318869099738
+  "row_locality_sensitivity": 1.7555613268376555
 }
 ```
 
@@ -3553,7 +3553,7 @@
 ```json
 {
   "binary_sha256": "cdebd98312f31519f81f9dde721a59205bf713a99250e0bfdbcf43e28d19460b",
-  "peak_gbps": 3126.58
+  "peak_gbps": 3131.25
 }
 ```
 
@@ -3570,8 +3570,8 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `uniquely_identified` |
-| measurement | `tensor_mma_latency` = 24.4648 cycles_per_op |
-| simulator_param | `tensor_core_mma_latency` = 24.4648 cycles_per_op |
+| measurement | `tensor_mma_latency` = 24.4668 cycles_per_op |
+| simulator_param | `tensor_core_mma_latency` = 24.4668 cycles_per_op |
 | concept | `tensor_core_mma_latency` |
 
 - binary_hash: `07c5b2d89de384194bfc0b9b31e724a5db1df99917c52a7bf15f0fd393c1870f`
@@ -3587,8 +3587,8 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `cycles_median` | 12526 | — |
-| `cycles_per_mma` | 24.4648 | cycles_per_op |
+| `cycles_median` | 12527 | — |
+| `cycles_per_mma` | 24.4668 | cycles_per_op |
 
 ### Raw values
 
@@ -3596,8 +3596,8 @@
 | --- | --- |
 | `binary_sha256` | 07c5b2d89de384194bfc0b9b31e724a5db1df99917c52a7bf15f0fd393c1870f |
 | `chain` | 512 |
-| `cycles_median` | 12526 |
-| `cycles_per_mma` | 24.4648 |
+| `cycles_median` | 12527 |
+| `cycles_per_mma` | 24.4668 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
 | `mma_shape` | m16n16k16_fp16 |
 | `repeats` | 32 |
@@ -3659,8 +3659,8 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[128, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `uniquely_identified` |
-| measurement | `tensor_mma_throughput` = 0.1599 mma/cycle |
-| simulator_param | `tensor_core_initiation_interval` = 6.2539 cycles_per_op |
+| measurement | `tensor_mma_throughput` = 0.1598 mma/cycle |
+| simulator_param | `tensor_core_initiation_interval` = 6.2578 cycles_per_op |
 | concept | `tensor_core_mma_throughput` |
 
 - binary_hash: `57fb5eb9fac953ae055b712cd2649ef7b251768cfbaf527d602c6a97d32ba015`
@@ -3676,19 +3676,19 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `cycles_median` | 6406 | — |
-| `mma_per_cycle_per_warp` | 0.1599 | mma/cycle |
+| `cycles_median` | 6408 | — |
+| `mma_per_cycle_per_warp` | 0.1598 | mma/cycle |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
 | `binary_sha256` | 57fb5eb9fac953ae055b712cd2649ef7b251768cfbaf527d602c6a97d32ba015 |
-| `cycles_median` | 6406 |
+| `cycles_median` | 6408 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
 | `iters` | 256 |
 | `lanes` | 4 |
-| `mma_per_cycle_per_warp` | 0.1599 |
+| `mma_per_cycle_per_warp` | 0.1598 |
 | `mma_shape` | m16n16k16_fp16 |
 | `warps` | 4 |
 
@@ -3767,8 +3767,8 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[256, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `conditionally_identified` |
-| measurement | `memory_fence_latency` = 923.901 cycles |
-| simulator_param | `fence_latency` = 923.901 cycles |
+| measurement | `memory_fence_latency` = 929.878 cycles |
+| simulator_param | `fence_latency` = 929.878 cycles |
 | concept | `memory_fence_latency` |
 
 - binary_hash: `c085b9ee5779e1845e75772c38109e6fdd2945486e4072609f5fcd4fb8889dae`
@@ -3786,8 +3786,8 @@
 | key | value | unit |
 | --- | --- | --- |
 | `cycles_per_empty` | 0.0151 | — |
-| `cycles_per_fence` | 923.916 | — |
-| `net_cycles_per_fence` | 923.901 | cycles |
+| `cycles_per_fence` | 929.893 | — |
+| `net_cycles_per_fence` | 929.878 | cycles |
 
 ### Raw values
 
@@ -3795,10 +3795,10 @@
 | --- | --- |
 | `binary_sha256` | c085b9ee5779e1845e75772c38109e6fdd2945486e4072609f5fcd4fb8889dae |
 | `cycles_per_empty` | 0.0151 |
-| `cycles_per_fence` | 923.916 |
+| `cycles_per_fence` | 929.893 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
 | `fences` | 4096 |
-| `net_cycles_per_fence` | 923.901 |
+| `net_cycles_per_fence` | 929.878 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -3858,8 +3858,8 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[128, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `conditionally_identified` |
-| measurement | `async_copy_tile_latency` = 722.125 cycles |
-| simulator_param | `async_copy_completion_latency` = 722.125 cycles |
+| measurement | `async_copy_tile_latency` = 723.984 cycles |
+| simulator_param | `async_copy_completion_latency` = 723.984 cycles |
 | concept | `async_copy_latency` |
 
 - binary_hash: `7ddaad00b56af1c7ea60f9df42d3e8ca2d9a04eb45fb0a05a3633fa4517bd65b`
@@ -3877,7 +3877,7 @@
 | key | value | unit |
 | --- | --- | --- |
 | `bytes_per_tile` | 4096 | — |
-| `cycles_per_tile` | 722.125 | cycles |
+| `cycles_per_tile` | 723.984 | cycles |
 | `tiles` | 64 | — |
 
 ### Raw values
@@ -3886,7 +3886,7 @@
 | --- | --- |
 | `binary_sha256` | 7ddaad00b56af1c7ea60f9df42d3e8ca2d9a04eb45fb0a05a3633fa4517bd65b |
 | `bytes_per_tile` | 4096 |
-| `cycles_per_tile` | 722.125 |
+| `cycles_per_tile` | 723.984 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
 | `tiles` | 64 |
 
@@ -3963,8 +3963,8 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[256, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `bounded` |
-| measurement | `async_copy_throughput` = 37.39 GB/s |
-| simulator_param | `tma_transfer_throughput` = 37.39 GB/s |
+| measurement | `async_copy_throughput` = 37.48 GB/s |
+| simulator_param | `tma_transfer_throughput` = 37.48 GB/s |
 | concept | `async_copy_throughput` |
 
 - binary_hash: `a63a25f79ed2fa621135f704b3dfde2a8713213c703655ea86c15b7166b85a31`
@@ -3981,7 +3981,7 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `peak_gbps` | 37.39 | GB/s |
+| `peak_gbps` | 37.48 | GB/s |
 | `sweep_points` | 4 | — |
 
 ### Raw values
@@ -3996,9 +3996,9 @@
 | gbps | tile_kb |
 | --- | --- |
 | 2 | 1 |
-| 7.32 | 4 |
-| 22.5 | 16 |
-| 37.39 | 32 |
+| 7.35 | 4 |
+| 22.56 | 16 |
+| 37.48 | 32 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -4086,8 +4086,8 @@
 
 ```json
 {
-  "async_copy_peak_gbps": 37.5,
-  "async_copy_tile_latency": 722.1406
+  "async_copy_peak_gbps": 37.46,
+  "async_copy_tile_latency": 724.0312
 }
 ```
 
@@ -4095,8 +4095,8 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `async_copy_peak_gbps` | 37.5 | — |
-| `async_copy_tile_latency` | 722.141 | — |
+| `async_copy_peak_gbps` | 37.46 | — |
+| `async_copy_tile_latency` | 724.031 | — |
 
 ### Raw values
 
@@ -4104,7 +4104,7 @@
 
 ```json
 {
-  "async_copy_tile_latency": 722.1406,
+  "async_copy_tile_latency": 724.0312,
   "binary_sha256": "7ddaad00b56af1c7ea60f9df42d3e8ca2d9a04eb45fb0a05a3633fa4517bd65b"
 }
 ```
@@ -4115,8 +4115,8 @@
 
 ```json
 {
-  "async_copy_peak_gbps": 37.5,
-  "async_copy_tile_latency": 722.1406
+  "async_copy_peak_gbps": 37.46,
+  "async_copy_tile_latency": 724.0312
 }
 ```
 
@@ -4126,7 +4126,7 @@
 
 ```json
 {
-  "async_copy_peak_gbps": 37.5,
+  "async_copy_peak_gbps": 37.46,
   "binary_sha256": "a63a25f79ed2fa621135f704b3dfde2a8713213c703655ea86c15b7166b85a31"
 }
 ```
@@ -4144,8 +4144,8 @@
 | launch | `kernel`  — |
 | evidence_tier | `timing_direct` |
 | fit_status | `bounded` |
-| measurement | `injection_saturation_gbps` = 3084.05 GB/s |
-| simulator_param | `interconnect_injection_bandwidth` = 3084.05 GB/s |
+| measurement | `injection_saturation_gbps` = 3084.61 GB/s |
+| simulator_param | `interconnect_injection_bandwidth` = 3084.61 GB/s |
 | concept | `interconnect_injection` |
 
 - binary_hash: `ce58ed8dc33e87bcc371366ffd09984a193f2f4a8a74fce1cb909a8d48f5ff38`
@@ -4162,7 +4162,7 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `saturation_gbps` | 3084.05 | GB/s |
+| `saturation_gbps` | 3084.61 | GB/s |
 | `sweep_points` | 4 | — |
 
 ### Raw values
@@ -4176,10 +4176,10 @@
 
 | blocks_per_sm | gbps |
 | --- | --- |
-| 1 | 1261.07 |
-| 2 | 2193.39 |
-| 4 | 2928.47 |
-| 8 | 3084.05 |
+| 1 | 1265.54 |
+| 2 | 2198.85 |
+| 4 | 2927.96 |
+| 8 | 3084.61 |
 
 <details><summary><code>ncu</code> (JSON)</summary>
 
@@ -4191,7 +4191,7 @@
   },
   "role": "primary",
   "values": {
-    "dram_bytes_read": 4295159040.0
+    "dram_bytes_read": 4295168768.0
   }
 }
 ```
@@ -4278,9 +4278,9 @@
 | key | value | unit |
 | --- | --- | --- |
 | `address_mapping_class` | uniform | — |
-| `bandwidth_ratio` | 1.0786 | — |
-| `max_gbps` | 4513.98 | GB/s |
-| `min_gbps` | 4185.05 | GB/s |
+| `bandwidth_ratio` | 1.0799 | — |
+| `max_gbps` | 4517.81 | GB/s |
+| `min_gbps` | 4183.53 | GB/s |
 
 ### Raw values
 
@@ -4293,16 +4293,16 @@
 
 | gbps | stride_kb |
 | --- | --- |
-| 4196.72 | 1 |
-| 4513.98 | 2 |
-| 4339.34 | 4 |
-| 4255.43 | 8 |
-| 4217.05 | 16 |
-| 4194.81 | 32 |
-| 4185.43 | 64 |
-| 4185.3 | 128 |
-| 4185.81 | 256 |
-| 4185.05 | 512 |
+| 4227.23 | 1 |
+| 4517.81 | 2 |
+| 4341.66 | 4 |
+| 4261.06 | 8 |
+| 4217.18 | 16 |
+| 4195.83 | 32 |
+| 4186.06 | 64 |
+| 4183.53 | 128 |
+| 4185.43 | 256 |
+| 4183.91 | 512 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -4391,7 +4391,7 @@
 ```json
 {
   "address_mapping_class": "uniform",
-  "injection_saturation_gbps": 3082.91
+  "injection_saturation_gbps": 3074.44
 }
 ```
 
@@ -4400,7 +4400,7 @@
 | key | value | unit |
 | --- | --- | --- |
 | `address_mapping_class` | uniform | — |
-| `injection_saturation_gbps` | 3082.91 | — |
+| `injection_saturation_gbps` | 3074.44 | — |
 
 ### Raw values
 
@@ -4420,7 +4420,7 @@
 ```json
 {
   "address_mapping_class": "uniform",
-  "injection_saturation_gbps": 3082.91
+  "injection_saturation_gbps": 3074.44
 }
 ```
 
@@ -4431,7 +4431,7 @@
 ```json
 {
   "binary_sha256": "ce58ed8dc33e87bcc371366ffd09984a193f2f4a8a74fce1cb909a8d48f5ff38",
-  "injection_saturation_gbps": 3082.91
+  "injection_saturation_gbps": 3074.44
 }
 ```
 
