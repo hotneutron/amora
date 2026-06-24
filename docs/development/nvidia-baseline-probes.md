@@ -183,11 +183,12 @@ with a registered source hash; analyzers degrade cleanly).
 
 ## Next Implementation Steps
 
-1. Add SASS validation with `nvdisasm`/`cuobjdump` so opcode/dependency
-   assumptions are enforced rather than assumed.
-2. Integrate NCU/CUPTI metric discovery and the metric resolver so counter
-   evidence can corroborate or replace timing for probes that support it.
-3. Implement the P2 and P3 probe families (memory pipeline, L2, DRAM, tensor
-   core, synchronization, TMA/async copy, interconnect).
-4. Replace CUDA approximations (e.g. the register-bank sweep proxy) with
-   SASS-controlled variants where toolchain support allows.
+1. Add a curated published-facts table (per-arch SM/cache/bandwidth specs) to
+   anchor metadata probes with trust-and-verify cross-checks.
+2. Extend the report SUMMARY with cross-SKU trend deltas once a second
+   architecture (beyond H100/V100) is profiled.
+3. Wire simulator traces as the target side of the mapping contracts so
+   bounded/behavioral P3 fits (partition, address mapping) can be promoted to
+   uniquely-identified.
+4. Add architecture gating by compute capability so Hopper-only probes (TMA,
+   some MMA shapes) downgrade cleanly on older arches.
