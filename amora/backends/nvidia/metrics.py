@@ -43,6 +43,59 @@ class MetricResolver:
         "shared_conflicts": (
             "l1tex__data_bank_conflicts_pipe_lsu_mem_shared.sum",
         ),
+        # Global-memory request / sector behavior (memory_pipeline).
+        "global_load_requests": (
+            "l1tex__t_requests_pipe_lsu_mem_global_op_ld.sum",
+        ),
+        "global_load_sectors": (
+            "l1tex__t_sectors_pipe_lsu_mem_global_op_ld.sum",
+        ),
+        # DRAM traffic (global_memory).
+        "dram_bytes_read": (
+            "dram__bytes_read.sum",
+        ),
+        "dram_bytes_write": (
+            "dram__bytes_write.sum",
+        ),
+        "dram_throughput": (
+            "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+            "dram__throughput.avg",
+        ),
+        # L2 sector hits (l2_cache / global_memory).
+        "l2_sector_hits": (
+            "lts__t_sectors_lookup_hit.sum",
+        ),
+        # Tensor-pipe utilization (tensor_core).
+        "tensor_pipe_active": (
+            "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_elapsed",
+            "sm__inst_executed_pipe_tensor.sum",
+        ),
+        # Warp-issue stall reasons (CUPTI-derived; scheduler / memory probes).
+        # NCU exposes these as a percentage of issue-stall cycles (.pct).
+        "stall_long_scoreboard": (
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct",
+        ),
+        "stall_short_scoreboard": (
+            "smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct",
+        ),
+        "stall_wait": (
+            "smsp__warp_issue_stalled_wait_per_warp_active.pct",
+        ),
+        "stall_barrier": (
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct",
+        ),
+        "stall_lg_throttle": (
+            "smsp__warp_issue_stalled_lg_throttle_per_warp_active.pct",
+        ),
+        "stall_mio_throttle": (
+            "smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct",
+        ),
+        "stall_math_pipe_throttle": (
+            "smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct",
+        ),
+        "stall_not_selected": (
+            "smsp__warp_issue_stalled_not_selected_per_warp_active.pct",
+        ),
     }
 
     def resolve(self, logical_name: str) -> MetricResolution:
@@ -56,7 +109,7 @@ class MetricResolver:
                 reason="unknown logical metric",
             )
         for candidate in candidates:
-            if candidate in self.supported_metrics:
+            if self._is_supported(candidate):
                 return MetricResolution(
                     logical_name=logical_name,
                     selected_name=candidate,
@@ -70,3 +123,18 @@ class MetricResolver:
             available=False,
             reason="no candidate metric supported",
         )
+
+    def _is_supported(self, candidate: str) -> bool:
+        """Match a suffixed candidate against the supported set.
+
+        ``ncu --query-metrics`` reports *base* metric names without the trailing
+        rollup suffix (``.sum`` / ``.avg`` / ``.max`` / ...). A candidate like
+        ``smsp__inst_executed.sum`` is supported when its base
+        (``smsp__inst_executed``) is in the discovered set. Exact matches are
+        also accepted for sets that include suffixes.
+        """
+
+        if candidate in self.supported_metrics:
+            return True
+        base = candidate.rsplit(".", 1)[0]
+        return base in self.supported_metrics

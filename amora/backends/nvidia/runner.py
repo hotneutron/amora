@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from amora.backends.nvidia.cuda import NvidiaCapabilities
+from amora.backends.nvidia.sass import SassExpectation, SassValidation, validate_sass
 
 
 DEFAULT_BUILD_ROOT = Path(
@@ -44,6 +45,7 @@ class CudaRunResult:
     stderr: str
     returncode: int
     payload: dict
+    sass_validation: SassValidation | None = None
 
 
 def _sha256(path: Path) -> str:
@@ -108,6 +110,85 @@ def build_executable(
     return binary, src_hash
 
 
+def build_cubin(
+    source: Path,
+    *,
+    capabilities: NvidiaCapabilities,
+    arch: str = DEFAULT_ARCH,
+    build_root: Path = DEFAULT_BUILD_ROOT,
+) -> tuple[Path, str]:
+    """Compile ``source`` to a device-only cubin and return ``(path, source_sha256)``.
+
+    Cached next to the host-binary cache, keyed by source SHA-256.
+    """
+
+    nvcc_path, _ = _ensure_cuda(capabilities)
+    src_hash = _sha256(source)
+    target_dir = build_root / source.stem / src_hash
+    target_dir.mkdir(parents=True, exist_ok=True)
+    cubin = target_dir / f"{source.stem}.cubin"
+    if cubin.exists():
+        return cubin, src_hash
+    args = [nvcc_path, "-arch", arch, "-cubin", "-std=c++14", str(source), "-o", str(cubin)]
+    completed = subprocess.run(args, check=False, capture_output=True, text=True, timeout=120)
+    if completed.returncode != 0 or not cubin.exists():
+        if cubin.exists():
+            cubin.unlink()
+        raise CudaUnavailable(
+            f"nvcc -cubin failed for {source.name}: rc={completed.returncode} "
+            f"stderr={(completed.stderr or '').strip()[:400]}"
+        )
+    return cubin, src_hash
+
+
+def _disassembler(capabilities: NvidiaCapabilities) -> str | None:
+    """Prefer cuobjdump (-sass) over nvdisasm for cubin disassembly."""
+
+    for name in ("cuobjdump", "nvdisasm"):
+        tool = capabilities.tools.get(name)
+        if tool and tool.available and tool.path:
+            return tool.path
+    return None
+
+
+def validate_kernel_sass(
+    source: Path,
+    expectation: SassExpectation,
+    *,
+    capabilities: NvidiaCapabilities,
+    arch: str = DEFAULT_ARCH,
+    build_root: Path = DEFAULT_BUILD_ROOT,
+) -> SassValidation | None:
+    """Build a cubin, disassemble it, and validate against ``expectation``.
+
+    Returns ``None`` (never raises) when the toolchain cannot produce SASS, so a
+    missing disassembler degrades gracefully instead of failing the probe.
+    """
+
+    disasm = _disassembler(capabilities)
+    if disasm is None:
+        return None
+    try:
+        cubin, _ = build_cubin(
+            source, capabilities=capabilities, arch=arch, build_root=build_root
+        )
+        flag = "-sass" if disasm.endswith("cuobjdump") else "-c"
+        completed = subprocess.run(
+            [disasm, flag, str(cubin)],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if completed.returncode != 0 or not completed.stdout.strip():
+            return None
+        sass_text = completed.stdout
+        disassembly_hash = hashlib.sha256(sass_text.encode("utf-8")).hexdigest()
+        return validate_sass(sass_text, expectation, disassembly_hash=disassembly_hash)
+    except (CudaUnavailable, subprocess.SubprocessError, OSError):
+        return None
+
+
 def run_kernel(
     source: Path,
     *,
@@ -116,10 +197,13 @@ def run_kernel(
     timeout: int = 30,
     arch: str = DEFAULT_ARCH,
     build_root: Path = DEFAULT_BUILD_ROOT,
+    expectation: SassExpectation | None = None,
 ) -> CudaRunResult:
     """Build (if needed) and execute the CUDA driver compiled from ``source``.
 
-    The host driver is expected to print a single JSON document to stdout.
+    The host driver is expected to print a single JSON document to stdout. When
+    ``expectation`` is provided, the kernel's SASS is validated (best effort) and
+    attached to the result; SASS-tooling failures do not abort the run.
     """
 
     binary, _ = build_executable(
@@ -151,6 +235,11 @@ def run_kernel(
         raise CudaUnavailable(
             f"{source.stem} stdout is not valid JSON: {exc!s}; raw={payload_str[:200]!r}"
         ) from exc
+    sass = None
+    if expectation is not None:
+        sass = validate_kernel_sass(
+            source, expectation, capabilities=capabilities, arch=arch, build_root=build_root
+        )
     return CudaRunResult(
         binary_path=binary,
         binary_sha256=binary_sha,
@@ -158,6 +247,7 @@ def run_kernel(
         stderr=completed.stderr,
         returncode=completed.returncode,
         payload=payload,
+        sass_validation=sass,
     )
 
 

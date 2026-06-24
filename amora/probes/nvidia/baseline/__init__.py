@@ -11,6 +11,40 @@ from amora.probes.nvidia.baseline.arithmetic_latency.dependent_chain import (
 from amora.probes.nvidia.baseline.arithmetic_throughput.independent_chains import (
     run as run_independent_chains,
 )
+from amora.probes.nvidia.baseline.l1_cache.analyze import run as run_l1_analyze
+from amora.probes.nvidia.baseline.l1_cache.conflict_sets import run as run_l1_conflict_sets
+from amora.probes.nvidia.baseline.l1_cache.pointer_chase import run as run_l1_pointer_chase
+from amora.probes.nvidia.baseline.l1_cache.working_set import run as run_l1_working_set
+from amora.probes.nvidia.baseline.register_file.analyze import run as run_register_analyze
+from amora.probes.nvidia.baseline.register_file.register_bank_sweep import (
+    run as run_register_bank_sweep,
+)
+from amora.probes.nvidia.baseline.register_file.register_latency import (
+    run as run_register_latency,
+)
+from amora.probes.nvidia.baseline.scheduler_policy.analyze import run as run_scheduler_analyze
+from amora.probes.nvidia.baseline.scheduler_policy.mixed_issue import run as run_mixed_issue
+from amora.probes.nvidia.baseline.scheduler_policy.ready_warps import run as run_ready_warps
+from amora.probes.nvidia.baseline.global_memory.analyze import run as run_gmem_analyze
+from amora.probes.nvidia.baseline.global_memory.partition_sweep import run as run_partition_sweep
+from amora.probes.nvidia.baseline.global_memory.row_policy_sweep import run as run_row_policy_sweep
+from amora.probes.nvidia.baseline.global_memory.streaming import run as run_streaming
+from amora.probes.nvidia.baseline.l2_cache.pointer_chase import run as run_l2_pointer_chase
+from amora.probes.nvidia.baseline.memory_pipeline.analyze import run as run_mempipe_analyze
+from amora.probes.nvidia.baseline.memory_pipeline.lane_patterns import run as run_lane_patterns
+from amora.probes.nvidia.baseline.memory_pipeline.outstanding_requests import (
+    run as run_outstanding_requests,
+)
+from amora.probes.nvidia.baseline.synchronization.barrier_latency import run as run_barrier_latency
+from amora.probes.nvidia.baseline.synchronization.fence_latency import run as run_fence_latency
+from amora.probes.nvidia.baseline.tensor_core.mma_latency import run as run_mma_latency
+from amora.probes.nvidia.baseline.tensor_core.mma_throughput import run as run_mma_throughput
+from amora.probes.nvidia.baseline.tma_copy.analyze import run as run_tma_analyze
+from amora.probes.nvidia.baseline.tma_copy.async_copy_latency import run as run_async_copy_latency
+from amora.probes.nvidia.baseline.tma_copy.tma_transfer_sweep import run as run_tma_transfer_sweep
+from amora.probes.nvidia.baseline.interconnect.address_mapping import run as run_address_mapping
+from amora.probes.nvidia.baseline.interconnect.analyze import run as run_icn_analyze
+from amora.probes.nvidia.baseline.interconnect.injection_rate import run as run_injection_rate
 from amora.probes.nvidia.baseline.shared_memory.analyze import run as run_shared_analyze
 from amora.probes.nvidia.baseline.shared_memory.bank_stride import run as run_bank_stride
 from amora.probes.nvidia.baseline.shared_memory.pointer_chase import run as run_pointer_chase
@@ -24,6 +58,7 @@ ProbeRunner = Callable[[NvidiaCapabilities], list[ProbeResult]]
 
 
 PROBES: dict[str, ProbeRunner] = {
+    # P0 baseline
     "topology.device_attributes": run_device_attributes,
     "topology.occupancy": run_occupancy,
     "topology.persistent_cta": run_persistent_cta,
@@ -32,29 +67,44 @@ PROBES: dict[str, ProbeRunner] = {
     "shared_memory.pointer_chase": run_pointer_chase,
     "shared_memory.bank_stride": run_bank_stride,
     "shared_memory.analyze": run_shared_analyze,
+    # P1 caches / scheduler / register file
+    "l1_cache.pointer_chase": run_l1_pointer_chase,
+    "l1_cache.working_set": run_l1_working_set,
+    "l1_cache.conflict_sets": run_l1_conflict_sets,
+    "l1_cache.analyze": run_l1_analyze,
+    "scheduler_policy.ready_warps": run_ready_warps,
+    "scheduler_policy.mixed_issue": run_mixed_issue,
+    "scheduler_policy.analyze": run_scheduler_analyze,
+    "register_file.register_bank_sweep": run_register_bank_sweep,
+    "register_file.register_latency": run_register_latency,
+    "register_file.analyze": run_register_analyze,
+    # P2 phase A (timing-first)
+    "synchronization.barrier_latency": run_barrier_latency,
+    "global_memory.streaming": run_streaming,
+    "l2_cache.pointer_chase": run_l2_pointer_chase,
+    "memory_pipeline.outstanding_requests": run_outstanding_requests,
+    # P2 phase B (NCU counters)
+    "memory_pipeline.lane_patterns": run_lane_patterns,
+    "memory_pipeline.analyze": run_mempipe_analyze,
+    "global_memory.partition_sweep": run_partition_sweep,
+    "global_memory.row_policy_sweep": run_row_policy_sweep,
+    "global_memory.analyze": run_gmem_analyze,
+    # P2 phase C (tensor core + fence)
+    "tensor_core.mma_latency": run_mma_latency,
+    "tensor_core.mma_throughput": run_mma_throughput,
+    "synchronization.fence_latency": run_fence_latency,
+    # P3 phase D (TMA / async copy + interconnect)
+    "tma_copy.async_copy_latency": run_async_copy_latency,
+    "tma_copy.tma_transfer_sweep": run_tma_transfer_sweep,
+    "tma_copy.analyze": run_tma_analyze,
+    "interconnect.injection_rate": run_injection_rate,
+    "interconnect.address_mapping": run_address_mapping,
+    "interconnect.analyze": run_icn_analyze,
 }
 
-IMPLEMENTED_PROBES: frozenset[str] = frozenset({
-    "topology.device_attributes",
-    "topology.occupancy",
-    "topology.persistent_cta",
-    "arithmetic_latency.dependent_chain",
-    "arithmetic_throughput.independent_chains",
-    "shared_memory.pointer_chase",
-    "shared_memory.bank_stride",
-    "shared_memory.analyze",
-})
+IMPLEMENTED_PROBES: frozenset[str] = frozenset(PROBES)
 
-PLANNED_PROBES: tuple[str, ...] = (
-    "topology.device_attributes",
-    "topology.occupancy",
-    "topology.persistent_cta",
-    "arithmetic_latency.dependent_chain",
-    "arithmetic_throughput.independent_chains",
-    "shared_memory.pointer_chase",
-    "shared_memory.bank_stride",
-    "shared_memory.analyze",
-)
+PLANNED_PROBES: tuple[str, ...] = tuple(PROBES)
 
 
 def list_probes() -> list[dict[str, object]]:

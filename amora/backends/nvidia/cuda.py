@@ -69,6 +69,7 @@ class NvidiaCapabilities:
     tools: dict[str, ToolStatus] = field(default_factory=dict)
     devices: list[NvidiaDevice] = field(default_factory=list)
     unsupported_reasons: list[str] = field(default_factory=list)
+    ncu_metrics: frozenset[str] = field(default_factory=frozenset)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -78,6 +79,8 @@ class NvidiaCapabilities:
             "tools": {name: tool.to_dict() for name, tool in self.tools.items()},
             "devices": [device.to_dict() for device in self.devices],
             "unsupported_reasons": list(self.unsupported_reasons),
+            "ncu_counters_available": bool(self.ncu_metrics),
+            "ncu_metric_count": len(self.ncu_metrics),
         }
 
     def to_json(self) -> str:
@@ -137,6 +140,27 @@ def _discover_devices(nvidia_smi: ToolStatus) -> tuple[list[NvidiaDevice], str |
     return devices, None
 
 
+def _discover_ncu_metrics(ncu: ToolStatus) -> frozenset[str]:
+    """Best-effort capture of NCU's supported metric names (empty on failure)."""
+
+    if not ncu.available or not ncu.path:
+        return frozenset()
+    try:
+        completed = _run([ncu.path, "--query-metrics"], timeout=30)
+    except Exception:  # pragma: no cover - defensive subprocess path
+        return frozenset()
+    if completed.returncode != 0:
+        return frozenset()
+    names: set[str] = set()
+    for line in completed.stdout.splitlines():
+        token = line.strip().split()
+        # Lines look like "<metric_name>   <description>"; take the first token
+        # that looks like a metric (contains a '.' or '__').
+        if token and ("." in token[0] or "__" in token[0]):
+            names.add(token[0])
+    return frozenset(names)
+
+
 def discover_capabilities() -> NvidiaCapabilities:
     tools = {
         "nvcc": discover_tool("nvcc", ["--version"]),
@@ -153,10 +177,12 @@ def discover_capabilities() -> NvidiaCapabilities:
         reasons.append(device_error)
     cuda_available = tools["nvcc"].available
     gpu_available = bool(devices)
+    ncu_metrics = _discover_ncu_metrics(tools["ncu"])
     return NvidiaCapabilities(
         cuda_available=cuda_available,
         gpu_available=gpu_available,
         tools=tools,
         devices=devices,
         unsupported_reasons=reasons,
+        ncu_metrics=ncu_metrics,
     )
