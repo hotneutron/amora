@@ -7,7 +7,7 @@
 
 | sku | device | probes | fit_status | generated | report |
 | --- | --- | ---: | --- | --- | --- |
-| `h100-80g` | NVIDIA H100 80GB HBM3 | 18 | `behavioral_only`=2, `conditionally_identified`=2, `direct`=5, `underconstrained`=5, `uniquely_identified`=4 | 2026-06-24T07:05Z | [probes](probes-h100-80g.md) |
+| `h100-80g` | NVIDIA H100 80GB HBM3 | 18 | `behavioral_only`=2, `conditionally_identified`=2, `direct`=5, `underconstrained`=5, `uniquely_identified`=4 | 2026-06-24T08:46Z | [probes](probes-h100-80g.md) |
 
 ## `h100-80g` outcomes
 
@@ -21,7 +21,7 @@
 | [shared_memory.pointer_chase](probes-h100-80g.md#shared_memorypointer_chase) | `kernel` | `timing_direct` | `direct` | 29.0146 cycles |
 | [shared_memory.bank_stride](probes-h100-80g.md#shared_memorybank_stride) | `kernel` | `timing_direct` | `uniquely_identified` | 32 banks |
 | [shared_memory.analyze](probes-h100-80g.md#shared_memoryanalyze) | `analysis` | `coupled_inference` | `uniquely_identified` | _object_ (bank_count, bank_serialization_factor, shared_load_latency_cycles) |
-| [l1_cache.pointer_chase](probes-h100-80g.md#l1_cachepointer_chase) | `kernel` | `timing_direct` | `direct` | 70.6121 cycles |
+| [l1_cache.pointer_chase](probes-h100-80g.md#l1_cachepointer_chase) | `kernel` | `timing_direct` | `direct` | 70.6108 cycles |
 | [l1_cache.working_set](probes-h100-80g.md#l1_cacheworking_set) | `kernel` | `timing_direct` | `underconstrained` | _object_ |
 | [l1_cache.conflict_sets](probes-h100-80g.md#l1_cacheconflict_sets) | `kernel` | `timing_direct` | `underconstrained` | — |
 | [l1_cache.analyze](probes-h100-80g.md#l1_cacheanalyze) | `analysis` | `coupled_inference` | `underconstrained` | _object_ (l1_effective_capacity_kb, l1_hit_latency_cycles) |

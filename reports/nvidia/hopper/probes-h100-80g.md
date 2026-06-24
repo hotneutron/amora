@@ -1,6 +1,6 @@
 # nvidia / hopper / h100-80g — Probe Results
 
-- Generated: 2026-06-24T07:05Z
+- Generated: 2026-06-24T08:46Z
 - Device: NVIDIA H100 80GB HBM3  ·  Backend: `nvidia_cuda`  ·  Probes: 18
 - `fit_status`: `behavioral_only`=2, `conditionally_identified`=2, `direct`=5, `underconstrained`=5, `uniquely_identified`=4
 - Back to [family index](README.md)
@@ -1029,7 +1029,7 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `elapsed_ms` | 0.1866 | ms |
+| `elapsed_ms` | 0.1902 | ms |
 | `mean_resident_blocks_per_sm` | 7.7576 | — |
 | `multi_processor_count` | 132 | — |
 | `peak_resident_blocks_per_sm` | 8 | — |
@@ -1043,17 +1043,49 @@
 | `blocks_launched` | 1024 |
 | `busy_cycles` | 200000 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
-| `elapsed_ms` | 0.1866 |
+| `elapsed_ms` | 0.1902 |
 | `mean_resident_blocks_per_sm` | 7.7576 |
 | `multi_processor_count` | 132 |
 | `peak_resident_blocks_per_sm` | 8 |
 | `sm_count_observed` | 132 |
 | `threads_per_block` | 32 |
 
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "disassembly_hash": "6bd1d01c6a6144a242e8c629fdcd8d907dfc334f9f97b050f1d895f83fbba8a5",
+  "opcode_histogram": {
+    "BRA": 2,
+    "CS2R": 3,
+    "EXIT": 2,
+    "IADD3": 1,
+    "IMAD": 2,
+    "ISETP": 3,
+    "LDC": 2,
+    "NOP": 9,
+    "S2R": 3,
+    "STG": 3,
+    "ULDC": 2
+  },
+  "satisfied": [],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
+
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/topology/persistent_cta.cu`
 - bytes: `5507`  ·  sha256: `ce2f1944aa3ad53742efcae13166e51ee6c0b88f9517d01fce3a0699dcb8a770`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `6bd1d01c6a6144a242e8c629fdcd8d907dfc334f9f97b050f1d895f83fbba8a5`
+- opcode_histogram: `{"BRA": 2, "CS2R": 3, "EXIT": 2, "IADD3": 1, "IMAD": 2, "ISETP": 3, "LDC": 2, "NOP": 9, "S2R": 3, "STG": 3, "ULDC": 2}`
 
 [↑ contents](#contents)
 
@@ -1100,10 +1132,51 @@
 | `device_name` | NVIDIA H100 80GB HBM3 |
 | `repeats` | 64 |
 
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "dependency_confirmed": true,
+  "disassembly_hash": "8e35104a69bfdb10f61454278b232b323a6336063c51641923cd5a6bf910e0a1",
+  "opcode_histogram": {
+    "BRA": 2,
+    "CS2R": 2,
+    "EXIT": 2,
+    "FFMA": 32,
+    "HFMA2": 1,
+    "IADD3": 3,
+    "ISETP": 1,
+    "LDC": 3,
+    "LOP3": 1,
+    "MOV": 2,
+    "NOP": 9,
+    "S2R": 1,
+    "S2UR": 1,
+    "STG": 2,
+    "ULDC": 2
+  },
+  "satisfied": [
+    "FFMA>=8 (32)"
+  ],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
+
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/arithmetic_latency/dependent_chain.cu`
 - bytes: `3276`  ·  sha256: `75b8231ef6b256c8eabe9f5586ad06ba00260c15ee1752415fe139a6a82ab880`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `8e35104a69bfdb10f61454278b232b323a6336063c51641923cd5a6bf910e0a1`
+- satisfied: FFMA>=8 (32)
+- dependency_confirmed: `True`
+- opcode_histogram: `{"BRA": 2, "CS2R": 2, "EXIT": 2, "FFMA": 32, "HFMA2": 1, "IADD3": 3, "ISETP": 1, "LDC": 3, "LOP3": 1, "MOV": 2, "NOP": 9, "S2R": 1, "S2UR": 1, "STG": 2, "ULDC": 2}`
 
 [↑ contents](#contents)
 
@@ -1145,20 +1218,59 @@
 | `binary_sha256` | e30d16ab2f4848347d3522bb4049e1b971f4be2e2e4c201e68e70af66f25b5aa |
 | `blocks` | 16 |
 | `chain_length` | 4096 |
-| `cycles_max` | 18797 |
+| `cycles_max` | 18800 |
 | `cycles_median` | 18794 |
-| `cycles_min` | 18722 |
+| `cycles_min` | 18784 |
 | `cycles_per_fma_per_thread` | 1.1471 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
-| `elapsed_ms` | 0.0183 |
+| `elapsed_ms` | 0.0179 |
 | `independent_chains` | 4 |
 | `multi_processor_count` | 132 |
 | `threads` | 128 |
+
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "disassembly_hash": "47d695f861cf42bc1b6e14ad9763b708d219f5555b1caa947f2ace6f8f3a7e1d",
+  "opcode_histogram": {
+    "BRA": 2,
+    "CS2R": 2,
+    "EXIT": 1,
+    "FADD": 6,
+    "FFMA": 128,
+    "HFMA2": 1,
+    "IADD3": 3,
+    "IMAD": 3,
+    "ISETP": 1,
+    "LDC": 4,
+    "MOV": 5,
+    "NOP": 13,
+    "S2R": 2,
+    "STG": 2,
+    "ULDC": 3
+  },
+  "satisfied": [
+    "FFMA>=8 (128)"
+  ],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
 
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/arithmetic_throughput/independent_chains.cu`
 - bytes: `4638`  ·  sha256: `3707dce55ee9b9715b5343b1543301bb9f4de54b691b8af1b50ec509b209428b`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `47d695f861cf42bc1b6e14ad9763b708d219f5555b1caa947f2ace6f8f3a7e1d`
+- satisfied: FFMA>=8 (128)
+- opcode_histogram: `{"BRA": 2, "CS2R": 2, "EXIT": 1, "FADD": 6, "FFMA": 128, "HFMA2": 1, "IADD3": 3, "IMAD": 3, "ISETP": 1, "LDC": 4, "MOV": 5, "NOP": 13, "S2R": 2, "STG": 2, "ULDC": 3}`
 
 [↑ contents](#contents)
 
@@ -1198,17 +1310,62 @@
 | --- | --- |
 | `binary_sha256` | 18d423cc6c50bfb2c83d570fe14887d712fa4e8437883055c251c34c79d07662 |
 | `chase_len` | 4096 |
-| `cycles_max` | 118865 |
+| `cycles_max` | 118851 |
 | `cycles_median` | 118844 |
-| `cycles_min` | 118844 |
+| `cycles_min` | 118843 |
 | `cycles_per_load` | 29.0146 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
 | `repeats` | 64 |
+
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "disassembly_hash": "e54306e2b42ece6936af213a72d4c6330874a98ef377e898b7ee71e215bc7d39",
+  "opcode_histogram": {
+    "BAR": 1,
+    "BRA": 2,
+    "CS2R": 2,
+    "EXIT": 2,
+    "IADD3": 1,
+    "IMAD": 4,
+    "ISETP": 3,
+    "LDC": 3,
+    "LDS": 64,
+    "LEA": 65,
+    "LOP3": 1,
+    "MOV": 1,
+    "NOP": 8,
+    "S2R": 2,
+    "S2UR": 1,
+    "STG": 2,
+    "STS": 1,
+    "ULDC": 1,
+    "ULEA": 1,
+    "UMOV": 1,
+    "VIADD": 2
+  },
+  "satisfied": [
+    "LDS>=1 (64)"
+  ],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
 
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/shared_memory/pointer_chase.cu`
 - bytes: `3320`  ·  sha256: `8708d8a5a03239f88fa1520247d007ff6be5319b5d83e1ab1aa8dd310c4ceedd`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `e54306e2b42ece6936af213a72d4c6330874a98ef377e898b7ee71e215bc7d39`
+- satisfied: LDS>=1 (64)
+- opcode_histogram: `{"BAR": 1, "BRA": 2, "CS2R": 2, "EXIT": 2, "IADD3": 1, "IMAD": 4, "ISETP": 3, "LDC": 3, "LDS": 64, "LEA": 65, "LOP3": 1, "MOV": 1, "NOP": 8, "S2R": 2, "S2UR": 1, "STG": 2, "STS": 1, "ULDC": 1, "ULEA": 1, "UMOV": 1, "VIADD": 2}`
 
 [↑ contents](#contents)
 
@@ -1268,10 +1425,70 @@
 | 32 | 268204 | 65.4795 | 32 |
 | 1 | 28204 | 6.8857 | 33 |
 
+<details><summary><code>ncu</code> (JSON)</summary>
+
+```json
+{
+  "launches_profiled": 64,
+  "logical": "shared_conflicts",
+  "metric": "l1tex__data_bank_conflicts_pipe_lsu_mem_shared.sum",
+  "role": "validation",
+  "value": 4096.0
+}
+```
+
+</details>
+
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "disassembly_hash": "0d72d07d030e7393d173f30263b1ca22bda4a26d640c3c9e5e37674e195303d5",
+  "opcode_histogram": {
+    "BAR": 1,
+    "BRA": 2,
+    "CS2R": 2,
+    "EXIT": 3,
+    "IADD3": 2,
+    "IMAD": 32,
+    "ISETP": 4,
+    "LDC": 3,
+    "LDS": 32,
+    "LEA": 1,
+    "LOP3": 49,
+    "MOV": 1,
+    "NOP": 11,
+    "S2R": 2,
+    "S2UR": 1,
+    "SHF": 7,
+    "STG": 2,
+    "STS": 1,
+    "ULDC": 2,
+    "ULEA": 1,
+    "UMOV": 1,
+    "VIADD": 32
+  },
+  "satisfied": [
+    "LDS>=1 (32)"
+  ],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
+
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/shared_memory/bank_stride.cu`
 - bytes: `4535`  ·  sha256: `deee44a45bdafc0270320e62f77d735ec08f3c481b8db8985cbb6ec1bf0f7de9`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `0d72d07d030e7393d173f30263b1ca22bda4a26d640c3c9e5e37674e195303d5`
+- satisfied: LDS>=1 (32)
+- opcode_histogram: `{"BAR": 1, "BRA": 2, "CS2R": 2, "EXIT": 3, "IADD3": 2, "IMAD": 32, "ISETP": 4, "LDC": 3, "LDS": 32, "LEA": 1, "LOP3": 49, "MOV": 1, "NOP": 11, "S2R": 2, "S2UR": 1, "SHF": 7, "STG": 2, "STS": 1, "ULDC": 2, "ULEA": 1, "UMOV": 1, "VIADD": 32}`
 
 [↑ contents](#contents)
 
@@ -1363,8 +1580,8 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `direct` |
-| measurement | `l1_hit_load_latency` = 70.6121 cycles |
-| simulator_param | `l1_latency` = 70.6121 cycles |
+| measurement | `l1_hit_load_latency` = 70.6108 cycles |
+| simulator_param | `l1_latency` = 70.6108 cycles |
 | concept | `l1_path_hit_latency` |
 
 - binary_hash: `aea1c593856320979dc411cf66981a009cb13437e410ceff83a5256d388dc94b`
@@ -1381,9 +1598,9 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `dram_cycles_per_load` | 318.102 | cycles |
-| `hit_to_dram_ratio` | 4.50492 | — |
-| `l1_hit_cycles_per_load` | 70.6121 | cycles |
+| `dram_cycles_per_load` | 317.958 | cycles |
+| `hit_to_dram_ratio` | 4.50296 | — |
+| `l1_hit_cycles_per_load` | 70.6108 | cycles |
 
 ### Raw values
 
@@ -1391,17 +1608,56 @@
 | --- | --- |
 | `binary_sha256` | aea1c593856320979dc411cf66981a009cb13437e410ceff83a5256d388dc94b |
 | `device_name` | NVIDIA H100 80GB HBM3 |
-| `dram_cycles_per_load` | 318.102 |
-| `l1_hit_cycles_per_load` | 70.6121 |
+| `dram_cycles_per_load` | 317.958 |
+| `l1_hit_cycles_per_load` | 70.6108 |
 | `large_kb` | 8192 |
 | `repeats` | 64 |
 | `small_kb` | 16 |
 | `steps` | 4096 |
 
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "disassembly_hash": "6275e1d880988c28a7b893d366d589cbe5bb2efb2dab55c07fed4b71ba42ff0c",
+  "opcode_histogram": {
+    "BRA": 6,
+    "CS2R": 2,
+    "EXIT": 2,
+    "IADD3": 6,
+    "IMAD": 17,
+    "ISETP": 5,
+    "LDC": 6,
+    "LDG": 17,
+    "LOP3": 2,
+    "MOV": 1,
+    "NOP": 10,
+    "S2R": 1,
+    "S2UR": 1,
+    "STG": 2,
+    "ULDC": 2
+  },
+  "satisfied": [
+    "LDG>=1 (17)"
+  ],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
+
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/l1_cache/pointer_chase.cu`
 - bytes: `5643`  ·  sha256: `198f6a1e50bc281f93330623a68670586bd6f83f49dab47b704c831b35c3edff`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `6275e1d880988c28a7b893d366d589cbe5bb2efb2dab55c07fed4b71ba42ff0c`
+- satisfied: LDG>=1 (17)
+- opcode_histogram: `{"BRA": 6, "CS2R": 2, "EXIT": 2, "IADD3": 6, "IMAD": 17, "ISETP": 5, "LDC": 6, "LDG": 17, "LOP3": 2, "MOV": 1, "NOP": 10, "S2R": 1, "S2UR": 1, "STG": 2, "ULDC": 2}`
 
 [↑ contents](#contents)
 
@@ -1453,24 +1709,63 @@
 
 | cycles_per_load | working_set_kb |
 | --- | --- |
-| 47.3457 | 4 |
-| 55.3892 | 8 |
-| 70.6113 | 16 |
-| 86.2441 | 24 |
-| 101.236 | 32 |
-| 128.86 | 48 |
-| 151.066 | 64 |
-| 202.88 | 128 |
-| 238.593 | 256 |
-| 264.456 | 512 |
-| 275.795 | 1024 |
-| 311.615 | 4096 |
-| 353.435 | 16384 |
+| 47.3569 | 4 |
+| 55.4131 | 8 |
+| 70.6562 | 16 |
+| 86.3101 | 24 |
+| 101.26 | 32 |
+| 128.85 | 48 |
+| 151.03 | 64 |
+| 202.842 | 128 |
+| 238.56 | 256 |
+| 264.61 | 512 |
+| 275.678 | 1024 |
+| 311.713 | 4096 |
+| 352.958 | 16384 |
+
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "disassembly_hash": "27c2fe00efb6e73da81a1bc1f140267fc6cb401a11dbe978e45437e8bbe54641",
+  "opcode_histogram": {
+    "BRA": 6,
+    "CS2R": 2,
+    "EXIT": 2,
+    "IADD3": 6,
+    "IMAD": 17,
+    "ISETP": 5,
+    "LDC": 6,
+    "LDG": 17,
+    "LOP3": 2,
+    "MOV": 1,
+    "NOP": 10,
+    "S2R": 1,
+    "S2UR": 1,
+    "STG": 2,
+    "ULDC": 2
+  },
+  "satisfied": [
+    "LDG>=1 (17)"
+  ],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
 
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/l1_cache/working_set.cu`
 - bytes: `4223`  ·  sha256: `0bdfc85ec29e0f1847fd8bca024ae2637a57427be3c0796383ed180cc75987b6`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `27c2fe00efb6e73da81a1bc1f140267fc6cb401a11dbe978e45437e8bbe54641`
+- satisfied: LDG>=1 (17)
+- opcode_histogram: `{"BRA": 6, "CS2R": 2, "EXIT": 2, "IADD3": 6, "IMAD": 17, "ISETP": 5, "LDC": 6, "LDG": 17, "LOP3": 2, "MOV": 1, "NOP": 10, "S2R": 1, "S2UR": 1, "STG": 2, "ULDC": 2}`
 
 [↑ contents](#contents)
 
@@ -1518,34 +1813,73 @@
 | cycles_per_load | ways |
 | --- | --- |
 | 39.7166 | 1 |
-| 39.7744 | 2 |
+| 39.7747 | 2 |
 | 39.8391 | 3 |
-| 39.9028 | 4 |
-| 39.969 | 5 |
+| 39.9033 | 4 |
+| 39.9692 | 5 |
 | 40.0269 | 6 |
-| 40.084 | 7 |
-| 40.146 | 8 |
-| 40.2 | 9 |
-| 40.2578 | 10 |
-| 40.322 | 11 |
-| 40.3867 | 12 |
-| 40.4504 | 13 |
-| 40.5088 | 14 |
-| 40.5642 | 15 |
-| 40.6252 | 16 |
-| 40.6831 | 17 |
-| 40.7385 | 18 |
-| 40.8005 | 19 |
-| 40.8665 | 20 |
-| 40.9336 | 21 |
-| 40.99 | 22 |
-| 41.0476 | 23 |
-| 41.1116 | 24 |
+| 40.0842 | 7 |
+| 40.1462 | 8 |
+| 40.2012 | 9 |
+| 40.2585 | 10 |
+| 40.3223 | 11 |
+| 40.3875 | 12 |
+| 40.4526 | 13 |
+| 40.5093 | 14 |
+| 40.5654 | 15 |
+| 40.6262 | 16 |
+| 40.6836 | 17 |
+| 40.7424 | 18 |
+| 40.8042 | 19 |
+| 40.8716 | 20 |
+| 40.9353 | 21 |
+| 40.9922 | 22 |
+| 41.0488 | 23 |
+| 41.1138 | 24 |
+
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "disassembly_hash": "1545a684c1493ce4a53dffe7a33207a3efc8ab08a17cba953138aefd1733ec6f",
+  "opcode_histogram": {
+    "BRA": 6,
+    "CS2R": 2,
+    "EXIT": 2,
+    "IADD3": 6,
+    "IMAD": 17,
+    "ISETP": 5,
+    "LDC": 6,
+    "LDG": 17,
+    "LOP3": 2,
+    "MOV": 1,
+    "NOP": 10,
+    "S2R": 1,
+    "S2UR": 1,
+    "STG": 2,
+    "ULDC": 2
+  },
+  "satisfied": [
+    "LDG>=1 (17)"
+  ],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
 
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/l1_cache/conflict_sets.cu`
 - bytes: `4359`  ·  sha256: `a1c9a63a7abe678c35db2a1c1f96e95658eb687a8d6b157b54981d06b72ee984`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `1545a684c1493ce4a53dffe7a33207a3efc8ab08a17cba953138aefd1733ec6f`
+- satisfied: LDG>=1 (17)
+- opcode_histogram: `{"BRA": 6, "CS2R": 2, "EXIT": 2, "IADD3": 6, "IMAD": 17, "ISETP": 5, "LDC": 6, "LDG": 17, "LOP3": 2, "MOV": 1, "NOP": 10, "S2R": 1, "S2UR": 1, "STG": 2, "ULDC": 2}`
 
 [↑ contents](#contents)
 
@@ -1575,7 +1909,7 @@
 ```json
 {
   "l1_effective_capacity_kb": {},
-  "l1_hit_latency_cycles": 70.6072
+  "l1_hit_latency_cycles": 70.6057
 }
 ```
 
@@ -1584,7 +1918,7 @@
 | key | value | unit |
 | --- | --- | --- |
 | `l1_effective_capacity_kb` | `{}` | — |
-| `l1_hit_latency_cycles` | 70.6072 | — |
+| `l1_hit_latency_cycles` | 70.6057 | — |
 
 ### Raw values
 
@@ -1603,7 +1937,7 @@
 ```json
 {
   "l1_effective_capacity_kb": {},
-  "l1_hit_latency_cycles": 70.6072
+  "l1_hit_latency_cycles": 70.6057
 }
 ```
 
@@ -1614,7 +1948,7 @@
 ```json
 {
   "binary_sha256": "aea1c593856320979dc411cf66981a009cb13437e410ceff83a5256d388dc94b",
-  "l1_hit_cycles_per_load": 70.6072
+  "l1_hit_cycles_per_load": 70.6057
 }
 ```
 
@@ -1660,7 +1994,7 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `peak_ops_per_cycle` | 106.352 | ops/cycle |
+| `peak_ops_per_cycle` | 106.411 | ops/cycle |
 | `saturation_warps` | 16 | — |
 | `sweep_points` | 32 | — |
 
@@ -1680,39 +2014,80 @@
 | 9096 | 14.4099 | 2 |
 | 9096 | 21.6148 | 3 |
 | 9096 | 28.8197 | 4 |
-| 9228 | 35.5093 | 5 |
+| 9227 | 35.5132 | 5 |
 | 9227 | 42.6158 | 6 |
-| 9227 | 49.7184 | 7 |
-| 9227 | 56.8211 | 8 |
-| 9615 | 61.3441 | 9 |
-| 9613 | 68.1743 | 10 |
-| 9626 | 74.8905 | 11 |
-| 9486 | 82.9045 | 12 |
-| 10358 | 82.2522 | 13 |
-| 10357 | 88.5878 | 14 |
-| 10348 | 94.9981 | 15 |
-| 10357 | 101.243 | 16 |
-| 12575 | 88.5974 | 17 |
-| 12577 | 93.7941 | 18 |
-| 12578 | 98.997 | 19 |
-| 12581 | 104.183 | 20 |
-| 14897 | 92.3848 | 21 |
-| 14898 | 96.7776 | 22 |
-| 14896 | 101.19 | 23 |
-| 14903 | 105.54 | 24 |
-| 17287 | 94.7764 | 25 |
-| 17292 | 98.539 | 26 |
-| 17306 | 102.246 | 27 |
-| 17292 | 106.119 | 28 |
-| 19710 | 96.4254 | 29 |
+| 9228 | 49.713 | 7 |
+| 9228 | 56.8149 | 8 |
+| 9622 | 61.2995 | 9 |
+| 9618 | 68.1389 | 10 |
+| 9622 | 74.9216 | 11 |
+| 9622 | 81.7327 | 12 |
+| 10356 | 82.2681 | 13 |
+| 10338 | 88.7506 | 14 |
+| 10354 | 94.943 | 15 |
+| 10314 | 101.665 | 16 |
+| 12580 | 88.5622 | 17 |
+| 12582 | 93.7568 | 18 |
+| 12588 | 98.9183 | 19 |
+| 12575 | 104.232 | 20 |
+| 14887 | 92.4468 | 21 |
+| 14887 | 96.8491 | 22 |
+| 14886 | 101.258 | 23 |
+| 14892 | 105.618 | 24 |
+| 17288 | 94.7709 | 25 |
+| 17294 | 98.5276 | 26 |
+| 17285 | 102.37 | 27 |
+| 17306 | 106.033 | 28 |
+| 19711 | 96.4205 | 29 |
 | 19714 | 99.7301 | 30 |
-| 19710 | 103.075 | 31 |
-| 19719 | 106.352 | 32 |
+| 19709 | 103.081 | 31 |
+| 19708 | 106.411 | 32 |
+
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "disassembly_hash": "9ae202af275fa1b6abfa288fd733b7a3a6e68137611ca61c211187b9283c7cb2",
+  "opcode_histogram": {
+    "BRA": 2,
+    "CS2R": 2,
+    "EXIT": 2,
+    "FADD": 1,
+    "FFMA": 16,
+    "HFMA2": 1,
+    "I2FP": 1,
+    "IADD3": 5,
+    "ISETP": 3,
+    "LDC": 2,
+    "LOP3": 1,
+    "MOV": 1,
+    "NOP": 10,
+    "S2R": 1,
+    "SHF": 2,
+    "STG": 2,
+    "ULDC": 4
+  },
+  "satisfied": [
+    "FFMA>=8 (16)"
+  ],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
 
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/scheduler_policy/ready_warps.cu`
 - bytes: `4167`  ·  sha256: `66e8d665ec60350e3c5fa942833f7065db231c1fd1ca64eb36650e36571860de`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `9ae202af275fa1b6abfa288fd733b7a3a6e68137611ca61c211187b9283c7cb2`
+- satisfied: FFMA>=8 (16)
+- opcode_histogram: `{"BRA": 2, "CS2R": 2, "EXIT": 2, "FADD": 1, "FFMA": 16, "HFMA2": 1, "I2FP": 1, "IADD3": 5, "ISETP": 3, "LDC": 2, "LOP3": 1, "MOV": 1, "NOP": 10, "S2R": 1, "SHF": 2, "STG": 2, "ULDC": 4}`
 
 [↑ contents](#contents)
 
@@ -1743,7 +2118,7 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `fp32_ops_per_cycle` | 115.387 | ops/cycle |
+| `fp32_ops_per_cycle` | 115.425 | ops/cycle |
 | `int_ops_per_cycle` | 483.215 | ops/cycle |
 | `mixed_ops_per_cycle` | 178.178 | ops/cycle |
 | `overlap_ratio` | 0.368734 | — |
@@ -1755,15 +2130,56 @@
 | `binary_sha256` | 4826d4e62529a9a8c1404c12e237a322565b36f4b206c901dd1d0c6096e2038e |
 | `chain_length` | 2048 |
 | `device_name` | NVIDIA H100 80GB HBM3 |
-| `fp32_ops_per_cycle` | 115.387 |
+| `fp32_ops_per_cycle` | 115.425 |
 | `int_ops_per_cycle` | 483.215 |
 | `mixed_ops_per_cycle` | 178.178 |
 | `warps` | 8 |
+
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "disassembly_hash": "9ce43af19d846c32f2c7c50872d53ad5cb588a9826a9915dfee8eaf63a0ad046",
+  "opcode_histogram": {
+    "BRA": 2,
+    "CS2R": 2,
+    "EXIT": 1,
+    "FADD": 2,
+    "FFMA": 32,
+    "HFMA2": 1,
+    "IADD3": 9,
+    "IMAD": 2,
+    "ISETP": 2,
+    "LDC": 3,
+    "LOP3": 1,
+    "MOV": 4,
+    "NOP": 10,
+    "S2R": 1,
+    "SHF": 1,
+    "STG": 3,
+    "ULDC": 4
+  },
+  "satisfied": [
+    "FFMA>=4 (32)"
+  ],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
 
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/scheduler_policy/mixed_issue.cu`
 - bytes: `5669`  ·  sha256: `7ed20977f0719cdb66f2939d1f30f8d2004ff321fa5dab14bdb86a39940fc8e7`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `9ce43af19d846c32f2c7c50872d53ad5cb588a9826a9915dfee8eaf63a0ad046`
+- satisfied: FFMA>=4 (32)
+- opcode_histogram: `{"BRA": 2, "CS2R": 2, "EXIT": 1, "FADD": 2, "FFMA": 32, "HFMA2": 1, "IADD3": 9, "IMAD": 2, "ISETP": 2, "LDC": 3, "LOP3": 1, "MOV": 4, "NOP": 10, "S2R": 1, "SHF": 1, "STG": 3, "ULDC": 4}`
 
 [↑ contents](#contents)
 
@@ -1794,7 +2210,7 @@
 {
   "issue_saturation_warps": 16,
   "mixed_issue_class": "single_issue_like",
-  "peak_ops_per_cycle": 106.4112
+  "peak_ops_per_cycle": 106.4058
 }
 ```
 
@@ -1804,7 +2220,7 @@
 | --- | --- | --- |
 | `issue_saturation_warps` | 16 | — |
 | `mixed_issue_class` | single_issue_like | — |
-| `peak_ops_per_cycle` | 106.411 | — |
+| `peak_ops_per_cycle` | 106.406 | — |
 
 ### Raw values
 
@@ -1814,7 +2230,7 @@
 {
   "issue_saturation_warps": 16,
   "mixed_issue_class": "single_issue_like",
-  "peak_ops_per_cycle": 106.4112
+  "peak_ops_per_cycle": 106.4058
 }
 ```
 
@@ -1896,10 +2312,50 @@
 | 1.167 | 12 |
 | 1.1252 | 16 |
 
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "disassembly_hash": "32b00f24f3dc9631660e2a3852a2d60551786eee1d0f2d93facad6cc44a49f1d",
+  "opcode_histogram": {
+    "BRA": 2,
+    "CS2R": 2,
+    "EXIT": 1,
+    "FADD": 32,
+    "FFMA": 128,
+    "HFMA2": 1,
+    "IADD3": 5,
+    "ISETP": 2,
+    "LDC": 3,
+    "LOP3": 1,
+    "MOV": 1,
+    "NOP": 8,
+    "S2R": 1,
+    "SHF": 1,
+    "STG": 2,
+    "ULDC": 2
+  },
+  "satisfied": [
+    "FFMA>=8 (128)"
+  ],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
+
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/register_file/register_bank_sweep.cu`
 - bytes: `4516`  ·  sha256: `7aa75fca4c6681820fe6c22be0b38aee5698824f1639b55dbcc13ccfbed950a5`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `32b00f24f3dc9631660e2a3852a2d60551786eee1d0f2d93facad6cc44a49f1d`
+- satisfied: FFMA>=8 (128)
+- opcode_histogram: `{"BRA": 2, "CS2R": 2, "EXIT": 1, "FADD": 32, "FFMA": 128, "HFMA2": 1, "IADD3": 5, "ISETP": 2, "LDC": 3, "LOP3": 1, "MOV": 1, "NOP": 8, "S2R": 1, "SHF": 1, "STG": 2, "ULDC": 2}`
 
 [↑ contents](#contents)
 
@@ -1946,10 +2402,47 @@
 | `rotating_reg_cycles_per_op` | 2.0789 |
 | `same_reg_cycles_per_op` | 4.4395 |
 
+<details><summary><code>sass</code> (JSON)</summary>
+
+```json
+{
+  "disassembly_hash": "68845fd951f326d632215e2cfc47e11225bc03dd62097a16316e823c0fb4da51",
+  "opcode_histogram": {
+    "BRA": 2,
+    "CS2R": 2,
+    "EXIT": 2,
+    "FFMA": 16,
+    "HFMA2": 1,
+    "IADD3": 3,
+    "ISETP": 2,
+    "LDC": 3,
+    "MOV": 2,
+    "NOP": 10,
+    "S2R": 1,
+    "STG": 2,
+    "ULDC": 2
+  },
+  "satisfied": [
+    "FFMA>=8 (16)"
+  ],
+  "validated": true,
+  "violations": []
+}
+```
+
+</details>
+
 ### Registered source
 
 - path: `/home/cliu/wk/amora/amora/probes/nvidia/baseline/register_file/register_latency.cu`
 - bytes: `4327`  ·  sha256: `e19a118fab98c5f6a260b19f5d10357e42bade8a5c98e02080c3560932c19975`
+
+### SASS validation
+
+- validated: `True`
+- disassembly_hash: `68845fd951f326d632215e2cfc47e11225bc03dd62097a16316e823c0fb4da51`
+- satisfied: FFMA>=8 (16)
+- opcode_histogram: `{"BRA": 2, "CS2R": 2, "EXIT": 2, "FFMA": 16, "HFMA2": 1, "IADD3": 3, "ISETP": 2, "LDC": 3, "MOV": 2, "NOP": 10, "S2R": 1, "STG": 2, "ULDC": 2}`
 
 [↑ contents](#contents)
 

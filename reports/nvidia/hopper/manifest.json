@@ -51,6 +51,8 @@
           }
         ],
         "gpu_available": true,
+        "ncu_counters_available": true,
+        "ncu_metric_count": 3637,
         "tools": {
           "cuobjdump": {
             "available": true,
@@ -112,7 +114,7 @@
       },
       "device_count": 7,
       "driver_version": "595.71.05",
-      "generated_at": "2026-06-24T07:05Z",
+      "generated_at": "2026-06-24T08:46Z",
       "outcomes": [
         {
           "fit": "direct",
@@ -172,7 +174,7 @@
         },
         {
           "fit": "direct",
-          "measurement": "70.6121 cycles",
+          "measurement": "70.6108 cycles",
           "mode": "kernel",
           "probe_id": "l1_cache.pointer_chase",
           "tier": "timing_direct"
@@ -293,7 +295,7 @@
         {
           "probe_id": "l1_cache.pointer_chase",
           "unit": "cycles",
-          "value": 70.6121
+          "value": 70.6108
         },
         {
           "probe_id": "l1_cache.conflict_sets",
@@ -324,7 +326,7 @@
       "schema_version": 1,
       "sku": "h100-80g",
       "source_json": "/tmp/amora_p0p1.json",
-      "source_sha256": "15bc518a53fde892848dfb6075afaf888e1c34d3e782366ecec96abe46d554bb"
+      "source_sha256": "9311dc20bc8bc0c404ffbc9a684a567e81e00de7c286e5d31043b80e6c561d65"
     }
   },
   "vendor": "nvidia"

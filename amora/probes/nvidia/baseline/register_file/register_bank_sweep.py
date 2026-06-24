@@ -14,7 +14,8 @@ from pathlib import Path
 
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
-from amora.probes.nvidia.baseline._sources import source_descriptor
+from amora.backends.nvidia.sass import SassExpectation
+from amora.probes.nvidia.baseline._sources import apply_sass_gating, source_descriptor
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -30,6 +31,13 @@ from amora.schemas.results import (
 
 PROBE_ID = "register_file.register_bank_sweep"
 SOURCE = Path(__file__).with_name("register_bank_sweep.cu")
+
+# The templated reg-width kernel must be FFMA-bound with no spills.
+EXPECTATION = SassExpectation(
+    kernel_symbol="amora_reg_width",
+    required_opcodes={"FFMA": 8},
+    forbidden_opcodes=("LDL", "STL"),
+)
 
 
 def _tool_context(capabilities: NvidiaCapabilities) -> ToolContext:
@@ -52,7 +60,7 @@ def _candidate_period(sweep: list[dict]) -> int | None:
 def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     src_descriptor = source_descriptor(SOURCE)
     try:
-        result = run_kernel(SOURCE, capabilities=capabilities, timeout=60)
+        result = run_kernel(SOURCE, capabilities=capabilities, timeout=60, expectation=EXPECTATION)
     except CudaUnavailable as exc:
         return [
             ProbeResult.unsupported(
@@ -65,11 +73,29 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     payload = result.payload
     sweep = list(payload["sweep"])
     plateau_width = _candidate_period(sweep)
+
+    # SASS gating: the templated reg-width kernel must be FFMA-bound with no spills.
+    sass = result.sass_validation
+    decision, fit, uncertainty, downgrade_reason = apply_sass_gating(
+        sass, EXPECTATION, FitStatus.UNDERCONSTRAINED, UncertaintyCategory.MULTI_FIT
+    )
+    if decision == "reject":
+        return [
+            ProbeResult.unsupported(
+                PROBE_ID,
+                f"SASS validation rejected the measurement: {sass.reason}",
+                tool_context=_tool_context(capabilities),
+                raw_values={"registered_source": src_descriptor, "sass": sass.to_dict()},
+            )
+        ]
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
         **payload,
     }
+    if sass is not None:
+        values["sass"] = sass.to_dict()
     assumptions = [
         "operand-width sweep of independent FMA accumulators (register pressure proxy)",
         "CUDA approximation of the SASS-controlled register sweep; bank count is not uniquely identified",
@@ -77,7 +103,11 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     ]
     return [
         ProbeResult(
-            identity=ProbeIdentity(probe_id=PROBE_ID, binary_hash=result.binary_sha256),
+            identity=ProbeIdentity(
+                probe_id=PROBE_ID,
+                binary_hash=result.binary_sha256,
+                disassembly_hash=sass.disassembly_hash if sass else None,
+            ),
             tool_context=_tool_context(capabilities),
             launch=LaunchDescriptor(grid=(1, 1, 1), block=(32, 1, 1), mode="kernel"),
             raw_observation=RawObservation(
@@ -94,8 +124,8 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 name="operand_delivery_plateau",
                 value=plateau_width,
                 unit="accumulators",
-                fit_status=FitStatus.UNDERCONSTRAINED,
-                uncertainty=UncertaintyCategory.MULTI_FIT,
+                fit_status=fit,
+                uncertainty=uncertainty,
                 assumptions=assumptions,
             ),
             backend_interpretation=BackendInterpretation(
@@ -103,15 +133,18 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 interpretation={
                     "nvidia_backend": "operand-delivery throughput plateau across register-pressure widths",
                 },
-                downgrade_reason="CUDA proxy cannot isolate register-bank count without SASS register control",
+                sass_validation=sass.to_dict() if sass else {},
+                downgrade_reason=downgrade_reason
+                if downgrade_reason is not None
+                else "CUDA proxy cannot isolate register-bank count without SASS register control",
             ),
             simulator_estimate=SimulatorEstimate(
                 parameter="gpgpu_num_reg_banks",
                 value=plateau_width,
                 unit="accumulators",
                 evidence_tier=EvidenceTier.TIMING_DIRECT,
-                fit_status=FitStatus.UNDERCONSTRAINED,
-                uncertainty=UncertaintyCategory.MULTI_FIT,
+                fit_status=fit,
+                uncertainty=uncertainty,
                 mapping_contract="operand-width plateau → simulator register-bank pressure (candidate, multi-fit)",
                 assumptions=assumptions,
             ),

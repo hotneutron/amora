@@ -13,7 +13,8 @@ from pathlib import Path
 
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
-from amora.probes.nvidia.baseline._sources import source_descriptor
+from amora.backends.nvidia.sass import SassExpectation
+from amora.probes.nvidia.baseline._sources import apply_sass_gating, source_descriptor
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -30,6 +31,13 @@ from amora.schemas.results import (
 PROBE_ID = "register_file.register_latency"
 SOURCE = Path(__file__).with_name("register_latency.cu")
 
+# The same-register RAW chain must be FFMA-bound with no spills.
+EXPECTATION = SassExpectation(
+    kernel_symbol="amora_reg_same",
+    required_opcodes={"FFMA": 8},
+    forbidden_opcodes=("LDL", "STL"),
+)
+
 
 def _tool_context(capabilities: NvidiaCapabilities) -> ToolContext:
     return ToolContext(tools=capabilities.to_dict())
@@ -38,7 +46,7 @@ def _tool_context(capabilities: NvidiaCapabilities) -> ToolContext:
 def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     src_descriptor = source_descriptor(SOURCE)
     try:
-        result = run_kernel(SOURCE, capabilities=capabilities)
+        result = run_kernel(SOURCE, capabilities=capabilities, expectation=EXPECTATION)
     except CudaUnavailable as exc:
         return [
             ProbeResult.unsupported(
@@ -52,11 +60,29 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     same = float(payload["same_reg_cycles_per_op"])
     rot = float(payload["rotating_reg_cycles_per_op"])
     differential = float(payload["differential_cycles_per_op"])
+
+    # SASS gating: the same-register chain must be FFMA-bound with no spills.
+    sass = result.sass_validation
+    decision, fit, uncertainty, downgrade_reason = apply_sass_gating(
+        sass, EXPECTATION, FitStatus.CONDITIONALLY_IDENTIFIED, UncertaintyCategory.CONDITIONAL_SCALAR
+    )
+    if decision == "reject":
+        return [
+            ProbeResult.unsupported(
+                PROBE_ID,
+                f"SASS validation rejected the measurement: {sass.reason}",
+                tool_context=_tool_context(capabilities),
+                raw_values={"registered_source": src_descriptor, "sass": sass.to_dict()},
+            )
+        ]
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
         **payload,
     }
+    if sass is not None:
+        values["sass"] = sass.to_dict()
     assumptions = [
         "same-register (RAW distance 1) vs rotating-register (relaxed RAW) chains of equal length",
         "differential cycles-per-op isolates operand-delivery cost from absolute arithmetic latency",
@@ -64,7 +90,11 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     ]
     return [
         ProbeResult(
-            identity=ProbeIdentity(probe_id=PROBE_ID, binary_hash=result.binary_sha256),
+            identity=ProbeIdentity(
+                probe_id=PROBE_ID,
+                binary_hash=result.binary_sha256,
+                disassembly_hash=sass.disassembly_hash if sass else None,
+            ),
             tool_context=_tool_context(capabilities),
             launch=LaunchDescriptor(grid=(1, 1, 1), block=(32, 1, 1), mode="kernel"),
             raw_observation=RawObservation(
@@ -86,8 +116,8 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 name="operand_delivery_differential_latency",
                 value=differential,
                 unit="cycles",
-                fit_status=FitStatus.CONDITIONALLY_IDENTIFIED,
-                uncertainty=UncertaintyCategory.CONDITIONAL_SCALAR,
+                fit_status=fit,
+                uncertainty=uncertainty,
                 assumptions=assumptions,
             ),
             backend_interpretation=BackendInterpretation(
@@ -97,14 +127,16 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                     "same_reg_cycles_per_op": same,
                     "rotating_reg_cycles_per_op": rot,
                 },
+                sass_validation=sass.to_dict() if sass else {},
+                downgrade_reason=downgrade_reason,
             ),
             simulator_estimate=SimulatorEstimate(
                 parameter="max_latency_regular_register_file_latency",
                 value=differential,
                 unit="cycles",
                 evidence_tier=EvidenceTier.TIMING_DIRECT,
-                fit_status=FitStatus.CONDITIONALLY_IDENTIFIED,
-                uncertainty=UncertaintyCategory.CONDITIONAL_SCALAR,
+                fit_status=fit,
+                uncertainty=uncertainty,
                 mapping_contract="RAW-distance differential cycles → simulator operand-delivery latency (conditional)",
                 assumptions=assumptions,
             ),

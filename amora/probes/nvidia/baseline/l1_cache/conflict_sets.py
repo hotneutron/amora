@@ -12,7 +12,13 @@ from pathlib import Path
 
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
-from amora.probes.nvidia.baseline._sources import source_descriptor
+from amora.backends.nvidia.sass import SassExpectation
+from amora.probes.nvidia.baseline._sources import (
+    apply_sass_gating,
+    downgrade_fit,
+    soften_uncertainty,
+    source_descriptor,
+)
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -28,6 +34,13 @@ from amora.schemas.results import (
 
 PROBE_ID = "l1_cache.conflict_sets"
 SOURCE = Path(__file__).with_name("conflict_sets.cu")
+
+# The timed loop must hit global memory (LDG) without shared or local spills.
+EXPECTATION = SassExpectation(
+    kernel_symbol="amora_l1_conflict",
+    required_opcodes={"LDG": 1},
+    forbidden_opcodes=("LDS", "STL"),
+)
 
 
 def _tool_context(capabilities: NvidiaCapabilities) -> ToolContext:
@@ -48,7 +61,7 @@ def _associativity_knee(sweep: list[dict]) -> int | None:
 def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     src_descriptor = source_descriptor(SOURCE)
     try:
-        result = run_kernel(SOURCE, capabilities=capabilities, timeout=60)
+        result = run_kernel(SOURCE, capabilities=capabilities, timeout=60, expectation=EXPECTATION)
     except CudaUnavailable as exc:
         return [
             ProbeResult.unsupported(
@@ -61,20 +74,45 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     payload = result.payload
     sweep = list(payload["sweep"])
     assoc = _associativity_knee(sweep)
+    fit = FitStatus.BOUNDED if assoc else FitStatus.UNDERCONSTRAINED
+
+    # SASS gating: reject if the timed loop is not a global-load conflict sweep.
+    sass = result.sass_validation
+    decision, fit, uncertainty, downgrade_reason = apply_sass_gating(
+        sass, EXPECTATION, fit, UncertaintyCategory.BOUNDED_RANGE
+    )
+    if decision == "reject":
+        return [
+            ProbeResult.unsupported(
+                PROBE_ID,
+                f"SASS validation rejected the measurement: {sass.reason}",
+                tool_context=_tool_context(capabilities),
+                raw_values={
+                    "registered_source": src_descriptor,
+                    "sass": sass.to_dict(),
+                },
+            )
+        ]
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
         **payload,
     }
+    if sass is not None:
+        values["sass"] = sass.to_dict()
     assumptions = [
         "ring of same-set lines grown one way at a time at a fixed power-of-two stride",
         "latency knee marks where the conflict set exceeds the effective associativity",
         "associativity is bounded: indexing/replacement/hashing can mimic the same curve",
     ]
-    fit = FitStatus.BOUNDED if assoc else FitStatus.UNDERCONSTRAINED
     return [
         ProbeResult(
-            identity=ProbeIdentity(probe_id=PROBE_ID, binary_hash=result.binary_sha256),
+            identity=ProbeIdentity(
+                probe_id=PROBE_ID,
+                binary_hash=result.binary_sha256,
+                disassembly_hash=sass.disassembly_hash if sass else None,
+            ),
             tool_context=_tool_context(capabilities),
             launch=LaunchDescriptor(grid=(1, 1, 1), block=(32, 1, 1), mode="kernel"),
             raw_observation=RawObservation(
@@ -93,7 +131,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 value=assoc,
                 unit="ways",
                 fit_status=fit,
-                uncertainty=UncertaintyCategory.BOUNDED_RANGE,
+                uncertainty=uncertainty,
                 assumptions=assumptions,
             ),
             backend_interpretation=BackendInterpretation(
@@ -101,7 +139,10 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 interpretation={
                     "nvidia_backend": "effective L1 associativity bounded by the conflict-set latency knee",
                 },
-                downgrade_reason=None if assoc else "no clear associativity knee detected",
+                sass_validation=sass.to_dict() if sass else {},
+                downgrade_reason=downgrade_reason
+                if downgrade_reason is not None
+                else (None if assoc else "no clear associativity knee detected"),
             ),
             simulator_estimate=SimulatorEstimate(
                 parameter="l1d_cache_assoc",
@@ -109,7 +150,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 unit="ways",
                 evidence_tier=EvidenceTier.TIMING_DIRECT,
                 fit_status=fit,
-                uncertainty=UncertaintyCategory.BOUNDED_RANGE,
+                uncertainty=uncertainty,
                 mapping_contract="conflict-set latency knee → simulator L1 associativity (bounded)",
                 assumptions=assumptions,
             ),

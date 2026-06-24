@@ -31,7 +31,7 @@ Per family, one table per probe group. Rows are SKUs; columns are the scalar pro
 
 | sku | l1_cache.conflict_sets (ways) | l1_cache.pointer_chase (cycles) | shared_memory.bank_stride (banks) | shared_memory.pointer_chase (cycles) |
 | --- | ---: | ---: | ---: | ---: |
-| `h100-80g` | — | 70.6121 | 32 | 29.0146 |
+| `h100-80g` | — | 70.6108 | 32 | 29.0146 |
 
 ### volta
 

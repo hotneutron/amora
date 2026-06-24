@@ -56,3 +56,28 @@ def soften_uncertainty(uncertainty: UncertaintyCategory) -> UncertaintyCategory:
     if uncertainty == UncertaintyCategory.STABLE_SCALAR:
         return UncertaintyCategory.BOUNDED_RANGE
     return uncertainty
+
+
+def apply_sass_gating(sass, expectation, fit: FitStatus, uncertainty: UncertaintyCategory):
+    """Apply SASS reject/downgrade/pass to a (fit, uncertainty) pair.
+
+    Returns ``(decision, fit, uncertainty, downgrade_reason)``. ``decision`` is
+    one of 'pass' / 'downgrade' / 'reject'. When ``sass`` is None (no
+    disassembler) the decision is 'pass' unchanged. Probes handle 'reject' by
+    returning a structured unsupported result.
+    """
+
+    # Imported lazily to avoid a hard dependency when SASS tooling is absent.
+    from amora.backends.nvidia.sass import gate_decision
+
+    if sass is None:
+        return "pass", fit, uncertainty, None
+    decision = gate_decision(sass, expectation)
+    if decision == "downgrade":
+        return (
+            "downgrade",
+            downgrade_fit(fit),
+            soften_uncertainty(uncertainty),
+            f"SASS validation downgrade: {sass.reason}",
+        )
+    return decision, fit, uncertainty, None

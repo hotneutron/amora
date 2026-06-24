@@ -12,7 +12,8 @@ from pathlib import Path
 
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
-from amora.probes.nvidia.baseline._sources import source_descriptor
+from amora.backends.nvidia.sass import SassExpectation
+from amora.probes.nvidia.baseline._sources import apply_sass_gating, source_descriptor
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -28,6 +29,13 @@ from amora.schemas.results import (
 
 PROBE_ID = "scheduler_policy.mixed_issue"
 SOURCE = Path(__file__).with_name("mixed_issue.cu")
+
+# The mixed FP32+INT kernel must be FFMA-bound with no spills.
+EXPECTATION = SassExpectation(
+    kernel_symbol="amora_mix_both",
+    required_opcodes={"FFMA": 4},
+    forbidden_opcodes=("LDL", "STL"),
+)
 
 
 def _tool_context(capabilities: NvidiaCapabilities) -> ToolContext:
@@ -58,7 +66,7 @@ def _classify(fp32: float, i32: float, mixed: float) -> tuple[str, float]:
 def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     src_descriptor = source_descriptor(SOURCE)
     try:
-        result = run_kernel(SOURCE, capabilities=capabilities, timeout=60)
+        result = run_kernel(SOURCE, capabilities=capabilities, timeout=60, expectation=EXPECTATION)
     except CudaUnavailable as exc:
         return [
             ProbeResult.unsupported(
@@ -73,11 +81,29 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     i32 = float(payload["int_ops_per_cycle"])
     mixed = float(payload["mixed_ops_per_cycle"])
     overlap_class, ratio = _classify(fp32, i32, mixed)
+
+    # SASS gating: the mixed FP32+INT kernel must be FFMA-bound with no spills.
+    sass = result.sass_validation
+    decision, fit, uncertainty, downgrade_reason = apply_sass_gating(
+        sass, EXPECTATION, FitStatus.BEHAVIORAL_ONLY, UncertaintyCategory.BEHAVIORAL_CLASS
+    )
+    if decision == "reject":
+        return [
+            ProbeResult.unsupported(
+                PROBE_ID,
+                f"SASS validation rejected the measurement: {sass.reason}",
+                tool_context=_tool_context(capabilities),
+                raw_values={"registered_source": src_descriptor, "sass": sass.to_dict()},
+            )
+        ]
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
         **payload,
     }
+    if sass is not None:
+        values["sass"] = sass.to_dict()
     assumptions = [
         "independent FP32 (FMA) and INT (MAD) streams run alone and interleaved",
         "overlap_ratio = mixed / max(fp32, int); higher means more pipe overlap",
@@ -85,7 +111,11 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     ]
     return [
         ProbeResult(
-            identity=ProbeIdentity(probe_id=PROBE_ID, binary_hash=result.binary_sha256),
+            identity=ProbeIdentity(
+                probe_id=PROBE_ID,
+                binary_hash=result.binary_sha256,
+                disassembly_hash=sass.disassembly_hash if sass else None,
+            ),
             tool_context=_tool_context(capabilities),
             launch=LaunchDescriptor(grid=(1, 1, 1), block=(256, 1, 1), mode="kernel"),
             raw_observation=RawObservation(
@@ -107,8 +137,8 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             normalized_measurement=NormalizedMeasurement(
                 name="mixed_issue_overlap",
                 value=overlap_class,
-                fit_status=FitStatus.BEHAVIORAL_ONLY,
-                uncertainty=UncertaintyCategory.BEHAVIORAL_CLASS,
+                fit_status=fit,
+                uncertainty=uncertainty,
                 assumptions=assumptions,
             ),
             backend_interpretation=BackendInterpretation(
@@ -117,13 +147,15 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                     "nvidia_backend": "FP32/INT pipe overlap classified from mixed vs single-pipe throughput",
                     "overlap_ratio": ratio,
                 },
+                sass_validation=sass.to_dict() if sass else {},
+                downgrade_reason=downgrade_reason,
             ),
             simulator_estimate=SimulatorEstimate(
                 parameter="gpgpu_dual_issue_diff_exec_units",
                 value=overlap_class,
                 evidence_tier=EvidenceTier.TIMING_DIRECT,
-                fit_status=FitStatus.BEHAVIORAL_ONLY,
-                uncertainty=UncertaintyCategory.BEHAVIORAL_CLASS,
+                fit_status=fit,
+                uncertainty=uncertainty,
                 mapping_contract="mixed/single-pipe overlap ratio → simulator dual-issue behavioral class",
                 assumptions=assumptions,
             ),
