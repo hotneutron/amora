@@ -342,6 +342,23 @@ def _build_probe_section(result: dict[str, Any]) -> list[str]:
             "",
         ]
 
+    # SASS validation (probes that declare an opcode expectation).
+    sass = interp.get("sass_validation")
+    if isinstance(sass, dict) and sass:
+        lines += ["### SASS validation", ""]
+        lines.append(f"- validated: `{sass.get('validated')}`")
+        if sass.get("disassembly_hash"):
+            lines.append(f"- disassembly_hash: `{sass['disassembly_hash']}`")
+        if sass.get("satisfied"):
+            lines.append(f"- satisfied: {', '.join(sass['satisfied'])}")
+        if sass.get("violations"):
+            lines.append(f"- violations: {', '.join(sass['violations'])}")
+        if sass.get("dependency_confirmed") is not None:
+            lines.append(f"- dependency_confirmed: `{sass['dependency_confirmed']}`")
+        if sass.get("opcode_histogram"):
+            lines.append(f"- opcode_histogram: `{json.dumps(sass['opcode_histogram'], sort_keys=True)}`")
+        lines.append("")
+
     lines.append("[↑ contents](#contents)")
     lines += ["", "---", ""]
     return lines

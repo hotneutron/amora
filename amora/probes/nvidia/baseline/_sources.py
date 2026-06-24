@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+from amora.schemas.evidence import FitStatus, UncertaintyCategory
+
 
 def sha256_file(path: Path) -> str:
     """Return the SHA-256 hex digest of a CUDA source on disk."""
@@ -23,3 +25,34 @@ def source_descriptor(path: Path) -> dict[str, object]:
         "sha256": sha256_file(path),
         "bytes": path.stat().st_size,
     }
+
+
+# Ordered weakest -> strongest, used to downgrade a fit one notch.
+_FIT_ORDER = [
+    FitStatus.UNSUPPORTED,
+    FitStatus.UNDERCONSTRAINED,
+    FitStatus.BEHAVIORAL_ONLY,
+    FitStatus.BOUNDED,
+    FitStatus.CONDITIONALLY_IDENTIFIED,
+    FitStatus.UNIQUELY_IDENTIFIED,
+    FitStatus.DIRECT,
+]
+
+
+def downgrade_fit(fit: FitStatus, *, notches: int = 1) -> FitStatus:
+    """Lower a fit status by ``notches`` (never below UNDERCONSTRAINED)."""
+
+    try:
+        idx = _FIT_ORDER.index(fit)
+    except ValueError:
+        return fit
+    new_idx = max(1, idx - notches)  # 1 == UNDERCONSTRAINED floor
+    return _FIT_ORDER[new_idx]
+
+
+def soften_uncertainty(uncertainty: UncertaintyCategory) -> UncertaintyCategory:
+    """Relax a stable scalar to a bounded range after a SASS downgrade."""
+
+    if uncertainty == UncertaintyCategory.STABLE_SCALAR:
+        return UncertaintyCategory.BOUNDED_RANGE
+    return uncertainty
