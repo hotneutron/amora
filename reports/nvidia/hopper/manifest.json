@@ -1,0 +1,218 @@
+{
+  "family": "hopper",
+  "skus": {
+    "h100-80g": {
+      "backend": "nvidia_cuda",
+      "capabilities": {
+        "backend": "nvidia_cuda",
+        "cuda_available": true,
+        "devices": [
+          {
+            "driver_version": "595.71.05",
+            "index": 0,
+            "name": "NVIDIA H100 80GB HBM3",
+            "uuid": "GPU-c80fe196-e3ba-82ff-7233-d9804f701864"
+          },
+          {
+            "driver_version": "595.71.05",
+            "index": 1,
+            "name": "NVIDIA H100 80GB HBM3",
+            "uuid": "GPU-4aae1f51-fb63-a02f-2980-271fde921f2e"
+          },
+          {
+            "driver_version": "595.71.05",
+            "index": 2,
+            "name": "NVIDIA H100 80GB HBM3",
+            "uuid": "GPU-d662fc1b-8afa-7d17-6877-8ca096f9c89a"
+          },
+          {
+            "driver_version": "595.71.05",
+            "index": 3,
+            "name": "NVIDIA H100 80GB HBM3",
+            "uuid": "GPU-69a548f0-cca4-48b1-30a7-77bb8928a43c"
+          },
+          {
+            "driver_version": "595.71.05",
+            "index": 4,
+            "name": "NVIDIA H100 80GB HBM3",
+            "uuid": "GPU-4dc55dbe-e752-a828-f69b-b7c2c04b24d6"
+          },
+          {
+            "driver_version": "595.71.05",
+            "index": 5,
+            "name": "NVIDIA H100 80GB HBM3",
+            "uuid": "GPU-01e9e7f2-6a35-5554-524c-8bf7ad6040b5"
+          },
+          {
+            "driver_version": "595.71.05",
+            "index": 6,
+            "name": "NVIDIA H100 80GB HBM3",
+            "uuid": "GPU-b356e84d-b220-a33c-dd68-3ea01ec109ea"
+          }
+        ],
+        "gpu_available": true,
+        "tools": {
+          "cuobjdump": {
+            "available": true,
+            "error": null,
+            "name": "cuobjdump",
+            "path": "/usr/local/cuda-12.8/bin/cuobjdump",
+            "version": "cuobjdump: NVIDIA (R) fat binary listing tool"
+          },
+          "ncu": {
+            "available": true,
+            "error": null,
+            "name": "ncu",
+            "path": "/usr/local/cuda-12.8/bin/ncu",
+            "version": "NVIDIA (R) Nsight Compute Command Line Profiler"
+          },
+          "nvcc": {
+            "available": true,
+            "error": null,
+            "name": "nvcc",
+            "path": "/usr/local/cuda-12.8/bin/nvcc",
+            "version": "nvcc: NVIDIA (R) Cuda compiler driver"
+          },
+          "nvdisasm": {
+            "available": true,
+            "error": null,
+            "name": "nvdisasm",
+            "path": "/usr/local/cuda-12.8/bin/nvdisasm",
+            "version": "nvdisasm: NVIDIA (R) CUDA disassembler"
+          },
+          "nvidia-smi": {
+            "available": true,
+            "error": null,
+            "name": "nvidia-smi",
+            "path": "/usr/bin/nvidia-smi",
+            "version": "NVIDIA-SMI version  : 595.71.05"
+          }
+        },
+        "unsupported_reasons": []
+      },
+      "counts": {
+        "evidence_tier": {
+          "coupled_inference": 1,
+          "direct_metadata": 2,
+          "timing_direct": 5
+        },
+        "fit_status": {
+          "direct": 4,
+          "uniquely_identified": 4
+        },
+        "launch_mode": {
+          "analysis": 1,
+          "kernel": 5,
+          "metadata": 1,
+          "planning": 1
+        }
+      },
+      "device_count": 7,
+      "driver_version": "595.71.05",
+      "generated_at": "2026-06-24T02:08Z",
+      "outcomes": [
+        {
+          "fit": "direct",
+          "measurement": "_object_ (device_index, device_name, driver_version, uuid)",
+          "mode": "metadata",
+          "probe_id": "topology.device_attributes",
+          "tier": "direct_metadata"
+        },
+        {
+          "fit": "direct",
+          "measurement": "_object_ (block_sizes, dynamic_shared_memory_bytes, point_count, registers_per_thread, sweep_points)",
+          "mode": "planning",
+          "probe_id": "topology.occupancy",
+          "tier": "direct_metadata"
+        },
+        {
+          "fit": "uniquely_identified",
+          "measurement": "8 blocks",
+          "mode": "kernel",
+          "probe_id": "topology.persistent_cta",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "direct",
+          "measurement": "4.377 cycles_per_op",
+          "mode": "kernel",
+          "probe_id": "arithmetic_latency.dependent_chain",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "uniquely_identified",
+          "measurement": "1.1471 cycles_per_op",
+          "mode": "kernel",
+          "probe_id": "arithmetic_throughput.independent_chains",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "direct",
+          "measurement": "29.0129 cycles",
+          "mode": "kernel",
+          "probe_id": "shared_memory.pointer_chase",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "uniquely_identified",
+          "measurement": "32 banks",
+          "mode": "kernel",
+          "probe_id": "shared_memory.bank_stride",
+          "tier": "timing_direct"
+        },
+        {
+          "fit": "uniquely_identified",
+          "measurement": "_object_ (bank_count, bank_serialization_factor, shared_load_latency_cycles)",
+          "mode": "analysis",
+          "probe_id": "shared_memory.analyze",
+          "tier": "coupled_inference"
+        }
+      ],
+      "primary_device": "NVIDIA H100 80GB HBM3",
+      "probe_count": 8,
+      "probe_ids": [
+        "topology.device_attributes",
+        "topology.occupancy",
+        "topology.persistent_cta",
+        "arithmetic_latency.dependent_chain",
+        "arithmetic_throughput.independent_chains",
+        "shared_memory.pointer_chase",
+        "shared_memory.bank_stride",
+        "shared_memory.analyze"
+      ],
+      "probes_file": "probes-h100-80g.md",
+      "scalars": [
+        {
+          "probe_id": "topology.persistent_cta",
+          "unit": "blocks",
+          "value": 8
+        },
+        {
+          "probe_id": "arithmetic_latency.dependent_chain",
+          "unit": "cycles_per_op",
+          "value": 4.377
+        },
+        {
+          "probe_id": "arithmetic_throughput.independent_chains",
+          "unit": "cycles_per_op",
+          "value": 1.1471
+        },
+        {
+          "probe_id": "shared_memory.pointer_chase",
+          "unit": "cycles",
+          "value": 29.0129
+        },
+        {
+          "probe_id": "shared_memory.bank_stride",
+          "unit": "banks",
+          "value": 32
+        }
+      ],
+      "schema_version": 1,
+      "sku": "h100-80g",
+      "source_json": "/tmp/amora_baseline.json",
+      "source_sha256": "4b163db65f7977afc1276c0f5442e9aacd5470b817d69534024929071a8b1e9e"
+    }
+  },
+  "vendor": "nvidia"
+}

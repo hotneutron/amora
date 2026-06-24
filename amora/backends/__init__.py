@@ -1,1 +1,1 @@
-"""Hardware backend implementations."""
+"""Accelerator backend integrations."""

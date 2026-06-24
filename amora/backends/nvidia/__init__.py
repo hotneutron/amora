@@ -1,5 +1,5 @@
-"""NVIDIA backend helpers."""
+"""NVIDIA CUDA backend."""
 
-from .cuda_tools import CudaToolchain, ToolStatus
+from amora.backends.nvidia.cuda import NvidiaCapabilities, discover_capabilities
 
-__all__ = ["CudaToolchain", "ToolStatus"]
+__all__ = ["NvidiaCapabilities", "discover_capabilities"]

@@ -2,44 +2,97 @@
 
 ## Scope
 
-This document defines probing methodology for P1 probes listed in
-`/Users/bytedance/wk/amora/.plan/nvidia-probe-semantic-measurement-gap-plan.md`.
-P1 probes have moderate semantic gaps. They are executable early, but their
-results should usually be reported as fitted equivalents rather than direct
-hardware facts.
+This document defines NVIDIA P1 probe methodology under the AMORA
+hardware-first, simulator-assisted validation model.
+
+P1 probes are executable early but have larger semantic gaps than the baseline probes. They map
+observable NVIDIA behavior onto simulator-equivalent cache, scheduler, and
+operand-delivery parameters. Most P1 outputs should be fitted, bounded, or
+behavioral unless a published fact or direct metric supports a scalar.
 
 P1 covers:
 
-- L1, constant, texture, and instruction-cache behavior
-- scheduler and issue behavior
-- register file and operand collector behavior
+- L1, constant, texture, and instruction-cache behavior,
+- scheduler and issue behavior,
+- register file and operand collector behavior.
 
-## Common Methodology Rules
+## Revision History
 
-1. Run P0 first. P1 analysis depends on known clock, occupancy, arithmetic
-   latency, shared-memory behavior, and basic throughput.
-2. Use disassembly checks for every generated kernel.
-3. Use NCU/CUPTI metrics to classify bottleneck source.
-4. Use PC Sampling when stall attribution matters.
-5. Use NVBit only in separate validation runs for dynamic instruction/register
-   evidence.
-6. Report simulator cache, scheduler, and operand-collector fields as
-   behavioral/effective estimates unless direct metadata exists.
+### 2026-06-18: Layered Evidence Refresh
+
+Source inputs:
+
+- `.plan/probing-suite-microarchitecture-plan.md`
+- `.plan/nvidia-probe-semantic-measurement-gap-plan.md`
+- Previous `.plan/nvidia-p1-kernel-methodology.md`
+- baseline methodology refresh in `.plan/nvidia-baseline-kernel-methodology.md`
+
+Major changes:
+
+- Replaced absolute workspace paths with repo-relative paths.
+- Updated P1 to depend explicitly on baseline layered outputs.
+- Reframed cache, scheduler, and register/operand results as backend
+  interpretations before simulator mapping.
+- Added primary-evidence selection by semantic match.
+- Added simulator trace validation hooks for cache state, scheduler state, and
+  operand-collector/register behavior.
+- Added scalar-output policies, fit status, uncertainty categories, rejection
+  rules, and downgrade rules per probe.
+
+Superseded assumptions:
+
+- Superseded: P1 probes can report simulator cache/scheduler/register fields
+  primarily through fitted confidence labels.
+  Replacement: P1 reports must preserve measurement, interpretation, and
+  simulator mapping layers with explicit scalar-output policy.
+
+- Superseded: scheduler policy inference can produce a simulator policy string.
+  Replacement: NVIDIA scheduler behavior should be reported as a behavioral
+  class unless direct evidence justifies a more specific mapping.
+
+## Common P1 Contract
+
+P1 requires baseline probe outputs:
+
+- topology and occupancy,
+- clock and device identity,
+- arithmetic latency,
+- arithmetic throughput,
+- shared-memory latency and bank behavior.
+
+Every P1 probe must emit:
+
+- `raw_observation`,
+- `normalized_measurement`,
+- `backend_interpretation`,
+- `simulator_estimate`.
+
+Every P1 simulator estimate must include:
+
+- fit status,
+- uncertainty category,
+- variance summary,
+- assumptions,
+- `coupled_with`,
+- primary evidence and validation evidence,
+- rejection/downgrade state,
+- fallback behavior.
 
 Risk scale:
 
-- Low: repeated timing curve has a sharp feature and matches counters.
-- Medium: curve is stable but several hardware mechanisms can explain it.
-- High: estimate maps a hidden hardware policy onto a simulator-only structure.
+- Medium: stable curve and matching counters, but simulator mapping is indirect.
+- High: multiple mechanisms can explain the same behavior.
+- Very high: target parameter is a simulator-only abstraction with weak external
+  evidence.
 
 ## Probe: `l1_cache/pointer_chase.cu`
 
-### Goal
+### Concept
 
-Measure L1 path hit latency for global/read-only/constant/texture-style access
+L1-like path hit latency for data, read-only, constant, texture, and instruction
 paths where supported.
 
-### Parameters
+### Target Parameters
 
 - `l1d_cache_config::l1_latency`
 - `m_L1D_config`
@@ -47,51 +100,60 @@ paths where supported.
 - `m_L0C_config`
 - `m_L1T_config`
 
+### Primary Evidence
+
+- NCU/CUPTI `l1tex__*` and path-specific metrics when direct.
+- Validated dependent pointer-chase timing when no direct latency metric exists.
+
+### Validation Evidence
+
+- SASS load opcode and cache modifier verification.
+- L2/DRAM traffic checks.
+- baseline shared-memory and arithmetic latency baselines.
+- Simulator L1/cache path trace.
+
 ### Methodology
 
-1. Allocate a pointer-chase list that fits inside the target cache level.
-2. Construct dependent loads so the next address depends on the previous load.
-3. Generate variants:
-   - ordinary global load
-   - cache-hinted global load if available
-   - read-only path
-   - constant path
-   - texture path if the backend supports it
-4. Keep working set below the expected L1 capacity for hit-latency runs.
-5. Sweep active warps to separate single-warp hit latency from scheduler hiding.
-6. Collect NCU/CUPTI `l1tex__*` hit, request, sector, and throughput metrics.
-7. Compare against shared-memory latency and L2 pointer-chase latency controls.
+1. Generate dependent pointer-chase kernels for each supported path:
+   ordinary global, cache-hinted global, read-only, constant, texture, and
+   instruction-footprint variants.
+2. Keep hit-latency working sets below the candidate L1 capacity.
+3. Use larger working sets as L2/DRAM controls.
+4. Sweep active warps to distinguish raw hit latency from scheduler hiding.
+5. Collect NCU/CUPTI hit, request, sector, and throughput metrics in profiler
+   mode.
+6. Run timing mode separately.
+7. Record exact opcode path and disassembly hash.
 
-### Reasoning
+### Scalar Policy
 
-Dependent pointer chasing removes memory-level parallelism and makes the latency
-of the selected path visible. Multiple source variants are necessary because
-NVIDIA cache paths do not map one-to-one to simulator cache objects.
+Allow scalar latency only for verified path-specific hit behavior with stable
+variance and matching counters. Otherwise emit `bounded_range` or
+`conditional_scalar`.
 
-### Risk Estimate
+### Fit And Uncertainty
 
-Risk: Medium.
+- Expected fit status: `direct`, `bounded`, or `conditionally_identified`.
+- Expected uncertainty: `stable_scalar`, `bounded_range`, or
+  `conditional_scalar`.
 
-Main risks:
+### Rejection And Downgrade
 
-- Loads may bypass or use different cache paths depending on compiler, address
-  space, and cache operators.
-- L1 behavior can be sectorized or unified with shared memory.
-- Hit-rate counters may not isolate a single path.
+Reject if the load path differs from the intended path. Downgrade if L2/DRAM
+traffic appears in a supposed L1-hit run or if path metrics cannot isolate the
+target.
 
-Mitigation:
+### Risk
 
-- Disassemble load opcodes and cache modifiers.
-- Use working sets that clearly fit L1 and clearly exceed L1 as controls.
-- Report path-specific estimates instead of collapsing them prematurely.
+Medium. NVIDIA cache paths do not map one-to-one to simulator cache objects.
 
 ## Probe: `l1_cache/working_set.cu`
 
-### Goal
+### Concept
 
-Estimate cache capacity and line-size knees for L1-like paths.
+Effective capacity knees and line/sector granularity for L1-like paths.
 
-### Parameters
+### Target Parameters
 
 - `cache_config::m_line_sz`
 - `cache_config::m_nset`
@@ -102,47 +164,56 @@ Estimate cache capacity and line-size knees for L1-like paths.
 - `m_L0C_config`
 - `m_L1T_config`
 
+### Primary Evidence
+
+- Working-set latency and miss-rate curves.
+- NCU/CUPTI sector, hit, miss, and request metrics.
+
+### Validation Evidence
+
+- Disassembly path checks.
+- Stride sweeps.
+- Simulator cache-state trace.
+
 ### Methodology
 
-1. Run pointer-chase or strided load loops across increasing working-set sizes.
-2. Use randomized pointer permutations to defeat simple prefetch/stream effects.
-3. Sweep access stride to detect line-size transitions.
-4. Repeat for data, read-only, constant, texture, and instruction-footprint
-   variants when practical.
-5. Fit latency or miss-rate knees:
-   - first knee: likely L1 capacity/effective capacity
-   - stride knee: likely line/sector granularity
-6. Validate with NCU/CUPTI hit-rate and sector metrics.
+1. Sweep working-set size using pointer-chase or randomized strided loads.
+2. Use access patterns that reduce prefetch and streaming artifacts.
+3. Sweep access stride to detect line/sector transitions.
+4. Repeat for data, read-only, constant, texture, and instruction variants when
+   practical.
+5. Fit latency and counter knees using segmented regression or derivative
+   thresholds.
+6. Preserve full curves and alternative knee candidates.
 
-### Reasoning
+### Scalar Policy
 
-Cache capacity and line size are usually visible as knees in latency or
-transaction curves. Randomized dependent traversals reduce false bandwidth
-signals and emphasize cache residency.
+Line or sector size can be scalar when stride/counter evidence is direct.
+Capacity should usually be a bounded effective range.
 
-### Risk Estimate
+### Fit And Uncertainty
 
-Risk: Medium.
+- Expected fit status: `bounded` or `conditionally_identified`.
+- Expected uncertainty: `bounded_range` or `conditional_scalar`.
 
-Main risks:
+### Rejection And Downgrade
 
-- Replacement policy and cache partitioning can blur capacity knees.
-- Real hardware may use sector lines, making simulator `m_line_sz` ambiguous.
-- Instruction-cache variants require careful code-size generation.
+Reject a capacity scalar if knees are broad or non-repeatable. Downgrade if
+sectorized behavior cannot be represented by one simulator line size.
 
-Mitigation:
+### Risk
 
-- Preserve full curves and report effective capacity ranges.
-- Distinguish line size from sector size when counters expose sectors.
-- Use confidence ranges rather than a single number when knees are broad.
+Medium. Replacement, sectoring, and shared/L1 partitioning blur structural
+interpretation.
 
 ## Probe: `l1_cache/conflict_sets.cu`
 
-### Goal
+### Concept
 
-Estimate associativity-like behavior and cache-index conflicts.
+Effective cache associativity, index conflict behavior, MSHR pressure, and
+miss-queue saturation.
 
-### Parameters
+### Target Parameters
 
 - `cache_config::m_assoc`
 - `cache_config::m_nset`
@@ -151,220 +222,210 @@ Estimate associativity-like behavior and cache-index conflicts.
 - `cache_config::m_miss_queue_size`
 - `l1d_cache_config::l1_banks`
 
+### Primary Evidence
+
+- Conflict-set latency and miss curves.
+- NCU/CUPTI L1 sector, miss, replay, and request metrics.
+
+### Validation Evidence
+
+- Multiple address-index hypotheses.
+- Simulator cache and MSHR trace.
+- P2 outstanding-request probes for queue-like behavior.
+
 ### Methodology
 
-1. Build address sets with controlled spacing so candidate addresses map to the
-   same index under simple indexing hypotheses.
-2. Sweep number of conflicting lines.
-3. Measure latency and miss metrics as conflict-set size grows.
-4. Add parallel miss variants to stress MSHR and miss-queue behavior.
-5. Compare conflict behavior across address-bit hypotheses.
-6. Use NCU/CUPTI L1 sectors, misses, and replay metrics.
+1. Construct candidate same-index address sets under multiple mapping
+   hypotheses.
+2. Sweep number of lines in each conflict set.
+3. Measure latency and cache metrics as set size grows.
+4. Add parallel miss streams to stress MSHR and miss-queue behavior.
+5. Compare candidate hypotheses and preserve alternatives.
+6. Do not collapse associativity, replacement, and queue depth into one scalar.
 
-### Reasoning
+### Scalar Policy
 
-Associativity-like behavior appears when adding one more line to a conflict set
-causes a stable miss-rate or latency increase. Parallel miss streams can reveal
-outstanding miss capacity, though that is more coupled than associativity.
+Associativity-like behavior may be bounded. MSHR and miss-queue values are
+`coupled_inference` or `behavioral_only` unless multiple probes agree.
 
-### Risk Estimate
+### Fit And Uncertainty
 
-Risk: Medium to High.
+- Expected fit status: `bounded`, `underconstrained`, or `behavioral_only`.
+- Expected uncertainty: `bounded_range`, `multi_fit`, or `behavioral_class`.
 
-Main risks:
+### Risk
 
-- NVIDIA cache indexing may be hashed or undocumented.
-- Replacement policy can obscure exact associativity.
-- MSHR and miss-queue estimates are coupled with L2 latency and warp scheduling.
-
-Mitigation:
-
-- Treat associativity as effective associativity.
-- Test multiple index hypotheses.
-- Mark MSHR/miss-queue estimates as `coupled_inference`.
+High. Cache indexing, replacement, hashing, and downstream latency can mimic one
+another.
 
 ## Probe: `l1_cache/analyze.py`
 
-### Goal
+### Concept
 
-Convert cache latency, working-set, and conflict curves into fitted simulator
-cache parameters.
+Cache-path analysis and simulator-equivalent cache mapping.
+
+### Primary Evidence
+
+- Pointer-chase latency curves.
+- Working-set curves.
+- Conflict curves.
+- NCU/CUPTI hit/miss/sector/replay metrics.
 
 ### Methodology
 
-1. Detect stable knees using segmented regression or derivative thresholds.
-2. Detect line/sector granularity from stride-response changes.
-3. Compare fitted values against NCU/CUPTI hit/miss and sector counters.
-4. Emit separate estimates by cache path:
-   - data
-   - read-only
-   - constant
-   - texture
-   - instruction, when measured
-5. Assign confidence based on repeatability and counter agreement.
+1. Normalize raw curves by clock domain and launch metadata.
+2. Detect hit-latency plateaus, capacity knees, sector/line transitions, and
+   conflict knees.
+3. Generate separate backend interpretations by access path.
+4. Map to simulator cache fields only through mapping contracts.
+5. Emit alternatives and residuals for ambiguous fits.
 
-### Reasoning
+### Scalar Policy
 
-Cache structure is not directly exposed. The analyzer must maintain the
-difference between measured behavior and simulator configuration equivalents.
+Emit scalar only when source probe policy permits it; otherwise emit bounded or
+behavioral outputs.
 
-### Risk Estimate
+### Risk
 
-Risk: Medium.
-
-Main risks:
-
-- Overfitting noisy knees.
-- Collapsing sectorized behavior into an incorrect single line size.
-
-Mitigation:
-
-- Require repeatable knees across repetitions.
-- Store raw curves in the result package.
-- Emit ranges when one number is not defensible.
+Medium to high. The analyzer must prevent false precision from noisy knees.
 
 ## Probe: `scheduler_policy/ready_warps.cu`
 
-### Goal
+### Concept
 
-Infer scheduler count, active-warp scaling, and broad scheduling behavior.
+Ready-warp scaling, scheduler issue capacity, and broad scheduling behavior.
 
-### Parameters
+### Target Parameters
 
 - `shader_core_config::num_subcores_in_SM`
 - `shader_core_config::gpgpu_num_sched_per_core`
 - `shader_core_config::gpgpu_scheduler_string`
 - `shader_core_config::gpgpu_max_insn_issue_per_warp`
 
+### Primary Evidence
+
+- NCU/CUPTI `smsp__*` issue, eligible-warps, active-warps, and stall metrics.
+
+### Validation Evidence
+
+- Controlled ready-warp kernels.
+- CUPTI PC Sampling stall attribution.
+- baseline arithmetic throughput coupling.
+- Simulator scheduler trace.
+
 ### Methodology
 
-1. Create kernels with controlled numbers of ready warps per SM.
-2. Use independent arithmetic instructions to minimize dependency stalls.
-3. Sweep active warps from one warp upward.
+1. Generate kernels with controlled numbers of ready warps per SM.
+2. Use independent arithmetic instructions to avoid dependency stalls.
+3. Sweep active warps, CTAs per SM, and readiness patterns.
 4. Measure issue throughput and per-warp progress.
-5. Add variants where only selected warps are ready at controlled intervals.
-6. Collect NCU/CUPTI `smsp__*` issue, eligible-warps, active-warps, and stall
-   metrics.
-7. Use PC Sampling to identify not-selected or scoreboard-related stalls.
+5. Collect issue and eligible-warp metrics.
+6. Use PC Sampling when stall attribution is required.
+7. Classify behavior rather than naming proprietary scheduler policy.
 
-### Reasoning
+### Scalar Policy
 
-Scheduler capacity and policy are visible in how issue rate scales with ready
-warps and how progress is distributed across warps. The result maps behavior to
-simulator policy labels, not vendor policy names.
+Allow exact counts only with direct or strongly corroborated evidence. Emit
+`gpgpu_scheduler_string` as `behavioral_class`.
 
-### Risk Estimate
+### Fit And Uncertainty
 
-Risk: High.
+- Expected fit status: `conditionally_identified` or `behavioral_only`.
+- Expected uncertainty: `conditional_scalar`, `multi_fit`, or
+  `behavioral_class`.
 
-Main risks:
+### Rejection And Downgrade
 
-- Scheduler policy is not directly exposed.
-- Warp distribution across SMSPs/subcores is not fully controllable.
-- Measured behavior is coupled with instruction pipe and scoreboard behavior.
+Reject runs where arithmetic or memory stalls dominate intended readiness
+behavior. Downgrade if different readiness patterns imply different scheduler
+classes.
 
-Mitigation:
+### Risk
 
-- Use several independent readiness patterns.
-- Report behavioral classification with confidence, not a hard policy name.
-- Cross-check with arithmetic throughput P0 results.
+High. Scheduler behavior is coupled with subpartition placement, pipeline
+availability, and scoreboard state.
 
 ## Probe: `scheduler_policy/mixed_issue.cu`
 
-### Goal
+### Concept
 
-Detect dual-issue or mixed-pipeline issue behavior.
+Mixed-pipeline issue and overlap behavior.
 
-### Parameters
+### Target Parameters
 
 - `shader_core_config::gpgpu_dual_issue_diff_exec_units`
 - `shader_core_config::pipeline_widths_string`
 - `shader_core_config::pipe_widths`
 - `shader_core_config::gpgpu_max_insn_issue_per_warp`
 
+### Primary Evidence
+
+- NCU/CUPTI pipe utilization, issue metrics, and instruction counts.
+
+### Validation Evidence
+
+- Mixed independent instruction streams.
+- NVBit opcode mix.
+- baseline single-pipe baselines.
+- Simulator pipeline trace.
+
 ### Methodology
 
-1. Generate instruction streams that alternate independent operations from two
-   different classes:
-   - FP32 + INT
-   - FP32 + SFU
-   - FP32 + memory
-   - FP32 + tensor when tensor P2 support is available
-2. Compare measured throughput against single-pipe baselines.
-3. Sweep active warps and independent chain count.
-4. Collect NCU/CUPTI pipe utilization and issue metrics.
-5. Validate dynamic instruction mix with NVBit.
+1. Generate independent mixed streams such as FP32+INT, FP32+SFU, FP32+memory,
+   and FP32+tensor when tensor support is available.
+2. Compare measured throughput to additive, max-only, and partially overlapped
+   models.
+3. Sweep active warps and independent chains.
+4. Validate opcode mix and disassembly.
+5. Record one-warp and many-warp behavior separately.
 
-### Reasoning
+### Scalar Policy
 
-If two instruction classes can issue in the same cycle or overlap more strongly
-than single-pipe limits predict, mixed streams should exceed the slower
-single-pipe expectation. This informs simulator dual-issue and pipeline width
-fields.
+Mixed-issue capability should be a behavioral classification unless multiple
+streams and counters support a conditional scalar.
 
-### Risk Estimate
+### Fit And Uncertainty
 
-Risk: Medium to High.
+- Expected fit status: `conditionally_identified` or `behavioral_only`.
+- Expected uncertainty: `conditional_scalar`, `multi_fit`, or
+  `behavioral_class`.
 
-Main risks:
+### Risk
 
-- Apparent overlap may come from latency hiding rather than dual issue.
-- Instruction pairing rules can be architecture-specific and opcode-specific.
-- Counters may aggregate in ways that hide issue pairing.
-
-Mitigation:
-
-- Compare against both one-warp and many-warp cases.
-- Use disassembly and NVBit opcode counts.
-- Mark dual-issue classification as medium confidence unless multiple streams
-  agree.
+Medium to high. Apparent overlap may come from latency hiding, not true dual
+issue.
 
 ## Probe: `scheduler_policy/analyze.py`
 
-### Goal
+### Concept
 
-Fit scheduler and issue behavior from ready-warp and mixed-issue results.
+Scheduler and issue-behavior classification.
 
 ### Methodology
 
-1. Estimate throughput scaling versus ready warps.
-2. Detect saturation point and per-SMSP issue capacity.
-3. Compare mixed-stream throughput against additive, max-only, and partially
-   overlapped models.
-4. Classify scheduler behavior by similarity:
-   - round-robin-like
-   - greedy-like
-   - two-level-like
-   - unknown/coupled
-5. Emit simulator mappings with confidence and `coupled_with` metadata.
+1. Fit throughput scaling versus ready warps.
+2. Detect saturation points and per-SMSP-like issue capacity where visible.
+3. Compare mixed-stream data against overlap models.
+4. Classify behavior as round-robin-like, greedy-like, two-level-like,
+   dual-issue-like, partial-overlap, unknown, or coupled.
+5. Emit simulator estimates with explicit `coupled_with` links to baseline arithmetic
+   throughput and P1 register behavior.
 
-### Reasoning
+### Scalar Policy
 
-The analyzer avoids pretending NVIDIA exposes simulator scheduler names. It
-should map observed behavior onto the closest simulator abstraction.
+Counts can be conditional; policies are behavioral classes.
 
-### Risk Estimate
+### Risk
 
-Risk: High.
-
-Main risks:
-
-- Multiple simulator policies can fit the same throughput data.
-- PC Sampling is statistical and may not resolve fine-grained policy.
-
-Mitigation:
-
-- Require multiple readiness patterns for policy classification.
-- Report unknown when policy evidence is weak.
+High. Multiple simulator policies can explain the same curves.
 
 ## Probe: `register_file/register_bank_sweep.sass`
 
-### Goal
+### Concept
 
-Infer register bank count and bank-conflict effects using controlled register
-numbering.
+Register-bank periodicity and operand-delivery conflict behavior.
 
-### Parameters
+### Target Parameters
 
 - `shader_core_config::gpgpu_num_reg_banks`
 - `shader_core_config::reg_file_port_throughput`
@@ -372,152 +433,180 @@ numbering.
 - `num_regular_register_file_read_ports_per_bank`
 - `num_regular_register_file_write_ports_per_bank`
 
+### Primary Evidence
+
+- SASS-controlled register-number sweeps.
+- NCU/CUPTI issue and scoreboard stall metrics.
+
+### Validation Evidence
+
+- Disassembly register-number verification.
+- NVBit register/instruction validation in narrow windows.
+- Simulator register-bank and operand-collector trace.
+
 ### Methodology
 
-1. Generate SASS or inline-PTX variants with explicit source and destination
-   register numbers.
-2. Construct same-bank and distributed-bank operand patterns under candidate
-   bank mappings.
-3. Sweep:
-   - register stride
-   - number of source operands
-   - destination register pattern
-   - warp ID if bank mapping may include warp ID
-4. Measure throughput degradation relative to conflict-free candidates.
-5. Collect NCU/CUPTI scoreboard or issue-stall counters where available.
-6. Use NVBit register instrumentation only for narrow validation windows.
+1. Generate SASS or inline-PTX variants with explicit source/destination
+   register numbers where toolchain support allows.
+2. Test candidate bank mappings by varying register stride, operand count,
+   destination pattern, and warp ID.
+3. Measure throughput degradation relative to candidate conflict-free cases.
+4. Collect issue and scoreboard metrics.
+5. Score candidate bank mappings and preserve alternatives.
 
-### Reasoning
+### Scalar Policy
 
-Register bank conflicts should appear as periodic throughput changes when
-register numbers alias under the true bank mapping. SASS is required because
-compiler register allocation would otherwise hide the experiment.
+Register-bank count may be scalar if periodicity is stable. Port counts and
+warp-ID mapping are conditional or multi-fit unless independently validated.
 
-### Risk Estimate
+### Fit And Uncertainty
 
-Risk: High.
+- Expected fit status: `uniquely_identified`, `bounded`, or `underconstrained`.
+- Expected uncertainty: `stable_scalar`, `bounded_range`, or `multi_fit`.
 
-Main risks:
+### Rejection And Downgrade
 
-- Handwritten SASS tooling may be fragile.
-- Register renaming or assembler constraints may alter intended numbering.
-- Bank mapping may include undocumented hashing or warp ID.
-- Throughput changes may be caused by operand collectors rather than banks.
+Reject if register numbers are not preserved. Downgrade if periodicity changes
+with unroll factor, active warps, or unrelated instruction alignment.
 
-Mitigation:
+### Risk
 
-- Disassemble and verify register numbers.
-- Test multiple mapping hypotheses.
-- Mark port counts and collector-related outputs as `coupled_inference`.
+High. Toolchain control and hidden mapping are fragile.
 
 ## Probe: `register_file/register_latency.cu`
 
-### Goal
+### Concept
 
-Measure dependent register read-after-write latency and operand delivery cost.
+Differential register read-after-write and operand-delivery cost.
 
-### Parameters
+### Target Parameters
 
 - `max_latency_regular_register_file_latency`
 - `shader_core_config::reg_file_port_throughput`
 - `gpgpu_operand_collector_num_units_*`
 
+### Primary Evidence
+
+- Differential latency/throughput under controlled register reuse patterns.
+
+### Validation Evidence
+
+- baseline arithmetic latency baseline.
+- NCU/CUPTI scoreboard/issue stall metrics.
+- Disassembly checks.
+- Simulator operand-collector trace.
+
 ### Methodology
 
-1. Build dependent arithmetic chains that vary operand count and register reuse.
-2. Compare:
-   - same register reuse
-   - rotating registers
-   - candidate same-bank registers
-   - candidate distributed-bank registers
-3. Use P0 arithmetic latency as the baseline.
-4. Attribute excess latency or throughput loss to register/operand delivery only
-   when arithmetic opcode and schedule are unchanged.
-5. Collect scoreboard and issue-stall metrics.
+1. Use the same arithmetic opcode while varying register reuse and candidate
+   bank patterns.
+2. Compare same-register, rotating-register, candidate same-bank, and candidate
+   distributed-bank variants.
+3. Attribute only differential excess cost to operand delivery.
+4. Prefer SASS-controlled variants for high-confidence claims.
+5. Report absolute arithmetic latency separately from differential penalties.
 
-### Reasoning
+### Scalar Policy
 
-Register-file latency is hard to isolate because arithmetic latency already
-includes operand delivery. The useful signal is differential: same opcode,
-different register pattern.
+Register-file latency and operand collector parameters are usually conditional,
+multi-fit, or behavioral. Do not emit precise collector counts without multiple
+independent supports.
 
-### Risk Estimate
+### Fit And Uncertainty
 
-Risk: High.
+- Expected fit status: `conditionally_identified`, `underconstrained`, or
+  `behavioral_only`.
+- Expected uncertainty: `conditional_scalar`, `multi_fit`, or
+  `behavioral_class`.
 
-Main risks:
+### Risk
 
-- Arithmetic latency, scoreboard behavior, and operand collectors are entangled.
-- Compiler register allocation can invalidate CUDA-source variants.
-- Counters may not expose register-bank conflicts directly.
-
-Mitigation:
-
-- Prefer SASS-controlled variants for high-confidence claims.
-- Report differential penalties separately from absolute latency.
-- Couple estimates with arithmetic and scheduler probe IDs.
+High. Arithmetic latency, scoreboard behavior, bank conflicts, and operand
+collectors are entangled.
 
 ## Probe: `register_file/analyze.py`
 
-### Goal
+### Concept
 
-Fit register-bank and operand-delivery behavior from SASS and CUDA variants.
+Register-bank and operand-delivery analysis.
 
 ### Methodology
 
 1. Detect periodic throughput penalties across register-number strides.
 2. Score candidate bank mappings.
-3. Compare same-bank and distributed-bank confidence.
-4. Estimate port pressure only when operand-count sweeps show stable plateaus.
-5. Emit:
-   - high/medium confidence for bank count when periodicity is clear
-   - low/medium confidence for port counts
-   - coupled estimates for operand collector parameters
+3. Compare operand-count sweeps for port-like saturation.
+4. Separate bank-count evidence from port/collector evidence.
+5. Emit alternatives, residuals, and `coupled_with` references to arithmetic and
+   scheduler probes.
 
-### Reasoning
+### Scalar Policy
 
-Register bank count may be observable through periodicity. Operand collector
-structure is usually not directly observable and must remain explicitly coupled.
+Bank count may be scalar; port and collector fields should usually be bounded,
+multi-fit, or behavioral.
 
-### Risk Estimate
+### Risk
 
-Risk: High.
+High. This is one of the first places P1 can overfit simulator internals.
 
-Main risks:
+## P1 Implementation Order
 
-- False periodicity from scheduler or instruction-cache alignment.
-- Multiple bank mappings fitting similar data.
+1. Implement `l1_cache/pointer_chase.cu` and `l1_cache/analyze.py` first
+   because cache-regime classification is needed by later P1/P2 probes.
+2. Add `l1_cache/working_set.cu` and `l1_cache/conflict_sets.cu` after the L1
+   hit-latency path is stable.
+3. Add `scheduler_policy/ready_warps.cu` to measure issue scaling under simple
+   instruction streams.
+4. Add `scheduler_policy/mixed_issue.cu` only after baseline throughput and P1
+   ready-warp baselines are available.
+5. Add `register_file/register_bank_sweep.sass` where SASS-level register
+   control is supported.
+6. Add `register_file/register_latency.cu` and `register_file/analyze.py` last
+   because register and operand-collector behavior is highly coupled.
 
-Mitigation:
+## Required Simulator Trace Hooks
 
-- Require repeatability across unroll factors and warp counts.
-- Include negative controls with unrelated register permutations.
+P1 needs simulator instrumentation for:
 
-## P1 Output Requirements
+- L1/TEX cache hit, miss, fill, and eviction events,
+- constant and texture path events where modeled,
+- instruction-cache access and miss events,
+- scheduler ready-warp sets,
+- issued instruction and functional-unit selection,
+- scoreboard dependency state,
+- register-bank selection,
+- operand-collector allocation and conflicts.
 
-Every P1 result should include:
+Simulator traces are direct observations of simulator state. They are not proof
+that NVIDIA hardware has the same internal state; they define the target side
+of the mapping contract.
 
-- dependency on P0 baselines
-- source and disassembly hashes
-- raw latency/throughput curves
-- counter evidence and metric availability
-- PC Sampling evidence when used
-- NVBit validation stream path when used
-- simulator estimate
-- confidence
-- `coupled_with` references
-- risk notes
+## Reporting Requirements
+
+Every P1 report must include:
+
+- evidence tier,
+- fit status,
+- uncertainty category,
+- variance summary,
+- metric resolver record,
+- SASS validation record,
+- access-pattern or instruction-mix descriptor,
+- launch and occupancy descriptor,
+- clock-domain record,
+- simulator mapping contract,
+- rejection or downgrade reason when applicable.
 
 ## P1 Acceptance Criteria
 
 P1 is complete when AMORA can report:
 
-- L1 hit-latency estimate for at least one data path
-- L1 line or sector granularity estimate
-- effective L1 capacity range
-- scheduler issue-scaling curve
-- mixed-issue classification for at least FP32+INT and FP32+SFU
-- register-bank periodicity result or an explicit unsupported/indeterminate
-  outcome
-- clear separation between direct measurements and simulator-equivalent fitted
-  parameters
+- at least one path-specific L1 hit-latency estimate or bounded range,
+- line/sector granularity estimate where counters support it,
+- effective L1 capacity range,
+- associativity/conflict behavior or explicit indeterminate status,
+- scheduler issue-scaling curve,
+- mixed-issue behavior classification,
+- register-bank periodicity result or explicit unsupported/indeterminate status,
+- layered outputs and mapping contracts for every result,
+- explicit separation between direct measurements, NVIDIA interpretations, and
+  simulator-equivalent estimates.

@@ -2,340 +2,650 @@
 
 ## Summary
 
-Implement the first executable AMORA probing suite for NVIDIA GPUs. The suite
-will map the simulator-oriented parameters identified in
-`/Users/bytedance/wk/amora/.plan/probing-suite-microarchitecture-plan.md` onto
-real-hardware measurements using two coordinated tracks:
+This document is the NVIDIA-specific specialization of the generalized AMORA
+probing plan in `.plan/probing-suite-microarchitecture-plan.md`. It defines how
+AMORA should use CUDA metadata, NCU, CUPTI, NVBit, disassembly, microkernels,
+published NVIDIA information, and simulator traces to produce trustworthy
+GPGPU-Sim/AMORA-facing parameter estimates.
 
-1. Tooling adapters for readily available evidence from NCU, CUPTI, and NVBit.
-2. Custom CUDA/SASS microkernels for parameters that cannot be measured directly
-   by available tools.
+The core rule is the same as the generalized plan:
 
-The implementation order should start with high-signal, low-gap probes that use
-available CUDA runtime metadata, NCU/CUPTI metrics, and simple kernels. It should
-then move toward semantic-gap-heavy probes where a simulator parameter is only an
-indirect or coupled approximation of real hardware behavior.
+```text
+published facts
+-> backend capabilities
+-> raw observations
+-> normalized hardware-neutral measurements
+-> NVIDIA backend interpretations
+-> simulator mapping contracts
+-> fitted simulator-equivalent estimates
+```
 
-## Current State Analysis
+NVIDIA tools can expose more direct execution facts than end-to-end timing for
+many CUDA-visible behaviors. Therefore NCU/CUPTI counters are primary evidence
+when a metric contract has a close semantic match. Microkernel timing remains
+essential for controlled workload generation, counter cross-checking, fallback
+coverage, and behaviors that are not directly exposed by profiler metrics.
 
-The repository has an empty implementation skeleton:
+## Revision History
 
-- `/Users/bytedance/wk/amora/amora/core`
-- `/Users/bytedance/wk/amora/amora/backends`
-- `/Users/bytedance/wk/amora/amora/probes`
-- `/Users/bytedance/wk/amora/amora/reports`
-- `/Users/bytedance/wk/amora/amora/schemas`
-- `/Users/bytedance/wk/amora/tools/doc_fetch`
-- `/Users/bytedance/wk/amora/tools/metric_scrape`
-- `/Users/bytedance/wk/amora/tools/report_render`
+### 2026-06-18: Alignment With Generalized AMORA Plan
 
-The existing plan at
-`/Users/bytedance/wk/amora/.plan/probing-suite-microarchitecture-plan.md`
-defines the target parameter families:
+Source inputs:
 
-- topology and occupancy
-- arithmetic latency and initiation interval
-- issue width, scheduler behavior, and functional-unit throughput
-- register file and operand collector behavior
-- shared memory
-- L1, constant, texture, and instruction caches
-- SM memory pipeline and coalescing
-- L2, DRAM, memory partitions, and DRAM timing
-- interconnect and address mapping
-- tensor core and matrix engine behavior
-- TMA, DMA, and async copy behavior
-- synchronization and barrier behavior
+- Generalized plan:
+  `.plan/probing-suite-microarchitecture-plan.md`
+- Previous NVIDIA plan:
+  `.plan/nvidia-probe-semantic-measurement-gap-plan.md`
+- NVIDIA plan reaction document:
+  `.plan/20260618_nvidia-probe-semantic-measurement-gap-plan_comments.md`
+- Existing baseline and later-priority methodology files:
+  `.plan/nvidia-baseline-kernel-methodology.md`,
+  `.plan/nvidia-p1-kernel-methodology.md`,
+  `.plan/nvidia-p2-kernel-methodology.md`,
+  `.plan/nvidia-p3-kernel-methodology.md`
 
-The NVIDIA documentation tree now contains CUPTI and NVBit notes:
+Major changes:
 
-- `/Users/bytedance/wk/amora/docs/vendors/nvidia/cupti/docs.md`
-- `/Users/bytedance/wk/amora/docs/vendors/nvidia/cupti/host-profiling.md`
-- `/Users/bytedance/wk/amora/docs/vendors/nvidia/cupti/range-profiling.md`
-- `/Users/bytedance/wk/amora/docs/vendors/nvidia/cupti/pm-sampling.md`
-- `/Users/bytedance/wk/amora/docs/vendors/nvidia/cupti/pc-sampling.md`
-- `/Users/bytedance/wk/amora/docs/vendors/nvidia/cupti/sass-metrics.md`
-- `/Users/bytedance/wk/amora/docs/vendors/nvidia/cupti/api-notes.md`
-- `/Users/bytedance/wk/amora/docs/vendors/nvidia/nvbit/docs.md`
-- `/Users/bytedance/wk/amora/docs/vendors/nvidia/nvbit/instrumentation-model.md`
-- `/Users/bytedance/wk/amora/docs/vendors/nvidia/nvbit/examples.md`
-- `/Users/bytedance/wk/amora/docs/vendors/nvidia/nvbit/limitations.md`
+- Rewrote the NVIDIA plan as a backend-specific instance of the generalized
+  layered architecture.
+- Added explicit NVIDIA backend capabilities, tool registry, ISA/SASS semantic
+  records, and metric resolver policy.
+- Preserved the design decision that NCU/CUPTI direct counters can be primary
+  evidence when their semantic contract is direct.
+- Preserved the design decision that microkernel timing is not universally
+  primary because it is affected by runtime fog.
+- Added layered result requirements matching the generalized plan:
+  `raw_observation`, `normalized_measurement`, `backend_interpretation`, and
+  `simulator_estimate`.
+- Reframed each NVIDIA probe family as a mapping contract from a
+  hardware-neutral concept through NVIDIA interpretation to simulator
+  parameters.
+- Added explicit use of published NVIDIA information as trust-and-verify
+  anchors.
+- Added explicit simulator trace usage for directly observable simulator states
+  such as queue length, scheduler state, cache state, pipeline state, and memory
+  partition state.
+- Added capability-gated execution modes so probes can be skipped, downgraded,
+  or reported as unsupported instead of emitting weak scalars.
+- Added compact uncertainty categories with detailed variance and fitting
+  records linked from reports.
+- Added implementation phases that update the current baseline scaffolding before
+  expanding into P1-P3.
 
-Key constraints from those notes:
+### 2026-06-18: Measurement-Contract Revision
 
-- CUPTI is the programmable metric backend.
-- CUPTI Range Profiling is the preferred exact metric path.
-- CUPTI Host Profiling is needed for metric enumeration, config images, and
-  metric evaluation.
-- CUPTI PM Sampling is useful for time-varying behavior but is not a replacement
-  for exact per-kernel metrics.
-- CUPTI PC Sampling and SASS Metrics provide attribution, not complete semantic
-  reconstruction.
-- NVBit is a dynamic SASS instrumentation layer and should be used for dynamic
-  instruction and memory-reference streams, not as a hardware counter backend.
-- NVBit and Nsight/NCU-style injection workflows should be run as separate
-  passes and correlated offline.
+This earlier revision responded to
+`.plan/20260618_nvidia-probe-semantic-measurement-gap-plan_comments.md`.
 
-## Semantic and Measurement Gap Matrix
+Key decisions retained:
 
-| Parameter Family | Simulator Semantics | Readily Available Evidence | Remaining Gap | Implementation Priority |
-|---|---|---|---|---|
-| Topology and occupancy | Static limits such as SM count, warp size, max CTAs, max warps, registers, shared memory | CUDA device attributes, occupancy APIs, launch metadata, NCU `launch__*`, simple persistent-CTA kernels | Cluster topology and exact residency policies are partly architectural and partly scheduler/runtime policy | P0 |
-| Arithmetic latency | Fixed simulator latency per opcode class | Dependent CUDA/SASS loops, CUPTI/NCU instruction metrics, NVBit opcode validation | Compiler scheduling and SASS selection can hide intended dependency chains unless disassembly is verified | P0 |
-| Arithmetic throughput and functional-unit count | Unit counts and initiation intervals | Independent instruction streams, NCU pipe utilization, CUPTI Range Profiling, NVBit opcode histograms | Unit count is inferred from throughput and clocks, not directly exposed | P0 |
-| Shared memory | Bank count, bank mapping, latency, broadcast/multicast behavior | Shared-memory stride kernels, NCU shared metrics, CUPTI Range Profiling | Bank mapping and broadcast policy are semantic approximations across generations | P0 |
-| L1 and cache geometry | Explicit cache set/line/associativity/MSHR parameters | Pointer chase, working-set sweeps, NCU `l1tex__*`, CUPTI metrics | Real cache policies are adaptive and may not map cleanly to simulator replacement/MSHR fields | P1 |
-| Scheduler and issue | Scheduler count, dual-issue policy, per-warp issue limits | Controlled ready-warp kernels, NCU `smsp__*` stall/issue metrics, PC Sampling | Scheduler policy names such as GTO or round-robin are simulator abstractions, not vendor-exposed facts | P1 |
-| Register file and operand collector | Bank count, ports, collector units, RF latency | Register-numbered SASS loops, NVBit register-value tools, NCU stall metrics | Operand collector structure is mostly not observable; measurements are coupled with scheduler and pipe behavior | P1 |
-| SM memory pipeline and coalescing | Coalescing cycles, queue depths, PRT limits, scalar units | Lane-address kernels, NVBit memory traces, NCU/CUPTI L1TEX metrics | Internal queue depths and coalescing windows are inferred from cliffs and can be confounded by L1/L2 behavior | P2 |
-| L2 and DRAM bandwidth/latency | Cache config, partitions, burst length, DRAM timings, scheduler queues | Pointer chase, streaming kernels, NCU `lts__*`/`dram__*`, CUPTI Range Profiling/PM Sampling | DRAM timing fields are highly coupled; exact bank-group policy and scheduler internals are not directly exposed | P2 |
-| Interconnect/address mapping | Flit size, routing delay, VC/switch allocation, address mask | Partition-camping sweeps, latency under load, CUPTI/NCU memory partition metrics where available | NoC/router fields are simulator-specific and only indirectly recoverable | P3 |
-| Tensor core | Tensor latency, rate, unit count, supported shapes | WMMA/MMA microkernels, NCU tensor metrics, CUPTI Range Profiling, NVBit opcode validation | Shape-specific extra latency and issue sharing are coupled with scheduler and operand delivery | P2 |
-| TMA/async copy | Copy-engine queues, requests per cycle, transfer entries, completion path | Hopper-style async/TMA kernels where supported, NCU/CUPTI memory metrics, PC/SASS attribution | TMA internal state names are simulator structures; real hardware exposes limited direct observability | P3 |
-| Synchronization/barriers | Barrier counts, fence costs, mbarrier/grid/cluster semantics | Barrier/fence microkernels, PC Sampling stalls, NCU scheduler stalls | Semantic mapping from real barrier instructions to simulator barrier classes is architecture-specific | P2 |
+- Use the evidence source with the closest semantic match.
+- Treat NCU/CUPTI direct metrics as primary when the metric maps directly to the
+  target behavior.
+- Use microkernel timing as controlled workload evidence, validation, or
+  fallback.
+- Trust and verify published NVIDIA parameters and stable CUDA metadata.
+- Treat simulator parameters and dynamic simulator states as directly observable
+  inside the simulator.
+- Require fitting metadata, uncertainty, clock-domain handling, metric mapping,
+  and explicit rejection/downgrade behavior.
 
-## Measurement Evidence Tiers
+### Superseded Assumptions From Earlier Versions
 
-Every estimate should be tagged with one of these evidence tiers:
+- Superseded: "Microkernel timing is the primary evidence source."
+  Replacement: Use semantic-match primary evidence. For NVIDIA, direct
+  NCU/CUPTI counters can be stronger than end-to-end timing when the metric
+  contract is direct.
 
-- `direct_metadata`: CUDA runtime/device attribute or launch metadata.
-- `direct_counter`: CUPTI/NCU metric with close semantic match.
-- `timing_direct`: custom microkernel timing with a single dominant parameter.
-- `instrumented_stream`: NVBit dynamic instruction, memory, or register stream.
-- `coupled_inference`: fitted estimate involving multiple hidden parameters.
-- `unsupported`: probe skipped with explicit reason.
+- Superseded: "A probe family can directly emit simulator parameters."
+  Replacement: A probe emits layered observations and measurements. Simulator
+  parameters are emitted only through mapping contracts.
 
-Confidence should be derived from evidence tier, repeatability, disassembly
-verification, metric availability, and degree of parameter coupling.
+- Superseded: "Metric naming is mostly a local implementation detail."
+  Replacement: NVIDIA metric names vary by architecture and tool version, so
+  logical metrics require candidate names, normalization, validation, and
+  fallback rules.
 
-## Proposed Changes
+- Superseded: "Hidden hardware and simulator state have the same observability."
+  Replacement: hardware internals may be indirect or unobservable, but simulator
+  internals are directly traceable. The semantic gap is the mapping from
+  hardware evidence to simulator-equivalent behavior.
 
-### 1. Create Probe Suite Package Skeleton
+## NVIDIA Backend Scope
 
-Files:
+This plan targets NVIDIA CUDA-capable GPUs and maps observations to
+GPGPU-Sim/AMORA-style simulator parameters.
 
-- `/Users/bytedance/wk/amora/amora/schemas/hardware_profile.schema.json`
-- `/Users/bytedance/wk/amora/amora/schemas/probe_result.schema.json`
-- `/Users/bytedance/wk/amora/amora/schemas/simulator_parameter_map.yaml`
-- `/Users/bytedance/wk/amora/amora/core/runner.py`
-- `/Users/bytedance/wk/amora/amora/core/statistics.py`
-- `/Users/bytedance/wk/amora/amora/core/parameter_model.py`
-- `/Users/bytedance/wk/amora/amora/core/capabilities.py`
-- `/Users/bytedance/wk/amora/amora/backends/base.py`
-- `/Users/bytedance/wk/amora/amora/backends/nvidia_cuda.py`
-- `/Users/bytedance/wk/amora/amora/backends/ncu.py`
-- `/Users/bytedance/wk/amora/amora/backends/cupti.py`
-- `/Users/bytedance/wk/amora/amora/backends/nvbit.py`
-- `/Users/bytedance/wk/amora/amora/reports/markdown.py`
-- `/Users/bytedance/wk/amora/amora/reports/json_report.py`
+Primary NVIDIA tool stack:
 
-What:
+- CUDA runtime and driver metadata
+- Nsight Compute CLI (`ncu`)
+- CUPTI Range Profiling
+- CUPTI Host Profiling
+- CUPTI PM Sampling
+- CUPTI PC Sampling
+- CUPTI SASS Metrics
+- NVBit
+- `nvdisasm` and `cuobjdump`
+- Published NVIDIA documentation and public specifications
+- AMORA/GPGPU-Sim internal simulator traces
 
-- Define schemas, backend interfaces, probe result records, capability
-  discovery, statistical fitting, and report generation.
+The NVIDIA backend is a reference backend for AMORA, not the global abstraction.
+Concept names should remain hardware-neutral until this plan maps them through
+NVIDIA-specific semantics.
 
-Why:
+## Evidence Policy
 
-- The existing repository has package directories but no executable probing
-  framework.
-- The CUPTI/NVBit tools have different runtime constraints and must be modeled
-  as separate evidence sources.
+Use the evidence source with the closest semantic match.
 
-How:
+| Evidence Source | Primary When | Validation When | Main Risk |
+|---|---|---|---|
+| Published NVIDIA facts | NVIDIA exposes stable limits, units, or architecture facts | Checking inferred values | Specs may omit SKU modes or dynamic behavior |
+| CUDA metadata | Runtime-visible limit maps directly to a target concept | Cross-checking profiler launch metadata | Runtime policy may differ from physical structure |
+| NCU direct metrics | Metric directly matches the behavior | Checking timing or fitted curves | Replay, permissions, metric availability |
+| CUPTI Range Profiling | Programmatic metric collection is needed | Automating NCU-equivalent checks | API complexity and pass constraints |
+| CUPTI Host Profiling | Metric enumeration/config/evaluation is needed | Resolving supported metrics | Version and architecture variation |
+| CUPTI PM Sampling | Time-varying PM state matters | Checking phase behavior | Sampling granularity |
+| CUPTI PC/SASS Metrics | Source/SASS attribution is needed | Explaining stall and instruction anomalies | Sampling or patching overhead |
+| NVBit | Executed instruction or memory stream is needed | Verifying SASS and dynamic mix | Instrumentation overhead and injection conflicts |
+| Microkernel timing | Timing behavior is the target or no direct metric exists | Cross-checking direct counters | Runtime fog |
+| Simulator trace | Simulator state/parameter behavior must be known | Mapping hardware observations to simulator knobs | Simulator may omit hardware mechanisms |
 
-- `base.py` defines abstract methods for device discovery, build, run, collect,
-  parse, and capability query.
-- `nvidia_cuda.py` handles CUDA compilation, launch, buffers, timers, and device
-  attributes.
-- `ncu.py` wraps `ncu --query-metrics`, `--set`, `--metrics`, and CSV raw-page
-  export.
-- `cupti.py` initially wraps a small CLI/helper binary contract rather than
-  embedding all CUPTI C++ code in Python.
-- `nvbit.py` invokes NVBit tools in separate runs using `LD_PRELOAD` or
-  `CUDA_INJECTION64_PATH`.
+Direct counters are not automatically trusted. A metric must be selected through
+a metric resolver and pass its validation rule before it can be primary.
 
-### 2. Define Stable Result Schemas
+## NVIDIA Backend Capabilities
 
-Files:
+The NVIDIA backend should discover and record these capabilities before running
+probes:
 
-- `/Users/bytedance/wk/amora/amora/schemas/probe_result.schema.json`
-- `/Users/bytedance/wk/amora/amora/schemas/hardware_profile.schema.json`
+```yaml
+backend: nvidia_cuda
+instruction_control:
+  can_emit_low_level_isa: partial
+  can_verify_disassembly: true
+  can_control_register_assignment: partial
+  can_validate_dynamic_instruction_stream: true
+timing:
+  has_device_timer: true
+  timer_domains:
+    - SM
+    - globaltimer_or_ns
+profiling:
+  has_per_kernel_counters: true
+  has_range_counters: true
+  has_pm_sampling: true
+  has_pc_sampling: true
+  has_sass_metrics: true
+  has_dynamic_binary_instrumentation: true
+memory_control:
+  can_select_address_space: true
+  can_control_cache_policy: partial
+  can_allocate_shared_memory: true
+  can_control_alignment: true
+simulator_mapping:
+  target_simulator: gpgpu_sim_or_amora
+  simulator_state_trace_available: true
+```
 
-Probe result fields:
+Capability values are target-specific. The runner must record actual tool
+availability, permission status, architecture support, and unsupported reasons.
 
-- `probe_id`
-- `family`
-- `target`
-- `backend`
-- `kernel`
-- `launch_config`
-- `source_kind`: `cuda|ptx|sass|external_binary|tool_only`
-- `disassembly_hash`
-- `measurement_evidence_tier`
-- `raw_measurements`
-- `counter_values`
-- `nvbit_streams`
-- `estimates`
+## NVIDIA ISA And SASS Semantic Records
+
+Every low-level probe must identify the SASS/PTX semantic class it intends to
+exercise and the architectural block it is expected to stress.
+
+Example:
+
+```yaml
+instruction: FFMA
+backend: nvidia_sass
+semantic_class: fp32_fma
+architectural_block:
+  primary: fp32_pipe
+  secondary:
+    - scheduler
+    - register_file
+    - operand_delivery
+verification:
+  disassembly_required: true
+  dynamic_instruction_count_optional: true
+mapping_confidence: high
+known_mismatches:
+  - compiler may replace source operations with alternate opcodes
+  - operand reuse and register banking can alter observed throughput
+```
+
+Initial semantic records should cover:
+
+- integer add/mul and predicate/control operations,
+- FP32 add/mul/FMA,
+- FP64 operations where supported,
+- SFU operations,
+- global, local, shared, constant, and texture load/store paths,
+- barrier and fence operations,
+- MMA/tensor instructions,
+- async-copy/TMA-like instructions where visible,
+- branch and control-flow instructions.
+
+## Tool Registry And Metric Resolver
+
+NVIDIA metric names are resolved through logical metric contracts.
+
+Each logical metric must define:
+
+- `logical_name`
+- `tool_candidates`
+- `candidate_metrics_by_arch`
+- `preferred_metric`
+- `normalization`
+- `validation_rule`
+- `fallback_source`
 - `unsupported_reason`
 
-Estimate fields:
+Example:
+
+```yaml
+logical_name: sm_active_cycles
+tool_candidates:
+  - ncu
+  - cupti_range
+candidate_metrics_by_arch:
+  default:
+    - sm__cycles_active.avg
+    - sm__cycles_elapsed.avg
+normalization: use active cycles for instruction latency and issue fits
+validation_rule: reject if active cycles are zero or launch metadata reports no executed kernel
+fallback_source: device_clock64_timing
+unsupported_reason: metric unavailable from NCU/CUPTI query
+```
+
+Metric resolver responsibilities:
+
+- query available metrics per target GPU,
+- select candidate metrics by architecture and CUDA/tool version,
+- record exact metric names used,
+- record units and aggregation suffixes,
+- record profiler replay or sampling mode,
+- emit unsupported status instead of silently substituting weak metrics.
+
+## Layered Result Schema
+
+NVIDIA probe output must preserve all layers.
+
+```yaml
+raw_observation:
+  source: ncu
+  raw_values:
+    smsp__cycles_active.avg: 100000
+    smsp__sass_thread_inst_executed_op_ffma_pred_on.sum: 25000
+  probe_id: arithmetic_throughput.fp32_ffma.nvidia
+  binary_hash: string
+  disassembly_hash: string
+
+normalized_measurement:
+  concept: scalar_instruction_reciprocal_throughput
+  value: 0.25
+  unit: sm_cycles_per_instruction
+  variance:
+    count: 20
+    median: 0.25
+    mad: 0.01
+    min: 0.24
+    max: 0.27
+
+backend_interpretation:
+  backend: nvidia_cuda
+  instruction_semantics: fp32_fma
+  architectural_block: fp32_pipe
+  clock_domain: SM
+  primary_evidence: direct_counter
+  validation_evidence:
+    - disassembly_hash
+    - nvbit_opcode_histogram
+    - timing_cross_check
+
+simulator_estimate:
+  parameter: gpgpu_num_sp_units
+  value: 128
+  unit: effective_units_per_sm
+  evidence_tier: coupled_inference
+  fit_status: conditionally_identified
+  uncertainty_category: conditional_scalar
+  assumptions:
+    - FFMA maps to the intended FP32 pipe class
+    - active-cycle normalization is valid
+  coupled_with:
+    - scheduler_issue_width
+    - operand_delivery
+    - clock_domain
+```
+
+## Measurement Contract Fields
+
+Every simulator estimate requires a contract with these fields:
 
 - `parameter`
-- `value`
-- `unit`
-- `confidence`
-- `evidence_tier`
-- `probe_ids`
-- `coupled_with`
-- `notes`
+- `simulator_component`
+- `hardware_behavior`
+- `nvidia_backend_interpretation`
+- `observability`
+- `primary_evidence`
+- `validation_evidence`
+- `probe_workload`
+- `metric_mapping`
+- `formula_or_fit`
+- `clock_domain`
+- `fit_status_required`
+- `uncertainty_category`
+- `scalar_output_allowed`
+- `known_mismatches`
+- `rejection_rules`
+- `downgrade_rules`
+- `fallback`
 
-Why:
+Observability values:
 
-- Semantic gaps must remain visible in the data model. A coupled estimate should
-  not look like a direct measurement.
+- `published`
+- `metadata`
+- `direct_counter`
+- `tool_derived_counter`
+- `instrumented_stream`
+- `timing`
+- `simulator_trace`
+- `coupled_inference`
+- `behavioral_only`
+- `unsupported`
 
-### 3. Implement Capability Discovery First
+## Fitting, Variance, And Uncertainty
 
-Files:
+Fit status values:
 
-- `/Users/bytedance/wk/amora/amora/core/capabilities.py`
-- `/Users/bytedance/wk/amora/amora/backends/nvidia_cuda.py`
-- `/Users/bytedance/wk/amora/amora/backends/ncu.py`
-- `/Users/bytedance/wk/amora/amora/backends/cupti.py`
-- `/Users/bytedance/wk/amora/amora/backends/nvbit.py`
+- `direct`
+- `uniquely_identified`
+- `bounded`
+- `conditionally_identified`
+- `underconstrained`
+- `behavioral_only`
+- `unsupported`
 
-What:
+Compact uncertainty categories:
 
-- Discover CUDA device properties, available NCU metrics, CUPTI feature support,
-  NVBit availability, `nvcc`, `nvdisasm`, driver version, and profiling
-  permissions.
+- `stable_scalar`: low variance and direct semantic match.
+- `bounded_range`: lower and upper bounds are more defensible than one scalar.
+- `conditional_scalar`: scalar valid under stated assumptions.
+- `multi_fit`: multiple parameter sets explain the data.
+- `behavioral_class`: emit class or curve, not hardware scalar.
+- `indeterminate`: evidence is insufficient or contradictory.
 
-Why:
+Variance records must include sample count, median, MAD, min, max, coefficient
+of variation, and per-pass/per-run counter variance where available.
 
-- Metric availability and tool compatibility vary by CUDA version, driver,
-  GPU architecture, MIG/MPS/vGPU mode, and permissions.
+## Clock-Domain Policy
 
-Acceptance:
+Every timing-derived or rate-derived NVIDIA result must record:
 
-- Unsupported features are reported before probe execution.
-- The runner can skip probes instead of producing misleading empty estimates.
+- `clock_domain`: `SM|L1TEX|L2|DRAM|fabric|copy_engine|host|mixed|unknown`
+- `clock_source`: `clock64|globaltimer|NCU metric|CUPTI metric|published|host_timer`
+- `clock_locked`: `true|false|unknown`
+- `observed_clock_range`
+- `native_unit`
+- `conversion_method`
+- `clock_assumptions`
 
-### 4. Implement P0 Readily Available Probes
+Rules:
 
-#### 4.1 Topology and Occupancy
+- Keep native units unless a simulator mapping contract defines conversion.
+- Convert to simulator cycles only with an explicit simulator clock ratio.
+- Keep SM, L2, DRAM, fabric, and copy-engine domains separate.
 
-Files:
+## Probe Execution Modes
 
-- `/Users/bytedance/wk/amora/amora/probes/topology/device_attributes.py`
-- `/Users/bytedance/wk/amora/amora/probes/topology/persistent_cta.cu`
-- `/Users/bytedance/wk/amora/amora/probes/topology/occupancy.py`
+Each NVIDIA probe should support these modes where applicable:
 
-Measurements:
+1. `capability`: discover CUDA device, tool, permission, and metric support.
+2. `counter`: collect NCU/CUPTI Range Profiling metrics.
+3. `sampling`: collect CUPTI PM/PC/SASS sampling or attribution data.
+4. `timing`: run low-overhead microkernel timing without profiler attachment.
+5. `instrumented`: run NVBit validation separately.
+6. `disassembly`: verify SASS/PTX and record hashes.
+7. `sim_trace`: run simulator with internal state tracing.
+8. `fit`: fuse evidence and emit layered results.
 
-- CUDA device attributes for SM count, warp size, registers, shared memory,
-  max threads, max blocks, and clock data.
-- Persistent CTA kernel to estimate concurrent CTA residency.
-- Sweep block size, register use, and dynamic shared memory.
+Small-kernel policy:
 
-Maps:
+- Separate timing-only runs from profiler runs.
+- Lengthen inner loops or batch kernels when profiler replay would dominate.
+- Correlate runs by probe ID, binary hash, disassembly hash, launch config,
+  metric set, device ID, and tool version.
 
+## Parameter Mapping Contracts
+
+### Topology And Occupancy
+
+Hardware-neutral concept:
+
+- topology limits and residency-like capacity.
+
+Primary NVIDIA evidence:
+
+- CUDA runtime/driver metadata,
+- published NVIDIA device specifications,
+- NCU launch metadata.
+
+Validation:
+
+- persistent CTA residency kernel,
+- simulator occupancy-state trace.
+
+Simulator parameters:
+
+- `gpgpu_sim_config::num_shader()`
+- `shader_core_config::n_simt_clusters`
+- `shader_core_config::n_simt_cores_per_cluster`
 - `shader_core_config::warp_size`
 - `shader_core_config::max_warps_per_shader`
 - `shader_core_config::max_cta_per_core`
 - `shader_core_config::gpgpu_shader_registers`
 - `shader_core_config::gpgpu_shmem_size`
 - `shader_core_config::gpgpu_shmem_per_block`
-- `gpgpu_sim_config::num_shader()`
 
-Gap handling:
+Scalar policy:
 
-- Treat CUDA metadata as direct for limits, but persistent CTA results as
-  runtime-policy evidence.
-- `n_simt_clusters` and `n_simt_cores_per_cluster` remain coupled unless
-  architecture-specific metadata is available.
+- allow scalar for SM count, warp size, max resident blocks, max resident
+  threads/warps, register limits, and shared-memory limits when metadata or
+  published facts are direct;
+- treat cluster decomposition as table-backed, fitted, or unsupported unless
+  an explicit architecture mapping exists.
 
-#### 4.2 Arithmetic Latency and Throughput
+### Arithmetic Latency
 
-Files:
+Hardware-neutral concept:
 
-- `/Users/bytedance/wk/amora/amora/probes/arithmetic_latency/dependent_chain.cu`
-- `/Users/bytedance/wk/amora/amora/probes/arithmetic_latency/independent_chains.cu`
-- `/Users/bytedance/wk/amora/amora/probes/arithmetic_latency/analyze.py`
+- dependent operation latency for a specific instruction semantic class.
 
-Measurements:
+Primary NVIDIA evidence:
 
-- Device-side cycle timing for dependent chains.
-- Independent chains for reciprocal throughput.
-- NCU/CUPTI counters for instruction counts and pipe utilization.
-- NVBit opcode histogram pass for dynamic instruction validation.
+- direct NCU/CUPTI instruction and active-cycle metrics when available;
+- dependent-chain timing when no direct counter contract exists.
 
-Maps:
+Validation:
+
+- SASS dependency-chain verification,
+- NVBit opcode histogram or dynamic instruction stream,
+- occupancy sweep to detect scheduler/latency hiding confounders.
+
+Simulator parameters:
 
 - `shader_core_config::max_sp_latency`
 - `shader_core_config::max_int_latency`
 - `shader_core_config::max_sfu_latency`
 - `shader_core_config::max_dp_latency`
+- `shader_core_config::max_tensor_core_latency`
+
+Scalar policy:
+
+- allow scalar only for stable opcode-class latency with matching counters,
+  SASS, timing, and low variance;
+- otherwise emit `conditional_scalar` or `bounded_range`.
+
+### Arithmetic Throughput And Functional Units
+
+Hardware-neutral concept:
+
+- reciprocal throughput and issue saturation for an instruction semantic class.
+
+Primary NVIDIA evidence:
+
+- NCU/CUPTI pipe utilization, instruction counts, active cycles, issue metrics;
+- independent-stream microkernels for saturation.
+
+Validation:
+
+- NVBit opcode mix,
+- timing plateau,
+- simulator pipeline trace.
+
+Simulator parameters:
+
+- `shader_core_config::pipeline_widths_string`
+- `shader_core_config::pipe_widths`
 - `gpgpu_num_sp_units`
+- `gpgpu_num_dp_units`
 - `gpgpu_num_int_units`
 - `gpgpu_num_sfu_units`
-- `gpgpu_num_dp_units`
+- `gpgpu_num_tensor_core_units`
 
-Gap handling:
+Scalar policy:
 
-- Require disassembly verification so compiler scheduling does not invalidate
-  dependency chains.
-- Unit counts are inferred from throughput and should be marked
-  `coupled_inference`.
+- throughput plateau can be `stable_scalar` when direct metrics are stable;
+- unit counts are `published`, `conditionally_identified`, or
+  `coupled_inference`, not raw facts unless documented.
 
-#### 4.3 Shared Memory
+### Scheduler And Issue
 
-Files:
+Hardware-neutral concept:
 
-- `/Users/bytedance/wk/amora/amora/probes/shared_memory/pointer_chase.cu`
-- `/Users/bytedance/wk/amora/amora/probes/shared_memory/bank_stride.cu`
-- `/Users/bytedance/wk/amora/amora/probes/shared_memory/analyze.py`
+- ready-work scheduling behavior, issue eligibility, and stall attribution.
 
-Measurements:
+Primary NVIDIA evidence:
 
-- Pointer chase latency.
-- Stride sweep for bank count and conflict periodicity.
-- Broadcast and multicast-like patterns.
-- NCU/CUPTI shared-memory request, transaction, and bank-conflict metrics.
+- `smsp__*` issue, eligible-warps, active-warps, and stall metrics;
+- CUPTI PC Sampling and SASS Metrics.
 
-Maps:
+Validation:
+
+- ready-warp and mixed-issue kernels,
+- arithmetic throughput coupling,
+- simulator scheduler trace.
+
+Simulator parameters:
+
+- `shader_core_config::num_subcores_in_SM`
+- `shader_core_config::gpgpu_num_sched_per_core`
+- `shader_core_config::gpgpu_scheduler_string`
+- `shader_core_config::gpgpu_max_insn_issue_per_warp`
+- `shader_core_config::gpgpu_dual_issue_diff_exec_units`
+
+Scalar policy:
+
+- emit exact counts only when metadata, published facts, or robust counter
+  evidence support them;
+- emit scheduler policy as `behavioral_class`, not as a claimed NVIDIA policy
+  name.
+
+### Register File And Operand Delivery
+
+Hardware-neutral concept:
+
+- operand delivery conflict behavior, register-bank effects, and port-like
+  saturation.
+
+Primary NVIDIA evidence:
+
+- SASS-controlled register-number sweeps,
+- NCU/CUPTI stall and issue metrics.
+
+Validation:
+
+- NVBit register/instruction validation where available,
+- throughput and latency probe coupling,
+- simulator operand-collector trace.
+
+Simulator parameters:
+
+- `shader_core_config::gpgpu_num_reg_banks`
+- `shader_core_config::reg_file_port_throughput`
+- `num_regular_register_file_read_ports_per_bank`
+- `num_regular_register_file_write_ports_per_bank`
+- `max_latency_regular_register_file_latency`
+- `gpgpu_operand_collector_num_units_*`
+- `gpgpu_operand_collector_num_in_ports_*`
+- `gpgpu_operand_collector_num_out_ports_*`
+
+Scalar policy:
+
+- register-bank count may be scalar if periodicity is stable across independent
+  register-number hypotheses;
+- ports and operand collectors usually require `multi_fit` or
+  `behavioral_class` unless multiple probe families agree.
+
+### Shared Memory
+
+Hardware-neutral concept:
+
+- explicitly managed local memory latency, bandwidth, and conflict behavior.
+
+Primary NVIDIA evidence:
+
+- NCU/CUPTI shared-memory transaction and conflict metrics;
+- bank-stride microkernels.
+
+Validation:
+
+- SASS shared-memory instruction verification,
+- timing impact,
+- simulator shared-memory trace.
+
+Simulator parameters:
 
 - `shader_core_config::gpgpu_shmem_num_banks`
-- `shader_core_config::gpgpu_smem_latency`
 - `gpgpu_shmem_limited_broadcast`
 - `gpgpu_shmem_warp_parts`
+- `gpgpu_smem_latency`
 - `memory_shared_memory_minimum_latency`
+- `memmory_max_concurrent_requests_shmem_per_sm`
 
-Gap handling:
+Scalar policy:
 
-- Bank count can be high confidence when stride periodicity is clean.
-- Broadcast/multicast policy is semantic and should be medium confidence unless
-  validated by counters.
+- bank count can be scalar when conflict periodicity is clean;
+- broadcast/multicast and queue behavior should be behavioral or fitted unless
+  directly supported by counters.
 
-### 5. Implement P1 Probes with Moderate Semantic Gaps
+### L1, Constant, Texture, And Instruction Caches
 
-#### 5.1 L1, Constant, Texture, and Instruction Cache
+Hardware-neutral concept:
 
-Files:
+- cache-like latency plateaus, capacity knees, transaction granularity, and
+  path-specific behavior.
 
-- `/Users/bytedance/wk/amora/amora/probes/l1_cache/pointer_chase.cu`
-- `/Users/bytedance/wk/amora/amora/probes/l1_cache/working_set.cu`
-- `/Users/bytedance/wk/amora/amora/probes/l1_cache/conflict_sets.cu`
-- `/Users/bytedance/wk/amora/amora/probes/l1_cache/analyze.py`
+Primary NVIDIA evidence:
 
-Measurements:
+- NCU/CUPTI `l1tex__*`, constant, texture, and instruction-cache metrics;
+- pointer-chase and working-set probes.
 
-- Hit latency, capacity knees, line size, associativity-like conflicts.
-- NCU/CUPTI `l1tex__*` metrics.
-- Optional source variants for global, read-only, texture, constant, and
-  instruction paths.
+Validation:
 
-Maps:
+- SASS load path and cache modifier verification,
+- L2/DRAM traffic checks,
+- simulator cache trace.
+
+Simulator parameters:
 
 - `m_L1D_config`
+- `l1d_cache_config::l1_latency`
+- `l1d_cache_config::l1_banks`
 - `m_L1I_L1_half_C_cache_config`
 - `m_L0I_config`
 - `m_L1C_config`
@@ -344,137 +654,77 @@ Maps:
 - `cache_config::m_nset`
 - `cache_config::m_line_sz`
 - `cache_config::m_assoc`
-- `l1d_cache_config::l1_latency`
-- `l1d_cache_config::l1_banks`
+- `cache_config::m_mshr_entries`
+- `cache_config::m_mshr_max_merge`
+- `cache_config::m_miss_queue_size`
 
-Gap handling:
+Scalar policy:
 
-- Real caches may be unified, sectorized, adaptive, or policy-dependent. Report
-  simulator fields as fitted equivalents, not direct hardware facts.
+- latency and line/sector behavior can be scalar or bounded when direct metrics
+  and access patterns agree;
+- associativity, MSHR, and replacement policy are fitted simulator equivalents.
 
-#### 5.2 Scheduler and Issue
+### SM Memory Pipeline And Coalescing
 
-Files:
+Hardware-neutral concept:
 
-- `/Users/bytedance/wk/amora/amora/probes/scheduler_policy/ready_warps.cu`
-- `/Users/bytedance/wk/amora/amora/probes/scheduler_policy/mixed_issue.cu`
-- `/Users/bytedance/wk/amora/amora/probes/scheduler_policy/analyze.py`
+- request formation, coalescing, sectorization, and SM-to-memory-pipeline
+  pressure.
 
-Measurements:
+Primary NVIDIA evidence:
 
-- Active-warp sweep.
-- Single-pipe and mixed-pipe issue streams.
-- NCU/CUPTI `smsp__*` issue and stall metrics.
-- PC Sampling for stall attribution.
+- NCU/CUPTI L1TEX sector/request/replay metrics;
+- lane-pattern kernels.
 
-Maps:
+Validation:
 
-- `shader_core_config::num_subcores_in_SM`
-- `shader_core_config::gpgpu_num_sched_per_core`
-- `shader_core_config::gpgpu_scheduler_string`
-- `shader_core_config::gpgpu_max_insn_issue_per_warp`
-- `shader_core_config::gpgpu_dual_issue_diff_exec_units`
-- `shader_core_config::pipeline_widths_string`
-- `shader_core_config::pipe_widths`
+- NVBit memory-reference stream,
+- simulator memory-pipeline trace.
 
-Gap handling:
+Simulator parameters:
 
-- Scheduler string is a simulator policy label. Map by behavioral similarity and
-  keep confidence below direct metadata/counter estimates.
-
-#### 5.3 Register File and Operand Collector
-
-Files:
-
-- `/Users/bytedance/wk/amora/amora/probes/register_file/register_bank_sweep.sass`
-- `/Users/bytedance/wk/amora/amora/probes/register_file/register_latency.cu`
-- `/Users/bytedance/wk/amora/amora/probes/register_file/analyze.py`
-
-Measurements:
-
-- Controlled register-numbering SASS loops.
-- Same-bank versus distributed-bank throughput.
-- Dependent read-after-write chains.
-- NVBit register-value instrumentation for validation windows.
-- NCU/CUPTI stall metrics for operand collector or scoreboard pressure where
-  available.
-
-Maps:
-
-- `shader_core_config::gpgpu_num_reg_banks`
-- `shader_core_config::reg_file_port_throughput`
-- `gpgpu_reg_bank_use_warp_id`
-- `num_regular_register_file_read_ports_per_bank`
-- `num_regular_register_file_write_ports_per_bank`
-- `max_latency_regular_register_file_latency`
-- `gpgpu_operand_collector_num_units_*`
-
-Gap handling:
-
-- Operand collector fields are mostly hidden. Treat collector estimates as
-  coupled with scheduler and functional-unit throughput.
-
-### 6. Implement P2 Probes with Strong Coupling
-
-#### 6.1 SM Memory Pipeline and Coalescing
-
-Files:
-
-- `/Users/bytedance/wk/amora/amora/probes/memory_pipeline/lane_patterns.cu`
-- `/Users/bytedance/wk/amora/amora/probes/memory_pipeline/outstanding_requests.cu`
-- `/Users/bytedance/wk/amora/amora/probes/memory_pipeline/analyze.py`
-
-Measurements:
-
-- Lane address pattern sweeps.
-- Independent memory instruction depth sweep.
-- Active warp sweep.
-- NVBit memory-reference traces.
-- NCU/CUPTI `l1tex__*`, memory dependency, and request metrics.
-
-Maps:
-
-- `memory_subcore_queue_size`
-- `memory_intermidiate_stages_subcore_unit`
-- `memory_sm_prt_size`
+- `memory_l1d_minimum_latency`
 - `memory_l1d_max_lookups_per_cycle_per_bank`
 - `memory_maximum_coalescing_cycles`
-- `memory_num_scalar_units_per_subcore`
 - `memory_subcore_link_to_sm_byte_size`
 - `memmory_max_concurrent_requests_standard_per_sm`
 
-Gap handling:
+Scalar policy:
 
-- Queue depths and coalescing windows are inferred from throughput cliffs. Mark
-  as coupled with L1, L2, and scheduler behavior.
+- coalescing and sector behavior can be direct when counters match expected lane
+  addresses;
+- queue and outstanding-request limits are fitted or bounded.
 
-#### 6.2 L2 and DRAM
+### L2, DRAM, And Memory Partitions
 
-Files:
+Hardware-neutral concept:
 
-- `/Users/bytedance/wk/amora/amora/probes/l2_cache/pointer_chase.cu`
-- `/Users/bytedance/wk/amora/amora/probes/global_memory/streaming.cu`
-- `/Users/bytedance/wk/amora/amora/probes/global_memory/partition_sweep.cu`
-- `/Users/bytedance/wk/amora/amora/probes/global_memory/row_policy_sweep.cu`
-- `/Users/bytedance/wk/amora/amora/probes/global_memory/analyze.py`
+- shared-cache behavior, memory partitioning, global memory latency, bandwidth,
+  and saturation.
 
-Measurements:
+Primary NVIDIA evidence:
 
-- L2 hit latency with working sets exceeding L1.
-- L2 capacity and conflict-like behavior.
-- Streaming bandwidth plateaus.
-- Address bit sweeps for partition camping.
-- Row-hit and row-miss style access patterns.
-- NCU/CUPTI `lts__*` and `dram__*` metrics.
+- NCU/CUPTI `lts__*`, `dram__*`, partition metrics where available;
+- CUPTI PM Sampling for phase behavior;
+- published memory specs as trust-and-verify anchors.
 
-Maps:
+Validation:
+
+- streaming, pointer-chase, partition-camping, and row-policy workloads;
+- simulator L2/DRAM/partition traces.
+
+Simulator parameters:
 
 - `memory_config::m_L2_config`
 - `gpgpu_cache:dl2`
 - `gpgpu_l2_rop_latency`
 - `memory_config::m_n_mem`
 - `memory_config::m_n_sub_partition_per_memory_channel`
+- `gpgpu_n_mem_per_ctrlr`
 - `memory_config::scheduler_type`
+- `gpgpu_dram_partition_queues`
+- `gpgpu_frfcfs_dram_sched_queue_size`
+- `gpgpu_dram_return_queue_size`
 - `memory_config::busW`
 - `memory_config::BL`
 - `memory_config::nbk`
@@ -488,31 +738,33 @@ Maps:
 - `dram_latency`
 - `dram_data_command_freq_ratio`
 
-Gap handling:
+Scalar policy:
 
-- Report DRAM timing parameters as fitted effective parameters, not literal
-  vendor DRAM timings.
-- Multiple simulator fields may be explained by one bandwidth or latency curve;
-  record `coupled_with` aggressively.
+- bandwidth can be stable or bounded when direct metrics and published anchors
+  agree;
+- DRAM timing-like parameters are usually `underconstrained` or `multi_fit`;
+- emit alternative fits and residuals for timing/scheduler combinations.
 
-#### 6.3 Tensor Core and Synchronization
+### Tensor Core
 
-Files:
+Hardware-neutral concept:
 
-- `/Users/bytedance/wk/amora/amora/probes/tensor_core/mma_latency.cu`
-- `/Users/bytedance/wk/amora/amora/probes/tensor_core/mma_throughput.cu`
-- `/Users/bytedance/wk/amora/amora/probes/synchronization/barrier_latency.cu`
-- `/Users/bytedance/wk/amora/amora/probes/synchronization/fence_latency.cu`
+- matrix operation latency, throughput, supported shapes, and datatype/layout
+  behavior.
 
-Measurements:
+Primary NVIDIA evidence:
 
-- Dependent and independent MMA instruction streams.
-- Shape and datatype sweeps.
-- CTA barrier and fence timing under varying active warp counts.
-- NCU/CUPTI tensor, stall, and barrier-related metrics.
-- NVBit opcode validation for MMA instruction mix.
+- NCU/CUPTI tensor instruction, tensor-pipe, active-cycle, and utilization
+  metrics;
+- MMA microkernels.
 
-Maps:
+Validation:
+
+- SASS MMA opcode verification,
+- NVBit dynamic opcode mix where practical,
+- simulator tensor-pipeline trace.
+
+Simulator parameters:
 
 - `gpgpu_tensor_core_avail`
 - `gpgpu_num_tensor_core_units`
@@ -520,37 +772,63 @@ Maps:
 - `tensor_rate_per_cycle`
 - `shader_core_config::max_tensor_core_latency`
 - `tensor_extra_latency_16816_fp32_1688_fp32`
+
+Scalar policy:
+
+- tensor throughput may be direct when counters match opcode shape and datatype;
+- unit count and shape-specific extra latency are conditional or fitted unless
+  published.
+
+### Synchronization And Barriers
+
+Hardware-neutral concept:
+
+- barrier, fence, arrival, and completion behavior under controlled patterns.
+
+Primary NVIDIA evidence:
+
+- NCU/CUPTI scheduler/barrier stall metrics;
+- CUPTI PC Sampling stall attribution.
+
+Validation:
+
+- barrier/fence microkernels,
+- simulator synchronization trace.
+
+Simulator parameters:
+
 - `gpgpu_num_cta_barriers`
 - `BARRIER_OP`
 - `MEMORY_BARRIER_OP`
+- `GRID_BARRIER_OP`
 - `MBARRIER_OP`
 - `CLUSTER_BARRIER_OP`
 
-Gap handling:
+Scalar policy:
 
-- Tensor unit count is coupled with clock, scheduler, issue limits, and operand
-  delivery.
-- Barrier operation classes are ISA and simulator semantic mappings, not direct
-  hardware counter names.
+- barrier count/feature support can be direct when documented or metadata-backed;
+- latency should be reported per scope and arrival pattern.
 
-### 7. Implement P3 Biggest-Gap Probes Last
+### TMA, DMA, And Async Copy
 
-#### 7.1 TMA, DMA, and Async Copy
+Hardware-neutral concept:
 
-Files:
+- async copy command issue, transfer bandwidth, completion, in-flight capacity,
+  and overlap behavior.
 
-- `/Users/bytedance/wk/amora/amora/probes/tma_copy/async_copy_latency.cu`
-- `/Users/bytedance/wk/amora/amora/probes/tma_copy/tma_transfer_sweep.cu`
-- `/Users/bytedance/wk/amora/amora/probes/tma_copy/analyze.py`
+Primary NVIDIA evidence:
 
-Measurements:
+- architecture feature checks,
+- SASS verification,
+- NCU/CUPTI async/copy metrics where available,
+- PM Sampling for phase behavior.
 
-- Issue-to-completion latency.
-- Transfer bandwidth by size, stride, rank, and alignment.
-- Wait/barrier completion semantics.
-- NCU/CUPTI memory metrics and PC/SASS attribution where supported.
+Validation:
 
-Maps:
+- async/TMA workloads,
+- simulator TMA/copy-engine trace.
+
+Simulator parameters:
 
 - `tma_unit_sm::kMaxRequestsPerCycle`
 - `TMACommand`
@@ -563,28 +841,34 @@ Maps:
 - `m_in_flight_transfers`
 - `m_outstanding_requests`
 - `m_outstanding_stores_per_warp`
+- `Subcore::m_tma_pipeline`
+- `SM::m_tma_unit_shared_of_sm`
+- `m_EX_TMA_reception_latches_per_subcore`
 
-Gap handling:
+Scalar policy:
 
-- Most TMA names are simulator internal states. Report only behavioral
-  equivalents unless a direct ISA event or metric exists.
+- feature presence and instruction support can be direct;
+- internal queue values are simulator-equivalent fitted parameters.
 
-#### 7.2 Interconnect and Address Mapping
+### Interconnect And Address Mapping
 
-Files:
+Hardware-neutral concept:
 
-- `/Users/bytedance/wk/amora/amora/probes/interconnect/address_mapping.cu`
-- `/Users/bytedance/wk/amora/amora/probes/interconnect/injection_rate.cu`
-- `/Users/bytedance/wk/amora/amora/probes/interconnect/analyze.py`
+- fabric saturation, address-to-partition behavior, injection pressure, and
+  routing-like latency.
 
-Measurements:
+Primary NVIDIA evidence:
 
-- Address bit to partition mapping.
-- Bandwidth and latency under controlled injection rates.
-- Multi-CTA partition-camping tests.
-- CUPTI/NCU partition or fabric metrics when available.
+- memory partition and L2 metrics where available,
+- traffic imbalance and partition-camping workloads,
+- PM Sampling for phase behavior.
 
-Maps:
+Validation:
+
+- NVBit memory address stream,
+- simulator interconnect and partition traces.
+
+Simulator parameters:
 
 - `icnt_flit_size`
 - `gpgpu_mem_addr_mapping`
@@ -596,183 +880,151 @@ Maps:
 - `input_speedup`
 - `output_speedup`
 - `internal_speedup`
-- `output_buffer_size`
-- `use_noc_latency`
 
-Gap handling:
+Scalar policy:
 
-- Router and VC fields are simulator constructs. They should be estimated only
-  as effective parameters after L2/DRAM and coalescing probes are stable.
+- address mapping can be inferred or bounded if partition counters and address
+  sweeps agree;
+- router microparameters should usually be `behavioral_class`,
+  `bounded_range`, or `multi_fit`, not exact hardware facts.
 
-### 8. Add Tool Correlation Workflow
+## Implementation Plan
 
-Files:
-
-- `/Users/bytedance/wk/amora/amora/core/correlation.py`
-- `/Users/bytedance/wk/amora/amora/backends/ncu.py`
-- `/Users/bytedance/wk/amora/amora/backends/cupti.py`
-- `/Users/bytedance/wk/amora/amora/backends/nvbit.py`
-
-What:
-
-- Correlate separate runs by `probe_id`, kernel name, launch config, problem
-  size, binary hash, and disassembly hash.
-
-Why:
-
-- NVBit and Nsight/NCU-style tooling cannot normally run together. CUPTI
-  profiling may require replay. AMORA needs offline correlation across separate
-  evidence passes.
-
-Acceptance:
-
-- A single probe can attach timing results, NCU/CUPTI metrics, PC/SASS
-  attribution, and NVBit streams without assuming they came from one process.
-
-### 9. Add Reports and Coverage Matrix
+### Phase N0: Bring Current Baseline Scaffolding Into Layered Output
 
 Files:
 
-- `/Users/bytedance/wk/amora/amora/reports/markdown.py`
-- `/Users/bytedance/wk/amora/amora/reports/json_report.py`
+- `amora/schemas/results.py`
+- `amora/reports/json_report.py`
+- `amora/backends/nvidia/cuda.py`
+- `amora/probes/nvidia/baseline/*.py`
 
-Report sections:
+Work:
 
-- target identity and tool versions
-- capability discovery results
-- semantic gap matrix for executed probe families
-- measurement coverage matrix by simulator parameter
-- high-confidence estimates
-- coupled estimates
-- unsupported parameters with reasons
-- raw result summary
-- suggested next probes to reduce uncertainty
+- Add layered result objects matching this plan.
+- Add fit status, uncertainty category, variance, assumptions, and coupled
+  parameters to simulator estimates.
+- Record binary/disassembly hashes when available.
+- Keep current baseline dry-run behavior compatible with tests.
 
-## Ordered Roadmap
+### Phase N1: Add NVIDIA Capability And Metric Resolution
 
-### P0: Readily Available and Low-Gap
+Files:
 
-1. Schemas and parameter map.
-2. Capability discovery.
-3. CUDA device metadata and occupancy probes.
-4. Arithmetic latency and throughput microkernels.
-5. Shared-memory latency and bank-conflict probes.
-6. NCU/CUPTI metric query and CSV/result ingestion.
-7. NVBit opcode histogram integration for validation.
+- `amora/backends/nvidia/capabilities.py`
+- `amora/backends/nvidia/metrics.py`
+- `amora/backends/nvidia/ncu.py`
+- `amora/backends/nvidia/cupti.py`
 
-Expected outcome:
+Work:
 
-- First JSON and Markdown reports with high-confidence estimates for warp size,
-  SM count, occupancy limits, basic arithmetic latency/throughput, shared memory
-  bank count, shared latency, and direct NCU/CUPTI metrics.
+- Query CUDA, NCU, CUPTI, NVBit, and disassembly tool availability.
+- Resolve logical metrics to target-specific candidate metric names.
+- Emit unsupported reasons and fallback routes.
 
-### P1: Moderate-Gap Structure
+### Phase N2: Add ISA/SASS Semantic Records
 
-1. L1/cache geometry probes.
-2. Scheduler and issue behavior probes.
-3. Register bank and operand delivery probes.
-4. PC Sampling and SASS Metrics attribution integration.
+Files:
 
-Expected outcome:
+- `amora/backends/nvidia/isa_semantics.yaml`
+- `amora/backends/nvidia/disassembly.py`
+- `amora/backends/nvidia/nvbit.py`
 
-- Medium/high-confidence fitted cache parameters.
-- Behavioral scheduler and dual-issue classifications.
-- Initial register-bank and operand-delivery estimates with explicit coupling.
+Work:
 
-### P2: Strongly Coupled Subsystems
+- Define SASS/PTX semantic classes for baseline and later-priority probes.
+- Add verification hooks for required opcode and dependency patterns.
+- Add NVBit validation records where practical.
 
-1. SM memory pipeline and coalescing probes.
-2. L2 and DRAM probes.
-3. Tensor core probes.
-4. Synchronization and barrier probes.
-5. PM Sampling support for long-running and phase-based probes.
+### Phase N3: Convert Baseline And Later-Priority Methodology Files
 
-Expected outcome:
+Files:
 
-- Effective L2/DRAM and memory-pipeline parameters with coupling metadata.
-- Tensor throughput and latency estimates.
-- Barrier/fence cost profiles.
+- `.plan/nvidia-baseline-kernel-methodology.md`
+- `.plan/nvidia-p1-kernel-methodology.md`
+- `.plan/nvidia-p2-kernel-methodology.md`
+- `.plan/nvidia-p3-kernel-methodology.md`
 
-### P3: Biggest Semantic Gaps
+Work:
 
-1. TMA/async-copy probe family.
-2. Interconnect and address-mapping probe family.
-3. Effective router/queue parameter fitting.
-4. Architecture-specific refinements for Hopper/Blackwell-style features.
+- Add per-probe measurement contracts.
+- Mark primary evidence source and validation evidence.
+- Add clock-domain policy, rejection rules, downgrade rules, and fallback.
+- Add scalar-output policy and expected fit status.
 
-Expected outcome:
+### Phase N4: Add Simulator Trace Contracts
 
-- Behavioral equivalents for simulator-specific TMA and interconnect fields.
-- Explicit list of parameters that remain unobservable without vendor-private
-  documentation or stronger hardware counter support.
+Files:
 
-## Assumptions and Decisions
+- `amora/backends/simulator_trace.py`
+- `amora/probes/simulator_state/*.py`
 
-- First executable target is NVIDIA CUDA hardware.
-- Framework interfaces should remain portable, but implementation starts with
-  NVIDIA-specific backends.
-- Tooling adapters and custom microkernels are implemented in parallel tracks.
-- CUPTI/NCU metrics are evidence, not the only source of truth.
-- NVBit is used for dynamic instruction, memory-reference, and register-stream
-  validation, not for hardware counter access.
-- The first implementation should emit reports and profiles. It should not
-  automatically rewrite simulator configuration files.
-- Every parameter estimate must include confidence, evidence tier, probe IDs,
-  and coupling notes.
+Work:
 
-## Verification Steps
+- Define simulator trace points for scheduler state, queue lengths, pipeline
+  occupancy, cache state, interconnect state, and memory partition state.
+- Use traces to compare fitted simulator-equivalent parameters with dynamic
+  simulator behavior.
 
-### Static Verification
+### Phase N5: Expand Beyond Baseline
 
-1. Validate JSON schemas.
-2. Validate `simulator_parameter_map.yaml` contains only documented target
-   parameter names.
-3. Unit-test statistical helpers for median, MAD, slope fitting, plateau
-   detection, knee detection, and periodicity detection.
-4. Unit-test report rendering from synthetic probe results.
+Work order:
 
-### Tool Verification
+1. topology and occupancy,
+2. arithmetic latency and throughput,
+3. shared/local memory,
+4. coalescing and L1/L2 behavior,
+5. scheduler and operand delivery,
+6. DRAM and partition behavior,
+7. tensor core,
+8. synchronization,
+9. TMA/async copy,
+10. interconnect and address mapping.
 
-1. Verify `nvcc`, `nvdisasm`, CUDA runtime, NCU, CUPTI helper, and NVBit tool
-   availability are detected independently.
-2. Verify unavailable tools produce `unsupported` evidence records.
-3. Verify NCU metric query parsing against a saved sample.
-4. Verify NVBit output parsing against a small opcode histogram sample.
+Reasoning:
 
-### Kernel Verification
+- Start with metadata-backed and direct-counter-backed probes.
+- Move next to probes with stable microkernel contracts.
+- Leave highly coupled hidden structures for later phases where simulator
+  traces and fitting infrastructure exist.
 
-1. Compile and disassemble every microkernel.
-2. Reject or warn when disassembly does not match the expected dependency or
-   instruction pattern.
-3. Run a no-op kernel to validate launch plumbing.
-4. Run timer calibration to validate monotonic device timing.
-5. Run repeated arithmetic and shared-memory probes to confirm low variance.
+## Acceptance Criteria
 
-### Acceptance Criteria
+This NVIDIA plan is implemented when:
 
-The implementation is complete for the first milestone when:
+- every NVIDIA probe emits layered results,
+- every simulator parameter estimate references a measurement contract,
+- every logical metric is resolved through the metric resolver,
+- direct NCU/CUPTI metrics are primary only when the metric contract is direct,
+- microkernel timing is separated from profiler runs,
+- disassembly and NVBit validation are recorded where required,
+- published parameters and CUDA metadata are used as trust-and-verify anchors,
+- simulator dynamic state trace contracts exist for fitted mappings,
+- every non-direct estimate reports fit status, uncertainty category, variance,
+  assumptions, and coupled parameters,
+- clock domains and conversion methods are explicit,
+- unsupported, downgraded, and rejected measurements appear in reports.
 
-- AMORA can run P0 probes on one NVIDIA CUDA target.
-- It emits a machine-readable JSON hardware profile.
-- It emits a Markdown report with a semantic gap and coverage matrix.
-- It provides estimates for at least:
-  - `shader_core_config::warp_size`
-  - `shader_core_config::max_warps_per_shader`
-  - `shader_core_config::gpgpu_shmem_size`
-  - `shader_core_config::gpgpu_shmem_num_banks`
-  - `shader_core_config::gpgpu_smem_latency`
-  - `shader_core_config::max_sp_latency`
-  - `shader_core_config::max_int_latency`
-  - `shader_core_config::max_sfu_latency`
-  - `cache_config::m_line_sz`
-  - `l1d_cache_config::l1_latency`
-- Each estimate has value, unit, confidence, evidence tier, probe IDs, and
-  coupling notes.
-- Unsupported probes are listed with explicit reasons.
+## Key Decision Record
 
-## Rollout Notes
+- Decision: NCU/CUPTI direct counters can be primary evidence.
+  Reason: when metric semantics match the target behavior, counters expose
+  execution facts that end-to-end timing can hide behind runtime fog.
 
-Implement P0 first and keep P1-P3 behind explicit probe-family flags. This keeps
-early reports useful while avoiding false precision for the biggest semantic
-gaps. Promote a probe family from experimental to default only after its
-disassembly checks, repeatability checks, and cross-tool validation are stable.
+- Decision: Microkernels are controlled workload generators, validation tools,
+  and fallback measurement paths, not universally primary truth.
+  Reason: microkernel timing is also affected by clocks, scheduling, cache
+  state, launch overhead, and interference.
+
+- Decision: Published NVIDIA parameters are trust-and-verify anchors.
+  Reason: documented facts should not be re-inferred unless the goal is
+  validation or detecting mode-specific differences.
+
+- Decision: Simulator internal states are directly observable.
+  Reason: queue lengths, scheduler state, cache state, and pipeline state can be
+  traced in the simulator. The challenge is fitting hardware observations to
+  simulator-equivalent behavior.
+
+- Decision: Hidden NVIDIA structures map to simulator-equivalent behavior only
+  when contracts and fitting metadata justify it.
+  Reason: many simulator knobs are not literal NVIDIA hardware facts.

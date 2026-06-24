@@ -2,448 +2,615 @@
 
 ## Scope
 
-This document defines probing methodology for P3 probes listed in
-`/Users/bytedance/wk/amora/.plan/nvidia-probe-semantic-measurement-gap-plan.md`.
-P3 probes have the largest semantic and measurement gaps. They should be
-implemented only after P0-P2 baselines are stable.
+This document defines the P3 NVIDIA probe methodology under the current AMORA
+hardware-first, simulator-assisted validation model.
 
-P3 covers:
+P3 probes target behavior with the largest semantic and measurement gaps:
 
-- TMA, DMA, and async copy behavior
-- interconnect and address mapping behavior
+- TMA, asynchronous copy, and DMA-like transfer behavior,
+- interconnect injection and contention behavior,
+- address mapping across memory partitions, cache slices, and fabric paths.
 
-Most P3 target parameters are simulator internal structures. The goal is not to
-claim direct hardware equivalence. The goal is to produce effective behavioral
-parameters and clearly identify what remains unobservable.
+P3 outputs are expected to be more often bounded, behavioral, or
+underconstrained than baseline through P2 outputs. The methodology should still be useful:
+it records what can be observed on hardware, what the NVIDIA backend can
+interpret, what the simulator exposes directly, and where the mapping is not
+identifiable.
 
-## Common Methodology Rules
+```text
+published/CUDA facts
+-> raw tool, instruction-stream, and timing observations
+-> normalized hardware measurements
+-> NVIDIA backend interpretation
+-> simulator mapping contract
+-> simulator-equivalent estimate with fit metadata
+```
 
-1. Require P0-P2 baseline inputs:
-   - occupancy and clocks
-   - arithmetic throughput
-   - shared-memory behavior
-   - L1/L2/DRAM latency and bandwidth
-   - scheduler and memory-pipeline coupling notes
-2. Use architecture feature detection before running any P3 probe.
-3. Treat all unsupported instructions, scopes, and metrics as explicit
-   `unsupported` outputs.
-4. Use CUPTI/NCU metrics as supporting evidence, not definitive proof of internal
-   queue or router state.
-5. Use PC Sampling and SASS Metrics for attribution when supported.
-6. Use NVBit only in separate validation runs for dynamic instruction or memory
-   stream checks.
-7. Emit effective parameters, ranges, and alternatives instead of a single false
-   precision value.
+## Revision History
+
+### 2026-06-18: Layered Evidence Refresh
+
+Source inputs:
+
+- `.plan/probing-suite-microarchitecture-plan.md`
+- `.plan/nvidia-probe-semantic-measurement-gap-plan.md`
+- Previous `.plan/nvidia-p3-kernel-methodology.md`
+
+Major changes:
+
+- Rewrote P3 as a high-gap methodology instead of a list of ambitious kernel
+  ideas.
+- Replaced any absolute workspace references with repo-relative paths.
+- Made published facts, CUDA metadata, NCU/CUPTI metrics, CUPTI sampling,
+  NVBit streams, disassembly, timing, and simulator traces separate evidence
+  layers.
+- Added explicit capability gates because TMA, async-copy, and interconnect
+  metrics vary substantially by architecture and tool version.
+- Changed expected outputs from precise physical parameters to ranges,
+  candidate sets, behavioral classes, and simulator-equivalent estimates with
+  fit metadata.
+- Added downgrade and unsupported reporting rules to avoid overclaiming hidden
+  interconnect and address-mapping behavior.
+
+Superseded assumptions:
+
+- Superseded: P3 probes should recover exact proprietary interconnect or
+  address-mapping parameters.
+  Replacement: P3 probes should recover direct observations first, then emit
+  exact mappings only when the evidence uniquely identifies them.
+
+- Superseded: asynchronous-copy timing alone can define simulator copy-engine
+  parameters.
+  Replacement: timing must be joined with instruction-stream validation,
+  profiler metrics, memory traffic metrics, synchronization state, and simulator
+  traces before emitting simulator-equivalent estimates.
+
+## Common P3 Contract
+
+P3 requires baseline through P2 baselines:
+
+- topology, occupancy, clocks, and device identity,
+- arithmetic and shared-memory baselines,
+- L1/L2/DRAM regime classification,
+- scheduler and issue baselines,
+- memory coalescing and partition-sensitivity baselines,
+- tensor and synchronization baselines where relevant.
+
+Every P3 probe must define:
+
+- hardware-neutral concept,
+- NVIDIA-specific interpretation,
+- target simulator parameters,
+- required backend capabilities,
+- primary evidence,
+- validation evidence,
+- timing and profiler execution modes,
+- required SASS/disassembly pattern,
+- clock-domain policy,
+- scalar-output policy,
+- fit status and uncertainty category,
+- rejection and downgrade rules,
+- fallback behavior.
+
+Every P3 result must emit:
+
+- `raw_observation`
+- `normalized_measurement`
+- `backend_interpretation`
+- `simulator_estimate`
+
+Required shared fields:
+
+- probe ID,
+- source hash,
+- binary hash,
+- disassembly hash,
+- launch configuration,
+- CUDA device identity,
+- driver/runtime/tool versions,
+- metric names and units,
+- clock domain and clock source,
+- transfer descriptor or address-pattern descriptor,
+- synchronization descriptor,
+- variance summary,
+- assumptions,
+- `coupled_with`,
+- unsupported or downgrade reason.
+
+## Evidence And Risk Policy
+
+Evidence tiers:
+
+- `published_fact`
+- `direct_metadata`
+- `direct_counter`
+- `tool_derived_counter`
+- `instrumented_stream`
+- `timing_direct`
+- `simulator_trace`
+- `coupled_inference`
+- `unsupported`
+
+Fit status values:
+
+- `direct`
+- `uniquely_identified`
+- `bounded`
+- `conditionally_identified`
+- `underconstrained`
+- `behavioral_only`
+- `unsupported`
+
+Uncertainty categories:
+
+- `stable_scalar`
+- `bounded_range`
+- `conditional_scalar`
+- `multi_fit`
+- `behavioral_class`
+- `indeterminate`
 
 Risk scale:
 
-- Medium: stable behavior with a close metric or direct instruction semantic.
-- High: behavior is coupled with multiple already-measured subsystems.
-- Very high: target parameter is a simulator-only internal structure.
+- Low: direct metadata or direct counter with a documented semantic match.
+- Medium: stable behavior after disassembly, NVBit, profiler, and timing
+  validation agree.
+- High: any claim about hidden copy engines, fabric topology, address hashing,
+  queue capacity, arbitration, or physical routing.
 
 ## Probe: `tma_copy/async_copy_latency.cu`
 
-### Goal
+### Concept
 
-Measure issue-to-observable-completion latency for async-copy or TMA-like copy
-instructions where the architecture supports them.
+Latency and completion behavior for asynchronous copy paths, including
+instruction issue, transfer progress, wait/synchronization, and data visibility.
 
-### Parameters
+### Target Parameters
 
-- `tma_unit_sm::kMaxRequestsPerCycle`
-- `TMACommand`
-- `TMATransferEntry`
-- `TMAOpcodeFamily`
-- `TMADirection`
-- `TMATransferType`
-- `TMAOperandForm`
-- `m_command_queue`
-- `m_in_flight_transfers`
-- `m_outstanding_requests`
-- `m_outstanding_stores_per_warp`
+- simulator async-copy issue latency,
+- simulator async-copy completion latency,
+- copy-engine or transfer-pipeline throughput where modeled,
+- wait-group or synchronization latency,
+- state-machine behavior for transfer visibility.
+
+### Primary Evidence
+
+- Timing of issue, wait, and dependent-use sequences when latency behavior is
+  the target.
+- NCU/CUPTI async-copy, memory-traffic, and stall metrics when the metric
+  resolver identifies direct semantics.
+- SASS disassembly for exact async-copy/TMA instructions.
+
+### Validation Evidence
+
+- NVBit dynamic instruction stream where supported.
+- CUPTI PC/SASS metrics for attribution.
+- Shared-memory and global-memory traffic metrics.
+- P2 DRAM/L2 baselines.
+- Simulator async-copy state-machine trace.
 
 ### Methodology
 
-1. Detect architecture support:
-   - compute capability
-   - CUDA toolkit support
-   - assembler support for async-copy/TMA instructions
-   - required barrier/wait instructions
-2. Generate minimal copy kernels:
-   - one copy command
-   - controlled source and destination spaces
-   - required wait or barrier completion path
-3. Measure:
-   - issue-to-wait latency
-   - wait-only baseline
-   - barrier-arrive/wait overhead
-   - completion latency for zero or minimal payload when legal
-4. Sweep:
-   - transfer size
-   - alignment
-   - source/destination space
-   - one warp versus multiple warps
-   - one CTA versus multiple CTAs
-5. Use device-side timing around the copy and completion sequence.
-6. Disassemble to verify the exact async/TMA instruction and wait sequence.
-7. Collect NCU/CUPTI memory, stall, and async-copy-related metrics where
-   available.
-8. Use PC Sampling to attribute wait stalls to barrier, memory dependency, or
-   dispatch categories where available.
+1. Generate minimal async-copy sequences with explicit issue, wait, and
+   dependent-use phases.
+2. Sweep transfer size, alignment, source/destination layout, wait distance,
+   resident warps, and concurrent CTAs.
+3. Verify the intended SASS instructions and synchronization sequence.
+4. Collect timing for issue-to-wait, wait-to-use, and full transfer completion.
+5. Collect direct profiler metrics for async-copy activity and memory traffic
+   when available.
+6. Separate instruction issue overhead, transfer latency, memory-system
+   throughput, and synchronization overhead only when the evidence supports the
+   decomposition.
 
-### Reasoning
+### Scalar Policy
 
-Async copy and TMA instructions expose multiple latency components: command
-issue, transfer service, barrier/completion notification, and wait. A minimal
-latency probe isolates the fixed components before transfer-size sweeps add
-bandwidth effects.
+Allowed:
 
-### Risk Estimate
+- latency for a specific instruction sequence, transfer size, alignment, wait
+  policy, and occupancy regime,
+- bounded completion latency for a declared transfer class,
+- behavioral state-machine class.
 
-Risk: High to Very High.
+Not directly allowed:
 
-Main risks:
+- physical copy-engine count,
+- universal async-copy latency independent of transfer size and wait policy,
+- hidden queue capacity unless a saturation fit is identifiable.
 
-- TMA support is architecture-specific and may not be accessible from a simple
-  CUDA kernel on all targets.
-- The simulator names are internal abstractions, not public hardware counters.
-- Observed latency is coupled with shared memory, L2, DRAM, barriers, and warp
-  scheduling.
-- Compiler or assembler restrictions can change the generated instruction
-  sequence.
+### Fit And Uncertainty
 
-Mitigation:
+- Expected fit status: `conditionally_identified`, `bounded`, or
+  `behavioral_only`.
+- Expected uncertainty: `conditional_scalar`, `bounded_range`, or
+  `behavioral_class`.
 
-- Feature-gate every variant.
-- Store disassembly and reject unexpected instruction forms.
-- Report latency components separately.
-- Mark queue and transfer-entry estimates as `coupled_inference` unless a direct
-  metric exists.
+### Rejection And Downgrade
+
+Reject if SASS does not contain the intended async-copy/TMA sequence, if
+compiler motion invalidates phase timing, or if memory-system bottlenecks
+dominate a latency claim. Downgrade to `underconstrained` when issue,
+transfer, and wait components cannot be separated.
+
+### Risk
+
+High. Async-copy behavior is stateful and architecture-dependent.
 
 ## Probe: `tma_copy/tma_transfer_sweep.cu`
 
-### Goal
+### Concept
 
-Measure steady-state async/TMA transfer bandwidth, outstanding transfer limits,
-and completion behavior over transfer geometry.
+Bulk TMA or TMA-like transfer throughput, shape sensitivity, and concurrency
+behavior for multidimensional transfers.
 
-### Parameters
+### Target Parameters
 
-- `tma_unit_sm::kMaxRequestsPerCycle`
-- `m_command_queue`
-- `m_in_flight_transfers`
-- `m_outstanding_requests`
-- `m_outstanding_stores_per_warp`
-- `TMADirection`
-- `TMATransferType`
-- `TMAOperandForm`
+- simulator TMA transfer throughput,
+- simulator TMA setup overhead,
+- transfer granularity or alignment-equivalent behavior,
+- queue-depth or concurrency-equivalent behavior where modeled.
+
+### Primary Evidence
+
+- NCU/CUPTI TMA, async-copy, memory-byte, sector, and stall metrics when direct.
+- Timing-throughput curves when throughput or saturation behavior is the
+  target.
+
+### Validation Evidence
+
+- SASS disassembly and source-level transfer descriptor capture.
+- NVBit instruction stream where supported.
+- P2 DRAM/L2 throughput baselines.
+- CUPTI PM sampling for phase stability.
+- Simulator TMA queue and transfer traces.
 
 ### Methodology
 
-1. Build a family of transfer kernels with controlled producer/consumer state.
-2. Sweep:
-   - transfer bytes
-   - rank or dimensionality when supported
-   - stride
-   - alignment
-   - number of outstanding commands
-   - warps issuing commands
-   - CTAs per SM
-3. Separate phases:
-   - command issue phase
-   - transfer-in-flight phase
-   - wait/completion phase
-4. Measure:
-   - bytes per cycle
-   - commands per cycle
-   - completion latency
-   - throughput plateau
-   - cliff when outstanding request capacity is exceeded
-5. Collect NCU/CUPTI shared, L1TEX, L2, DRAM, and stall metrics.
-6. Use PM Sampling for long-running producer/consumer variants when replay would
-   distort overlap behavior.
+1. Sweep transfer shape, total bytes, alignment, source/destination layout,
+   multicast or cluster mode where supported, and concurrent transfer count.
+2. Measure setup-dominated, latency-dominated, and throughput-dominated
+   regimes separately.
+3. Normalize to bytes per second, bytes per cycle, transfers per cycle, and
+   fraction of P2 streaming bandwidth.
+4. Use direct TMA/async-copy metrics as primary only when metric semantics are
+   verified.
+5. Fit concurrency and queue-depth-equivalent behavior only after memory
+   bandwidth and synchronization bottlenecks are ruled out.
 
-### Reasoning
+### Scalar Policy
 
-Transfer sweeps reveal whether the limiting factor is command issue, in-flight
-capacity, memory bandwidth, or completion synchronization. The saturation point
-is the best public proxy for simulator queue-depth and request-rate fields.
+Allowed:
 
-### Risk Estimate
+- sustained throughput for a named transfer descriptor and concurrency regime,
+- setup overhead for a minimal validated descriptor,
+- candidate queue-depth range for a declared workload class.
 
-Risk: Very High.
+Not directly allowed:
 
-Main risks:
+- exact hardware queue depth,
+- exact engine count,
+- a single TMA bandwidth independent of shape, alignment, and memory regime.
 
-- Transfer engine behavior may be undocumented and architecture-specific.
-- Bandwidth plateaus can be dominated by L2/DRAM rather than TMA command limits.
-- In-flight capacity may not show a clean cliff if backpressure is gradual.
-- Replay profiling may perturb async overlap.
+### Fit And Uncertainty
 
-Mitigation:
+- Expected fit status: `direct` for direct byte/transfer metrics;
+  `bounded` or `conditionally_identified` for setup/concurrency estimates.
+- Expected uncertainty: `stable_scalar`, `bounded_range`, or `multi_fit`.
 
-- Compare transfer results against P2 global-memory and synchronization
-  baselines.
-- Use PM Sampling for phase behavior.
-- Report multiple candidate bottleneck explanations.
-- Keep TMA queue estimates low confidence unless cliffs are stable and counters
-  agree.
+### Rejection And Downgrade
+
+Reject if transfer descriptors differ from the reported class, if clocks drift,
+or if the measured regime is cache-resident when DRAM behavior is claimed.
+Downgrade concurrency fits when memory bandwidth, synchronization, and queueing
+effects cannot be separated.
+
+### Risk
+
+High for queue and engine inference; medium for measured sustained throughput.
 
 ## Probe: `tma_copy/analyze.py`
 
-### Goal
+### Concept
 
-Fit effective async/TMA command, transfer, and completion behavior.
+Analysis layer for async-copy and TMA observations.
+
+### Target Parameters
+
+- transfer latency records,
+- setup-overhead records,
+- transfer-throughput records,
+- concurrency candidate records,
+- simulator async-copy/TMA mapping contracts.
+
+### Primary Evidence
+
+- Structured outputs from `tma_copy/async_copy_latency.cu`.
+- Structured outputs from `tma_copy/tma_transfer_sweep.cu`.
+
+### Validation Evidence
+
+- Metric resolver records.
+- SASS and NVBit validation records.
+- P2 memory-regime records.
+- Simulator async-copy/TMA traces.
 
 ### Methodology
 
-1. Split measurements into fixed latency, bandwidth, and wait components.
-2. Fit:
-   - minimum issue-to-completion latency
-   - steady-state bytes per cycle
-   - commands per cycle
-   - outstanding command cliff or saturation range
-   - wait/completion overhead
-3. Compare against P2:
-   - shared-memory latency
-   - L2/DRAM bandwidth
-   - barrier/fence latency
-4. Emit simulator mappings only as behavioral equivalents:
-   - command queue capacity equivalent
-   - in-flight transfer equivalent
-   - request-rate equivalent
-5. Mark unobservable fields explicitly.
+1. Join timing, profiler, disassembly, NVBit, and simulator trace artifacts by
+   probe ID, binary hash, transfer descriptor, and launch configuration.
+2. Normalize timing into issue, wait, completion, and throughput records.
+3. Attach memory-regime classification from P2.
+4. Preserve separate setup, transfer, synchronization, and memory-system
+   components when identifiable.
+5. Emit bounded or behavioral outputs when decomposition is not identifiable.
 
-### Reasoning
+### Scalar Policy
 
-Most TMA simulator parameters describe internal state machines. Public probes can
-only measure external behavior. The analyzer must keep this distinction visible.
+Scalar summaries are allowed only for a single transfer descriptor, clock
+domain, memory regime, and fit status.
 
-### Risk Estimate
+### Fit And Uncertainty
 
-Risk: Very High.
+- Expected fit status: inherited from source probes.
+- Expected uncertainty: inherited from source probes plus aggregation variance.
 
-Main risks:
+### Rejection And Downgrade
 
-- Many internal configurations can produce the same observable transfer curve.
-- Tool metrics may not name TMA units consistently across architectures.
+Reject records with missing transfer descriptors, mismatched binary hashes, or
+ambiguous SASS validation. Downgrade aggregation across mixed memory regimes.
 
-Mitigation:
+### Risk
 
-- Emit ranges and candidate explanations.
-- Use `unsupported` or `indeterminate` rather than overfitting.
-- Link every TMA estimate to P2 memory and synchronization baselines.
+Medium. The analysis is straightforward, but component attribution can be
+underconstrained.
 
 ## Probe: `interconnect/address_mapping.cu`
 
-### Goal
+### Concept
 
-Infer effective address-to-partition and address-to-cache-slice behavior.
+Address-to-fabric, address-to-cache-slice, or address-to-memory-partition
+behavior inferred from controlled placement and access-pattern sweeps.
 
-### Parameters
+### Target Parameters
 
-- `gpgpu_mem_addr_mapping`
-- `gpgpu_mem_address_mask`
-- `memory_config::m_n_mem`
-- `memory_config::m_n_sub_partition_per_memory_channel`
+- simulator address-to-partition mapping,
+- simulator cache-slice or subpartition mapping where modeled,
+- fabric-path candidate class,
+- partition-camping sensitivity.
+
+### Primary Evidence
+
+- Throughput, latency, and imbalance changes across base-address, stride,
+  allocation, and page-placement sweeps.
+- Direct partition/slice/fabric metrics when available and semantically direct.
+
+### Validation Evidence
+
+- NVBit effective-address streams.
+- NCU/CUPTI L2, DRAM, partition, or subpartition metrics where available.
+- P2 partition-sweep baselines.
+- Simulator address-mapping and partition traces.
 
 ### Methodology
 
-1. Allocate large global-memory regions.
-2. Generate kernels that access controlled address sets.
-3. Sweep:
-   - base address
-   - stride
-   - selected address bits
-   - buffer size
-   - read versus write
-   - one CTA versus many CTAs
-4. Measure bandwidth and latency for each candidate mapping pattern.
-5. Detect partition-camping signatures:
-   - periodic bandwidth drops
-   - latency spikes
-   - uneven L2/DRAM metric instances if exposed
-6. Use NCU/CUPTI partition, L2 slice, or memory-controller metrics when
+1. Generate controlled address sets with varied base offsets, strides, page
+   sizes, allocation order, and concurrent stream placement.
+2. Collect timing, throughput, L2/DRAM traffic, and partition metrics where
    available.
-7. Repeat across allocations to account for virtual-to-physical mapping noise.
+3. Use NVBit to verify the effective address stream for candidate cases.
+4. Search mapping candidates but retain all candidates that explain the data.
+5. Compare candidate mappings with simulator traces and report the mapping
+   contract assumptions explicitly.
 
-### Reasoning
+### Scalar Policy
 
-Address mapping is observable only through traffic imbalance. If certain address
-bits select partitions or slices, controlled sweeps should reveal periodic
-contention patterns.
+Allowed:
 
-### Risk Estimate
+- partition-camping behavioral class,
+- candidate mapping set,
+- lower/upper bound on partition or slice count for a declared allocation mode.
 
-Risk: Very High.
+Not directly allowed:
 
-Main risks:
+- exact proprietary hash function unless uniquely identified,
+- physical fabric path or topology without direct evidence,
+- mapping claims that ignore virtual allocation and page-placement effects.
 
-- Physical address bits are usually not directly controlled.
-- NVIDIA may hash address bits in undocumented ways.
-- L2 slice mapping and DRAM partition mapping may not be the same.
-- Page allocation, compression, and memory placement can distort patterns.
+### Fit And Uncertainty
 
-Mitigation:
+- Expected fit status: `bounded`, `conditionally_identified`,
+  `behavioral_only`, or `underconstrained`.
+- Expected uncertainty: `bounded_range`, `multi_fit`, `behavioral_class`, or
+  `indeterminate`.
 
-- Use many base addresses and allocation sizes.
-- Score multiple mapping hypotheses.
-- Report candidates and confidence instead of a single mapping when evidence is
-  ambiguous.
-- Reuse P2 partition-sweep evidence as a prerequisite.
+### Rejection And Downgrade
+
+Reject exact mapping claims if multiple candidates fit the observations.
+Downgrade if page placement, compression, migration, cache residency, or
+partition metrics are unavailable.
+
+### Risk
+
+High. Exact address mapping is intentionally opaque and architecture-specific.
 
 ## Probe: `interconnect/injection_rate.cu`
 
-### Goal
+### Concept
 
-Measure latency and bandwidth under controlled traffic injection rates to fit
-effective interconnect saturation behavior.
+Effective injection bandwidth and contention sensitivity for traffic entering
+the on-chip fabric or memory system from SMs.
 
-### Parameters
+### Target Parameters
 
-- `icnt_flit_size`
-- `routing_delay`
-- `vc_alloc_delay`
-- `sw_alloc_delay`
-- `credit_delay`
-- `input_speedup`
-- `output_speedup`
-- `internal_speedup`
-- `output_buffer_size`
-- `use_noc_latency`
+- simulator interconnect injection bandwidth,
+- fabric contention or arbitration-equivalent behavior,
+- per-SM or per-cluster traffic injection class,
+- simulator network queue or link-throughput estimates where modeled.
+
+### Primary Evidence
+
+- NCU/CUPTI throughput, stall, L2/DRAM traffic, and interconnect/fabric metrics
+  when direct.
+- Timing-throughput saturation curves for controlled multi-SM traffic.
+
+### Validation Evidence
+
+- NVBit instruction and address streams.
+- P2 coalescing, L2, DRAM, and partition baselines.
+- CUPTI PM sampling for phase stability.
+- Simulator interconnect queue, link, and arbitration traces.
 
 ### Methodology
 
-1. Generate traffic kernels with controlled per-SM injection rates.
-2. Sweep:
-   - number of active SMs
-   - CTAs per SM
-   - requests per warp
-   - read versus write traffic
-   - partition-balanced versus partition-camped addresses
-3. Measure:
-   - latency under load
-   - throughput under load
-   - saturation point
-   - backpressure onset
-4. Use NCU/CUPTI L2, DRAM, and fabric/interconnect metrics if available.
-5. Compare balanced and imbalanced traffic to distinguish downstream DRAM limits
-   from interconnect pressure.
-6. Use PM Sampling for long-running saturation phases.
+1. Generate traffic with controlled source SM count, CTA placement where
+   possible, access direction, stride, vector width, and working-set regime.
+2. Sweep offered load by varying active CTAs, active warps, instruction mix, and
+   independent memory streams.
+3. Collect throughput, stall, L2/DRAM, and fabric-related metrics when
+   available.
+4. Normalize to bytes per cycle per SM, aggregate bytes per cycle, and
+   saturation knee for the declared traffic class.
+5. Attribute bottlenecks to injection, L2, DRAM, partition camping, scheduler,
+   or occupancy only when supporting evidence separates them.
 
-### Reasoning
+### Scalar Policy
 
-Simulator interconnect fields are internal NoC/router parameters. Public probes
-can only observe effective latency and throughput under injection pressure. The
-shape of latency-versus-load and throughput-versus-load curves constrains
-effective routing and buffering behavior.
+Allowed:
 
-### Risk Estimate
+- effective injection-rate bound for a named traffic class,
+- saturation knee for a declared source-SM and memory-regime class,
+- contention behavioral class.
 
-Risk: Very High.
+Not directly allowed:
 
-Main risks:
+- physical link width,
+- physical crossbar topology,
+- exact arbitration policy,
+- universal fabric bandwidth independent of traffic shape.
 
-- Interconnect pressure is hard to separate from L2, memory partitions, and DRAM
-  scheduler behavior.
-- Router-level parameters such as VC allocation and switch allocation are not
-  publicly exposed.
-- Fabric metrics may be unavailable or architecture-specific.
+### Fit And Uncertainty
 
-Mitigation:
+- Expected fit status: `bounded`, `conditionally_identified`, or
+  `underconstrained`.
+- Expected uncertainty: `bounded_range`, `multi_fit`, or `behavioral_class`.
 
-- Run only after P2 L2/DRAM and memory-pipeline models exist.
-- Fit effective saturation curves rather than individual router microparameters.
-- Keep router/VC fields low confidence unless supported by strong counters.
+### Rejection And Downgrade
+
+Reject injection-rate claims when L2/DRAM throughput, partition camping, or
+coalescing explains the saturation. Downgrade if direct fabric metrics are
+unavailable and timing is the only signal.
+
+### Risk
+
+High. Injection behavior is strongly coupled with memory hierarchy and
+scheduler state.
 
 ## Probe: `interconnect/analyze.py`
 
-### Goal
+### Concept
 
-Fit effective address-mapping and interconnect saturation parameters from P3
-traffic probes.
+Analysis layer for address mapping, partition behavior, and interconnect
+injection experiments.
+
+### Target Parameters
+
+- address-mapping candidate records,
+- injection-rate bound records,
+- contention behavioral records,
+- simulator interconnect mapping contracts.
+
+### Primary Evidence
+
+- Structured outputs from `interconnect/address_mapping.cu`.
+- Structured outputs from `interconnect/injection_rate.cu`.
+
+### Validation Evidence
+
+- Metric resolver records.
+- NVBit address-stream records.
+- P2 memory-regime and partition records.
+- Simulator partition and interconnect traces.
 
 ### Methodology
 
-1. Score address-mapping hypotheses against partition-camping observations.
-2. Fit latency-versus-injection-rate curves.
-3. Fit throughput saturation points for balanced and imbalanced traffic.
-4. Compare against P2:
-   - L2 bandwidth
-   - DRAM bandwidth
-   - memory partition count candidates
-   - coalescing behavior
-5. Emit:
-   - effective address mapping candidates
-   - effective interconnect latency range
-   - effective saturation throughput
-   - unresolved simulator router fields
-6. Use `indeterminate` for fields that cannot be separated from downstream
-   memory behavior.
+1. Join raw observations by probe ID, binary hash, allocation descriptor,
+   address-pattern descriptor, and launch configuration.
+2. Normalize throughput, latency, partition metrics, and clock domains.
+3. Fit candidate mapping classes and injection bounds separately.
+4. Preserve candidate sets instead of selecting arbitrary single solutions.
+5. Emit simulator estimates only with explicit assumptions and unsupported
+   reasons.
 
-### Reasoning
+### Scalar Policy
 
-The analyzer is a guardrail against false precision. It should say which
-simulator fields are constrained by observations and which fields remain
-unobservable through public CUDA/CUPTI/NVBit methods.
+Scalar summaries are allowed for measured throughput bounds in one declared
+traffic class. Mapping and topology outputs should default to candidate sets,
+behavioral classes, or unsupported records.
 
-### Risk Estimate
+### Fit And Uncertainty
 
-Risk: Very High.
+- Expected fit status: inherited from source probes, often `bounded`,
+  `behavioral_only`, or `underconstrained`.
+- Expected uncertainty: `bounded_range`, `multi_fit`, `behavioral_class`, or
+  `indeterminate`.
 
-Main risks:
+### Rejection And Downgrade
 
-- Overfitting router parameters from end-to-end memory curves.
-- Assuming simulator NoC structure matches NVIDIA hardware organization.
-- Confusing address hashing with physical memory allocation effects.
+Reject rows with incompatible allocation modes, mixed cache regimes, unstable
+clock domains, or missing address descriptors. Downgrade exact mapping claims
+unless uniqueness is proven.
 
-Mitigation:
+### Risk
 
-- Report effective behavioral calibration values.
-- Keep raw curves and candidate models.
-- Require agreement across multiple traffic shapes before raising confidence.
+Medium for preserving observations; high for physical interpretation.
 
-## P3 Output Requirements
+## P3 Implementation Order
 
-Every P3 result should include:
+1. Implement `tma_copy/async_copy_latency.cu` for minimal instruction-sequence
+   validation and latency decomposition.
+2. Implement `tma_copy/tma_transfer_sweep.cu` for throughput and descriptor
+   sensitivity.
+3. Implement `tma_copy/analyze.py` with strict descriptor and SASS joins.
+4. Implement `interconnect/address_mapping.cu` as a candidate-set generator,
+   not an exact mapper.
+5. Implement `interconnect/injection_rate.cu` only after P2 memory-regime and
+   partition baselines are stable.
+6. Implement `interconnect/analyze.py` to preserve candidate mappings, bounds,
+   and unsupported records.
 
-- P0-P2 prerequisite result references
-- architecture feature checks
-- instruction support and disassembly evidence
-- raw latency and bandwidth curves
-- NCU/CUPTI metric availability and values
-- PC Sampling or SASS Metrics attribution when used
-- PM Sampling timeline when used
-- NVBit validation stream paths when used
-- fitted effective parameters
-- unresolved alternatives
-- explicit `unsupported` or `indeterminate` fields
-- risk and coupling notes
+## Required Simulator Trace Hooks
 
-## P3 Acceptance Criteria
+P3 needs simulator instrumentation for:
 
-P3 is complete when AMORA can report:
+- async-copy issue, wait, progress, and completion state,
+- TMA setup, transfer, queue, and completion state,
+- transfer descriptor interpretation,
+- memory partition selection,
+- cache-slice selection where modeled,
+- interconnect injection queues,
+- interconnect link utilization,
+- arbitration events,
+- memory-system backpressure.
 
-- async/TMA support status for the target GPU
-- minimum async/TMA issue-to-completion latency when supported
-- async/TMA transfer bandwidth curve when supported
-- candidate outstanding-transfer saturation behavior or explicit indeterminate
-  status
-- candidate address-mapping evidence or explicit indeterminate status
-- balanced versus imbalanced interconnect/memory traffic curves
-- effective interconnect saturation behavior
-- a list of simulator TMA and interconnect fields that remain unobservable
-  through public tooling
+Simulator traces are direct observations of simulator state. They are not proof
+that NVIDIA hardware has the same internal state; they define the target side
+of the mapping contract.
 
-## P3 Non-Goals
+## Reporting Requirements
 
-P3 should not claim:
+Every P3 report must include:
 
-- exact NVIDIA router topology
-- exact VC allocation delay
-- exact switch allocation delay
-- exact TMA internal queue layout
-- exact physical address mapping
+- evidence tier,
+- fit status,
+- uncertainty category,
+- variance summary,
+- metric resolver record,
+- SASS validation record,
+- transfer or address-pattern descriptor,
+- clock-domain record,
+- simulator mapping contract,
+- candidate set when uniqueness is not proven,
+- rejection or downgrade reason when applicable.
 
-Those are not public hardware facts in the available toolchain. AMORA should
-represent them as effective calibration parameters or leave them unresolved.
+P3 reports should prefer bounded ranges, candidate sets, behavioral classes,
+and explicit `unsupported` records over unsupported exact physical claims.

@@ -1,870 +1,1041 @@
-# Probing Suite Plan: Reverse-Engineer Microarchitectural Parameters
+# Probing Suite Microarchitecture Plan
 
 ## Summary
 
-Build a real-hardware-first probing suite that uses ISA-level microkernels to
-reverse engineer performance-relevant microarchitectural parameters for GPUs and
-AI accelerators. The suite should measure latencies, bandwidths, capacities,
-issue/throughput limits, scheduling behavior, cache and memory policies, tensor
-unit behavior, TMA-like copy engines, synchronization costs, and interconnect /
-off-chip memory characteristics.
+Build AMORA as a portable, hardware-first probing suite. Its primary object of
+study is real accelerator behavior: what the hardware exposes through published
+facts, runtime metadata, profiler metrics, ISA/binary behavior, controlled
+probes, and measured execution. Simulators are used as assisted validation and
+calibration targets, not as the source of truth for the real machine.
 
-The output should be a structured parameter report that maps measurements onto
-the simulator names used in this repository, especially the blocks shown in:
+The suite should support NVIDIA first, but its core design must generalize
+across GPUs, NPUs, TPUs, and other accelerators with different levels of ISA
+visibility, profiler support, timer semantics, memory hierarchy detail, and
+public documentation.
 
-- `.plan/20260617-1617-nvidia-gpu-architecture-diagram.md`
-- `simulator-remodeled/gpu-simulator/gpgpu-sim/src/gpgpu-sim/gpu-sim.h`
-- `simulator-remodeled/gpu-simulator/gpgpu-sim/src/gpgpu-sim/shader.h`
-- `simulator-remodeled/gpu-simulator/gpgpu-sim/src/gpgpu-sim/gpu-cache.h`
-- `simulator-remodeled/gpu-simulator/gpgpu-sim/src/gpgpu-sim/l2cache.h`
-- `simulator-remodeled/gpu-simulator/gpgpu-sim/src/gpgpu-sim/dram.h`
-- `simulator-remodeled/gpu-simulator/gpgpu-sim/src/operation_type.h`
-- `simulator-remodeled/gpu-simulator/gpgpu-sim/src/gpgpu-sim/remodeling/`
-
-The first implementation target is real hardware with an available ISA. The
-suite should assume it can emit, assemble, or run low-level ISA kernels. Portable
-kernel APIs can be used only as launch and allocation scaffolding.
-
-## Current State Analysis
-
-The repo models a GPGPU-Sim / Accel-Sim style architecture with these major
-performance blocks:
-
-| Diagram Block | Repo Names / Paths |
-|---|---|
-| GPU top level | `gpgpu_sim`, `gpgpu_sim_config`, `gpu-sim.h`, `gpu-sim.cc` |
-| SIMT clusters | `simt_core_cluster`, `shader.h`, `shader.cc` |
-| SM / shader core | `SM`, `shader_core_config`, `remodeling/sm.h`, `remodeling/sm.cc` |
-| Subcores | `Subcore`, `num_subcores_in_SM`, `remodeling/subcore.h`, `remodeling/subcore.cc` |
-| Warp scheduling | `scheduler_unit`, `gpgpu_scheduler_string`, `gpgpu_num_sched_per_core`, `gpgpu_max_insn_issue_per_warp` |
-| Pipeline widths | `-gpgpu_pipeline_widths`, `pipeline_widths_string`, `pipe_widths` |
-| Functional units | `functional_unit`, `functional_unit_with_queue`, `m_sp_pipeline`, `m_tensor_pipeline`, `m_tma_pipeline` |
-| Register file | `gpgpu_shader_registers`, `gpgpu_num_reg_banks`, `reg_file_port_throughput`, `Register_file` |
-| Shared memory | `gpgpu_shmem_size`, `gpgpu_shmem_num_banks`, `gpgpu_smem_latency` |
-| L1 / constant / texture caches | `m_L1D_config`, `m_L1I_L1_half_C_cache_config`, `m_L0I_config`, `m_L1C_config`, `m_L0C_config`, `m_L1T_config` |
-| LD/ST path | `ldst_unit_sm`, `memory_subcore_queue_size`, `memory_l1d_minimum_latency`, `memory_maximum_coalescing_cycles` |
-| Tensor units | `gpgpu_tensor_core_avail`, `gpgpu_num_tensor_core_units`, `tensor_latency`, `tensor_rate_per_cycle` |
-| TMA / copy engine | `tma_unit_sm`, `TMACommand`, `TMATransferEntry`, `m_command_queue`, `m_in_flight_transfers` |
-| Interconnect | `icnt_wrapper`, `local_interconnect`, `-icnt_flit_size`, Intersim router parameters |
-| L2 | `m_L2_config`, `l2_cache`, `-gpgpu_cache:dl2`, `-gpgpu_l2_rop_latency` |
-| DRAM | `memory_config`, `dram_t`, `-gpgpu_n_mem`, `-gpgpu_dram_buswidth`, `-gpgpu_dram_burst_length`, `-gpgpu_dram_timing_opt` |
-
-The suite should not try to infer every simulator field from a single probe.
-Instead, it should maintain a measurement-to-parameter confidence model because
-several repo parameters are coupled. For example, observed global memory
-bandwidth depends on `gpgpu_n_mem`, `gpgpu_dram_buswidth`,
-`gpgpu_dram_burst_length`, `dram_data_command_freq_ratio`, L2 policy, memory
-coalescing, and interconnect saturation.
-
-## Proposed Changes
-
-### 1. Add a Probe Suite Design Under `tools/probe_suite/`
-
-Create a new suite with this conceptual layout:
+The core design principle is layered evidence:
 
 ```text
-tools/probe_suite/
-  README.md
-  schema/
-    hardware_profile.schema.json
-    probe_result.schema.json
-    simulator_parameter_map.yaml
-  core/
-    runner.py
-    calibrator.py
-    statistics.py
-    parameter_model.py
-  backends/
-    isa_backend.py
-    cuda_launch_backend.py
-    external_assembler_backend.py
-  probes/
-    arithmetic_latency/
-    issue_throughput/
-    scheduler_policy/
-    register_file/
-    shared_memory/
-    l1_cache/
-    l2_cache/
-    global_memory/
-    interconnect/
-    tensor_core/
-    tma_copy/
-    synchronization/
-  reports/
-    render_markdown.py
-    render_json.py
+published facts
+-> backend capabilities
+-> raw observations
+-> normalized hardware-neutral measurements
+-> backend-specific interpretations
+-> simulator mapping contracts
+-> fitted simulator-equivalent estimates
 ```
 
-Why:
+The suite must not collapse these layers into one "parameter estimate" too
+early. A measurement can be useful even when no safe simulator scalar can be
+emitted.
 
-- The suite needs to run outside the simulator on real hardware.
-- The measured output still needs to map back to repo-defined simulator names.
-- Separating probes, backends, schemas, and calibration keeps accelerator-specific
-  ISA support isolated.
+## Methodology Position
 
-How:
+This is a hardware-first, simulator-assisted validation methodology.
 
-- `backends/isa_backend.py` defines the common interface:
+Hardware-first means AMORA starts from observable accelerator behavior and keeps
+hardware evidence layered by source and semantic strength. Simulator-assisted
+validation means simulator traces, queue lengths, scheduler states, cache states,
+pipeline states, and fitted simulator parameters are used to explain, calibrate,
+and validate whether a simulator can reproduce the measured hardware behavior.
 
-```python
-class ISABackend:
-    def assemble(self, source: str, target: str) -> bytes: ...
-    def launch(self, binary: bytes, launch_config: dict) -> dict: ...
-    def read_timer(self) -> str: ...
-    def supports_counter(self, name: str) -> bool: ...
+AMORA can be used for:
+
+- calibrating simulator parameters and simulator-equivalent behavior,
+- validating whether a simulator reproduces observed hardware bottlenecks,
+- comparing accelerator generations under a common measurement vocabulary,
+- discovering portable and vendor-specific architectural features,
+- building backend capability maps for profilers, ISA access, timers, and
+  metadata,
+- generating hardware profiles for compiler, runtime, and kernel-tuning work,
+- sanity-checking published specifications against tool-observed behavior,
+- identifying unsupported or underconstrained simulator mappings honestly,
+- producing regression baselines for driver, firmware, compiler, and simulator
+  changes,
+- teaching and documenting accelerator behavior with reproducible probes.
+
+## Revision History
+
+### 2026-06-18: Hardware-First Methodology Emphasis
+
+Source input:
+
+- Follow-up request to emphasize that this plan is hardware-first and
+  simulator-assisted, while also documenting use cases beyond simulator
+  parameter calibration.
+
+Major changes:
+
+- Clarified that AMORA studies real hardware first and uses simulators as
+  assisted validation and calibration targets.
+- Added a methodology-position section.
+- Added use cases for simulator calibration, simulator validation, cross-vendor
+  comparison, feature discovery, backend capability mapping, hardware profiling,
+  specification sanity checks, unsupported-mapping reporting, regression
+  baselines, and education/documentation.
+
+### 2026-06-18: Full Measurement-Contract Rewrite
+
+Source inputs:
+
+- Original umbrella plan: `.plan/probing-suite-microarchitecture-plan.md`
+- Reaction document:
+  `.plan/20260618_probing-suite-microarchitecture-plan_comments.md`
+- NVIDIA-specific canonical plan:
+  `.plan/nvidia-probe-semantic-measurement-gap-plan.md`
+- Follow-up design decisions from the generalized-plan discussion.
+
+Major changes:
+
+- Rewrote the plan from scratch around measurement contracts instead of a flat
+  probe-family roadmap.
+- Applied the NVIDIA-plan decisions here as general AMORA policy:
+  NCU/CUPTI-like counters may be primary evidence when semantically direct;
+  microkernel timing is essential but not universally primary; published
+  parameters are trust-and-verify anchors; simulator states are directly
+  observable inside the simulator; fitted estimates need fit metadata.
+- Separated portable measurement concepts from backend-specific implementation
+  and simulator-specific mapping.
+- Added explicit handling for different levels of information availability:
+  published specs, ISA-visible execution, profiler-visible metrics, binary-only
+  execution, runtime-only metadata, and black-box timing.
+- Added an ISA semantics layer that records instruction availability, semantic
+  equivalence, architectural block relationships, and confidence in mapping an
+  instruction to a hardware subsystem.
+- Added a profiler/tool support strategy that is vendor layered. NVIDIA NCU,
+  CUPTI, and NVBit are one backend instance, not global abstractions.
+- Replaced the old `ISABackend`-only framing with a richer backend model:
+  capability discovery, ISA semantics, profiler metrics, launch/runtime control,
+  binary validation, and simulator trace integration.
+- Added capability-gated probes so unsupported or weakly supported accelerator
+  targets produce honest `unsupported`, `behavioral_only`, or `underconstrained`
+  results instead of misleading simulator scalars.
+- Added layered output schemas:
+  `raw_observation`, `normalized_measurement`, `backend_interpretation`, and
+  `simulator_estimate`.
+- Reframed acceptance criteria away from requiring every backend to emit
+  GPGPU-Sim-specific parameters. Portable milestones require honest measurement
+  and mapping status; simulator scalars are emitted only when the mapping
+  contract allows them.
+
+### Superseded Assumptions From The Original Plan
+
+- Superseded: "ISA-level microkernels are the primary basis for reverse
+  engineering."
+  Replacement: Use the evidence source with the closest semantic match. Direct
+  counters, published parameters, runtime metadata, ISA microkernels, binary
+  instrumentation, and simulator traces each have a role.
+
+- Superseded: "`simulator_parameter_map.yaml` can be a family-to-parameter
+  coverage list."
+  Replacement: It must become a mapping-contract registry with observability,
+  evidence, formula/fit, scalar-output policy, fallback, and known mismatches.
+
+- Superseded: "One backend abstraction around assemble/launch/timer is enough."
+  Replacement: Backends must declare trust-critical capabilities, ISA semantics,
+  profiler support, validation routes, timer domains, memory hierarchy concepts,
+  and mapping constraints.
+
+- Superseded: "All accelerator backends should attempt the same simulator
+  parameter outputs."
+  Replacement: Backends emit portable measurements first. Simulator mapping is
+  optional, capability-gated, and classified as direct, fitted, behavioral,
+  underconstrained, or unsupported.
+
+## Goals
+
+AMORA should:
+
+- discover accelerator and tool capabilities,
+- identify available instruction semantics and their architectural relationships,
+- generate or select probes appropriate for the backend capability level,
+- collect raw observations from timing, profilers, metadata, instrumentation,
+  and published sources,
+- normalize those observations into hardware-neutral measurements,
+- interpret them using backend-specific architecture knowledge,
+- map them to simulator parameters only through explicit contracts,
+- emit uncertainty, variance, fitting metadata, and rejection/downgrade status,
+- keep unsupported or unidentifiable parameters explicit.
+
+Non-goal:
+
+- Claim exact hidden hardware structures when only behavioral evidence exists.
+
+## Architecture
+
+The suite has five layers.
+
+```text
+Layer 1: Hardware-neutral measurement concepts
+Layer 2: Backend capabilities and ISA/profiler support
+Layer 3: Backend-specific probe implementations
+Layer 4: Backend interpretation and evidence fusion
+Layer 5: Simulator mapping and fitting
 ```
 
-- `cuda_launch_backend.py` can provide allocation, launch, timing, and result
-  buffer plumbing for Nvidia targets while keeping the hot loop in ISA.
-- `external_assembler_backend.py` handles non-Nvidia accelerators where the
-  vendor assembler/compiler is external.
+### Layer 1: Hardware-Neutral Measurement Concepts
 
-### 2. Define a Hardware Profile Schema
+This layer defines concepts that can exist across accelerators without assuming
+NVIDIA SIMT terminology or GPGPU-Sim parameter names.
 
-Add `schema/hardware_profile.schema.json` with the normalized output format.
+Initial concepts:
 
-Required top-level fields:
+- topology limits
+- residency and occupancy-like capacity
+- scalar instruction latency
+- scalar instruction reciprocal throughput
+- vector/SIMD/SIMT issue behavior
+- tensor/matrix operation latency and throughput
+- local/scratchpad/shared-memory latency
+- local/scratchpad/shared-memory conflict behavior
+- cache or cache-like capacity knees
+- cache or cache-like transaction granularity
+- global/external-memory latency
+- global/external-memory bandwidth plateau
+- memory coalescing or request formation behavior
+- synchronization cost
+- DMA/async-copy transfer behavior
+- interconnect/fabric saturation behavior
 
-```json
-{
-  "target": {
-    "vendor": "nvidia|amd|intel|custom",
-    "device_name": "string",
-    "isa_name": "string",
-    "isa_version": "string",
-    "driver_version": "string"
-  },
-  "measurements": {},
-  "repo_parameter_estimates": {},
-  "confidence": {},
-  "raw_results": []
-}
-```
+These are measurements, not simulator parameters.
 
-`repo_parameter_estimates` should use repo names directly, for example:
+### Layer 2: Backend Capabilities And ISA/Profiler Support
 
-```json
-{
-  "shader_core_config::n_simt_clusters": 132,
-  "shader_core_config::n_simt_cores_per_cluster": 1,
-  "shader_core_config::warp_size": 32,
-  "shader_core_config::num_subcores_in_SM": 4,
-  "shader_core_config::gpgpu_num_sched_per_core": 4,
-  "shader_core_config::gpgpu_num_sp_units": 128,
-  "shader_core_config::gpgpu_num_tensor_core_units": 4,
-  "shader_core_config::gpgpu_shmem_size": 233472,
-  "shader_core_config::gpgpu_shmem_num_banks": 32,
-  "shader_core_config::gpgpu_smem_latency": 28,
-  "shader_core_config::max_sp_latency": 4,
-  "shader_core_config::max_tensor_core_latency": 32,
-  "memory_config::m_n_mem": 12,
-  "memory_config::busW": 64,
-  "memory_config::BL": 16,
-  "memory_config::dram_latency": 200
-}
-```
+Each backend must describe what can be trusted on the target.
 
-### 3. Define the Simulator Parameter Map
-
-Add `schema/simulator_parameter_map.yaml`.
-
-This file should map each probe family to the repo-defined parameters it can
-estimate.
-
-Initial map:
+Minimum capability schema:
 
 ```yaml
-topology:
-  estimates:
-    - shader_core_config::n_simt_clusters
-    - shader_core_config::n_simt_cores_per_cluster
-    - gpgpu_sim_config::num_shader()
-    - shader_core_config::n_thread_per_shader
-    - shader_core_config::warp_size
-    - shader_core_config::max_warps_per_shader
-    - shader_core_config::max_cta_per_core
-
-scheduler:
-  estimates:
-    - shader_core_config::num_subcores_in_SM
-    - shader_core_config::gpgpu_num_sched_per_core
-    - shader_core_config::gpgpu_scheduler_string
-    - shader_core_config::gpgpu_max_insn_issue_per_warp
-    - shader_core_config::gpgpu_dual_issue_diff_exec_units
-
-pipeline:
-  estimates:
-    - shader_core_config::pipeline_widths_string
-    - shader_core_config::pipe_widths
-    - shader_core_config::max_sp_latency
-    - shader_core_config::max_int_latency
-    - shader_core_config::max_sfu_latency
-    - shader_core_config::max_dp_latency
-    - shader_core_config::max_tensor_core_latency
-    - gpgpu_num_sp_units
-    - gpgpu_num_dp_units
-    - gpgpu_num_int_units
-    - gpgpu_num_sfu_units
-
-register_file:
-  estimates:
-    - shader_core_config::gpgpu_shader_registers
-    - shader_core_config::gpgpu_num_reg_banks
-    - shader_core_config::reg_file_port_throughput
-    - num_regular_register_file_read_ports_per_bank
-    - num_regular_register_file_write_ports_per_bank
-    - max_latency_regular_register_file_latency
-
-shared_memory:
-  estimates:
-    - shader_core_config::gpgpu_shmem_size
-    - shader_core_config::gpgpu_shmem_per_block
-    - shader_core_config::gpgpu_shmem_num_banks
-    - shader_core_config::gpgpu_smem_latency
-    - gpgpu_shmem_limited_broadcast
-    - gpgpu_shmem_warp_parts
-
-caches:
-  estimates:
-    - m_L1D_config
-    - m_L1I_L1_half_C_cache_config
-    - m_L0I_config
-    - m_L1C_config
-    - m_L0C_config
-    - m_L1T_config
-    - cache_config::m_nset
-    - cache_config::m_line_sz
-    - cache_config::m_assoc
-    - cache_config::m_mshr_entries
-    - cache_config::m_mshr_max_merge
-    - cache_config::m_miss_queue_size
-    - l1d_cache_config::l1_latency
-    - l1d_cache_config::l1_banks
-
-memory_pipeline:
-  estimates:
-    - memory_subcore_queue_size
-    - memory_intermidiate_stages_subcore_unit
-    - memory_sm_prt_size
-    - memory_shared_memory_minimum_latency
-    - memory_l1d_minimum_latency
-    - memory_l1d_max_lookups_per_cycle_per_bank
-    - memory_maximum_coalescing_cycles
-    - memory_num_scalar_units_per_subcore
-    - memory_subcore_link_to_sm_byte_size
-    - memmory_max_concurrent_requests_shmem_per_sm
-    - memmory_max_concurrent_requests_standard_per_sm
-
-l2_dram:
-  estimates:
-    - memory_config::m_L2_config
-    - gpgpu_cache:dl2
-    - gpgpu_l2_rop_latency
-    - memory_config::m_n_mem
-    - memory_config::m_n_sub_partition_per_memory_channel
-    - memory_config::scheduler_type
-    - memory_config::busW
-    - memory_config::BL
-    - memory_config::nbk
-    - memory_config::nbkgrp
-    - memory_config::tCCD
-    - memory_config::tRCD
-    - memory_config::tRAS
-    - memory_config::tRP
-    - memory_config::CL
-    - memory_config::WL
-    - dram_latency
-    - dram_data_command_freq_ratio
-
-interconnect:
-  estimates:
-    - icnt_flit_size
-    - gpgpu_mem_addr_mapping
-    - gpgpu_mem_address_mask
-    - routing_delay
-    - vc_alloc_delay
-    - sw_alloc_delay
-    - credit_delay
-    - input_speedup
-    - output_speedup
-    - internal_speedup
-
-tensor_tma_sync:
-  estimates:
-    - gpgpu_tensor_core_avail
-    - gpgpu_num_tensor_core_units
-    - tensor_latency
-    - tensor_rate_per_cycle
-    - tma_unit_sm::kMaxRequestsPerCycle
-    - TMACommand
-    - TMATransferEntry
-    - sync_debug_enable
+backend: nvidia_cuda
+target:
+  vendor: nvidia
+  device_name: string
+  architecture: string
+  driver_version: string
+  runtime_version: string
+instruction_control:
+  can_emit_low_level_isa: true
+  can_verify_disassembly: true
+  can_control_register_assignment: partial
+  can_prevent_compiler_fusion: true
+  can_validate_dynamic_instruction_stream: true
+timing:
+  has_device_timer: true
+  timer_domain: sm_cycles
+  timer_scope: per_sm_or_global
+  timer_overhead_measurable: true
+profiling:
+  has_per_kernel_counters: true
+  has_sampling_counters: true
+  has_pc_sampling: true
+  has_dynamic_binary_instrumentation: true
+memory_control:
+  can_select_address_space: true
+  can_control_cache_policy: partial
+  can_allocate_local_shared_memory: true
+  can_control_alignment: true
+simulator_mapping:
+  target_simulator: gpgpu_sim_like
+  simulator_state_trace_available: true
 ```
 
-### 4. Implement Probe Families
-
-Each probe family should produce:
-
-- generated ISA source
-- launch configuration
-- expected dependency pattern
-- raw timings
-- counter readings when available
-- inferred repo parameter estimates
-- confidence score
-
-#### 4.1 Topology and Occupancy Probes
-
-Goal:
-
-- Estimate `n_simt_clusters`, `n_simt_cores_per_cluster`, total SM count,
-  `warp_size`, `max_warps_per_shader`, `max_cta_per_core`, register and shared
-  memory occupancy limits.
-
-Methods:
-
-- Use persistent CTAs with atomic slot claiming to infer concurrent CTA count.
-- Vary threads per CTA and registers per thread to infer warp size and resident
-  warp limits.
-- Vary dynamic shared memory allocation to infer `gpgpu_shmem_size` and
-  `gpgpu_shmem_per_block`.
-
-Mapped parameters:
-
-- `shader_core_config::n_simt_clusters`
-- `shader_core_config::n_simt_cores_per_cluster`
-- `shader_core_config::warp_size`
-- `shader_core_config::max_warps_per_shader`
-- `shader_core_config::max_cta_per_core`
-- `shader_core_config::gpgpu_shader_registers`
-- `shader_core_config::gpgpu_shmem_size`
-- `shader_core_config::gpgpu_shmem_per_block`
-
-#### 4.2 Arithmetic Latency Probes
-
-Goal:
-
-- Estimate instruction latencies and initiation intervals for ALU, INT, SFU,
-  DP, branch, predicate, uniform, half, tensor, and miscellaneous operations.
-
-Methods:
-
-- Build dependent instruction chains:
-  - `dst_i = op(dst_{i-1})`
-  - measure cycles per instruction via ISA timer.
-- Build independent multi-chain kernels to separate latency from throughput.
-- Sweep chain count to find initiation interval and pipeline occupancy.
-
-Mapped parameters:
-
-- `shader_core_config::max_sp_latency`
-- `shader_core_config::max_int_latency`
-- `shader_core_config::max_sfu_latency`
-- `shader_core_config::max_dp_latency`
-- `shader_core_config::max_tensor_core_latency`
-- `sfu_latency`
-- `tensor_latency`
-- `branch_latency`
-- `half_latency`
-- `uniform_latency`
-- `predicate_latency`
-- `miscellaneous_queue_latency`
-- `miscellaneous_no_queue_latency`
-- `sfu_initiation`
-- `tensor_initiation`
-- `branch_initiation`
-- `half_initiation`
-- `uniform_initiation`
-- `predicate_initiation`
-
-#### 4.3 Issue Width and Scheduler Probes
-
-Goal:
-
-- Estimate scheduler count, issue width, dual-issue policy, and per-warp issue
-  limits.
-
-Methods:
-
-- Construct kernels with independent instructions targeting one execution unit.
-- Construct mixed-unit instruction streams, e.g. ALU + SFU, ALU + memory, ALU +
-  tensor, to detect `gpgpu_dual_issue_diff_exec_units`.
-- Vary active warps and subcore-local work distribution to infer
-  `num_subcores_in_SM` and `gpgpu_num_sched_per_core`.
-- Use controlled warp readiness patterns to distinguish round-robin,
-  greedy-then-oldest, and two-level scheduling behavior.
-
-Mapped parameters:
-
-- `shader_core_config::num_subcores_in_SM`
-- `shader_core_config::gpgpu_num_sched_per_core`
-- `shader_core_config::gpgpu_scheduler_string`
-- `shader_core_config::gpgpu_max_insn_issue_per_warp`
-- `shader_core_config::gpgpu_dual_issue_diff_exec_units`
-- `shader_core_config::pipeline_widths_string`
-- `shader_core_config::pipe_widths`
-
-#### 4.4 Functional Unit Count and Throughput Probes
-
-Goal:
-
-- Estimate the number and throughput of SP, INT, DP, SFU, tensor, and memory
-  units.
-
-Methods:
-
-- Saturate each unit class with independent instruction streams.
-- Sweep active warps and CTAs to find the saturation point.
-- Normalize throughput per SM and per cycle.
-
-Mapped parameters:
-
-- `gpgpu_num_sp_units`
-- `gpgpu_num_dp_units`
-- `gpgpu_num_int_units`
-- `gpgpu_num_sfu_units`
-- `gpgpu_tensor_core_avail`
-- `gpgpu_num_tensor_core_units`
-- `gpgpu_num_mem_units`
-- `tensor_rate_per_cycle`
-
-#### 4.5 Register File and Operand Collector Probes
-
-Goal:
-
-- Estimate register file banks, read/write ports, bank conflict policy, operand
-  collector throughput, and register file latency.
-
-Methods:
-
-- Generate ISA sequences with controlled source/destination register numbering.
-- Sweep register-bank conflict patterns and operand counts.
-- Measure throughput degradation under same-bank vs distributed-bank accesses.
-- Use dependent read-after-write chains to estimate register file latency.
-
-Mapped parameters:
-
-- `shader_core_config::gpgpu_num_reg_banks`
-- `shader_core_config::reg_file_port_throughput`
-- `gpgpu_reg_bank_use_warp_id`
-- `is_opc_improved`
-- `cu_num_ports`
-- `is_rf_cache_enabled`
-- `num_regular_register_file_read_ports_per_bank`
-- `num_regular_register_file_write_ports_per_bank`
-- `max_latency_regular_register_file_latency`
-- `max_operands_regular_register_file`
-- `gpgpu_operand_collector_num_units_*`
-- `gpgpu_operand_collector_num_in_ports_*`
-- `gpgpu_operand_collector_num_out_ports_*`
-
-#### 4.6 Shared Memory Probes
-
-Goal:
-
-- Estimate shared memory size, bank count, bank width / mapping, broadcast
-  behavior, and latency.
-
-Methods:
-
-- Pointer-chase in shared memory for latency.
-- Generate stride sweeps to identify bank count and bank mapping.
-- Compare uniform broadcast, multicast-like, and conflict-heavy access patterns.
-- Sweep shared memory allocation to find per-block and per-SM limits.
-
-Mapped parameters:
-
-- `shader_core_config::gpgpu_shmem_size`
-- `shader_core_config::gpgpu_shmem_per_block`
-- `shader_core_config::gpgpu_shmem_num_banks`
-- `gpgpu_shmem_limited_broadcast`
-- `gpgpu_shmem_warp_parts`
-- `gpgpu_smem_latency`
-- `memory_shared_memory_minimum_latency`
-- `memmory_max_concurrent_requests_shmem_per_sm`
-
-#### 4.7 L1 / Constant / Texture / Instruction Cache Probes
-
-Goal:
-
-- Estimate cache line size, capacity, associativity, hit latency, MSHR count,
-  miss queue depth, bank count, and replacement behavior.
-
-Methods:
-
-- Pointer-chase for hit latency.
-- Stride and working-set sweeps for capacity and line size.
-- Conflict-set construction for associativity.
-- Parallel miss streams for MSHR and miss queue pressure.
-- Read-only, constant, texture, and instruction-specific variants when the ISA
-  exposes those paths.
-
-Mapped parameters:
-
-- `m_L1D_config`
-- `m_L1I_L1_half_C_cache_config`
-- `m_L0I_config`
-- `m_L1C_config`
-- `m_L0C_config`
-- `m_L1T_config`
-- `cache_config::m_nset`
-- `cache_config::m_line_sz`
-- `cache_config::m_assoc`
-- `cache_config::m_mshr_entries`
-- `cache_config::m_mshr_max_merge`
-- `cache_config::m_miss_queue_size`
-- `l1d_cache_config::l1_latency`
-- `l1d_cache_config::l1_banks`
-- `gpgpu_l1_banks_byte_interleaving`
-- `gpgpu_l1_banks_hashing_function`
-
-#### 4.8 SM Memory Pipeline and Coalescing Probes
-
-Goal:
-
-- Estimate memory coalescing windows, scalar-unit count, subcore-to-SM link
-  bandwidth, queue depths, and concurrent request limits.
-
-Methods:
-
-- Generate warp memory instructions with controlled lane address patterns.
-- Sweep contiguous, strided, scattered, and scalar access patterns.
-- Vary independent memory instructions per warp and active warps per SM.
-- Detect throughput cliffs that correspond to queue and PRT saturation.
-
-Mapped parameters:
-
-- `memory_subcore_queue_size`
-- `memory_intermidiate_stages_subcore_unit`
-- `memory_sm_prt_size`
-- `memory_l1d_minimum_latency`
-- `memory_l1d_max_lookups_per_cycle_per_bank`
-- `memory_maximum_coalescing_cycles`
-- `memory_num_scalar_units_per_subcore`
-- `memory_subcore_link_to_sm_byte_size`
-- `memmory_max_concurrent_requests_standard_per_sm`
-
-#### 4.9 L2 and DRAM Probes
-
-Goal:
-
-- Estimate L2 cache geometry, L2 hit latency, DRAM bandwidth, DRAM latency,
-  memory partition count, bank group behavior, burst length, and scheduling
-  policy.
-
-Methods:
-
-- Use pointer-chase working sets that exceed L1 but fit L2 for L2 latency.
-- Use capacity and conflict sweeps for L2 geometry.
-- Use streaming reads/writes to estimate peak bandwidth.
-- Use bank/partition conflict address sweeps to infer memory address mapping.
-- Use row-hit / row-miss style address patterns to infer DRAM timing effects.
-- Use mixed read/write streams to infer scheduler behavior and return queue
-  pressure.
-
-Mapped parameters:
-
-- `memory_config::m_L2_config`
-- `gpgpu_cache:dl2`
-- `gpgpu_l2_rop_latency`
-- `memory_config::m_n_mem`
-- `memory_config::m_n_sub_partition_per_memory_channel`
-- `gpgpu_n_mem_per_ctrlr`
-- `memory_config::scheduler_type`
-- `gpgpu_dram_partition_queues`
-- `gpgpu_frfcfs_dram_sched_queue_size`
-- `gpgpu_dram_return_queue_size`
-- `memory_config::busW`
-- `memory_config::BL`
-- `memory_config::nbk`
-- `memory_config::nbkgrp`
-- `memory_config::tCCD`
-- `memory_config::tRCD`
-- `memory_config::tRAS`
-- `memory_config::tRP`
-- `memory_config::CL`
-- `memory_config::WL`
-- `dram_latency`
-- `dram_data_command_freq_ratio`
-- `dram_bnk_indexing_policy`
-- `dram_bnkgrp_indexing_policy`
-
-#### 4.10 Interconnect and Address Mapping Probes
-
-Goal:
-
-- Estimate address-to-partition mapping, interconnect flit size, latency, and
-  saturation behavior.
-
-Methods:
-
-- Sweep physical/virtual address bits and detect bandwidth/latency partitioning
-  changes.
-- Run many-CTA global-memory traffic patterns with controlled destination
-  partitions.
-- Measure latency under increasing injection rate to estimate routing and
-  allocator delays.
-
-Mapped parameters:
-
-- `icnt_flit_size`
-- `gpgpu_mem_addr_mapping`
-- `gpgpu_mem_address_mask`
-- `routing_delay`
-- `vc_alloc_delay`
-- `sw_alloc_delay`
-- `credit_delay`
-- `input_speedup`
-- `output_speedup`
-- `internal_speedup`
-- `output_buffer_size`
-- `use_noc_latency`
-
-#### 4.11 Tensor Core / Matrix Engine Probes
-
-Goal:
-
-- Estimate tensor instruction latency, throughput, unit count, supported tile
-  shapes, pipeline initiation interval, and operand-layout constraints.
-
-Methods:
-
-- Dependent tensor instruction chains for latency.
-- Independent tensor instruction streams for throughput.
-- Sweep matrix shapes, data types, accumulator types, and operand layouts.
-- Mix tensor and non-tensor instructions to detect issue sharing and dual-issue
-  restrictions.
-
-Mapped parameters:
-
-- `gpgpu_tensor_core_avail`
-- `gpgpu_num_tensor_core_units`
-- `tensor_latency`
-- `tensor_rate_per_cycle`
-- `shader_core_config::max_tensor_core_latency`
-- `tensor_extra_latency_16816_fp32_1688_fp32`
-
-#### 4.12 TMA / DMA / Async Copy Probes
-
-Goal:
-
-- Estimate copy engine queue depths, request rate, sectorization, outstanding
-  transfer limits, completion behavior, and interaction with synchronization.
-
-Methods:
-
-- Generate ISA async-copy or TMA-like commands when available.
-- Sweep transfer size, rank/dimension count, alignment, and stride.
-- Measure issue-to-completion latency and steady-state bandwidth.
-- Pair copy commands with barrier/wait instructions to infer completion semantics.
-
-Mapped parameters:
-
-- `tma_unit_sm::kMaxRequestsPerCycle`
-- `TMACommand`
-- `TMATransferEntry`
-- `TMAOpcodeFamily`
-- `TMADirection`
-- `TMATransferType`
-- `TMAOperandForm`
-- `m_command_queue`
-- `m_in_flight_transfers`
-- `m_outstanding_requests`
-- `m_outstanding_stores_per_warp`
-- `Subcore::m_tma_pipeline`
-- `SM::m_tma_unit_shared_of_sm`
-- `m_EX_TMA_reception_latches_per_subcore`
-
-#### 4.13 Synchronization and Barrier Probes
-
-Goal:
-
-- Estimate barrier latency, memory fence cost, mbarrier-like behavior, cluster
-  barrier behavior, and wait/arrive semantics.
-
-Methods:
-
-- Measure CTA barrier latency as a function of active warps.
-- Measure memory fence latency after different memory traffic patterns.
-- For Hopper-like ISAs, generate `SYNCS`, `UCGABAR`, `FENCE`, and async-copy
-  sequences to infer readiness and completion rules.
-
-Mapped parameters:
-
-- `gpgpu_num_cta_barriers`
-- `BARRIER_OP`
-- `MEMORY_BARRIER_OP`
-- `GRID_BARRIER_OP`
-- `MBARRIER_OP`
-- `CLUSTER_BARRIER_OP`
-- `sync_debug_enable`
-- `sync_debug_print_budget`
-- `sync_debug_skip_runtime_budget`
-
-### 5. Add Calibration and Inference Logic
-
-Add `core/calibrator.py` and `core/parameter_model.py`.
-
-The calibrator should:
-
-1. Normalize raw timings to cycles when a cycle counter exists.
-2. Use robust statistics: median, MAD, confidence intervals, outlier rejection.
-3. Fit simple models first:
-   - dependent chain slope → latency
-   - independent chain reciprocal throughput → initiation interval
-   - working-set knee → capacity
-   - stride periodicity → bank or partition count
-   - bandwidth plateau → peak throughput
-4. Emit direct estimates when confidence is high.
-5. Emit coupled estimates when several parameters cannot be separated.
-
-The parameter model should classify estimates:
-
-```json
-{
-  "parameter": "shader_core_config::gpgpu_smem_latency",
-  "value": 28,
-  "unit": "cycles",
-  "confidence": 0.87,
-  "probe_ids": ["shared_memory.pointer_chase.latency"],
-  "coupled_with": [],
-  "notes": "Median dependent shared-memory load latency."
-}
+Capability values should support `true`, `false`, `partial`, and `unknown`.
+
+### Layer 3: Backend-Specific Probe Implementations
+
+Each hardware-neutral concept is implemented by one or more backend-specific
+probes. A probe declares required and optional capabilities.
+
+Example:
+
+```yaml
+probe: arithmetic_latency.dependent_chain
+concept: scalar_instruction_latency
+requires:
+  - controllable_instruction_sequence
+  - device_timer
+  - disassembly_or_binary_verification
+optional:
+  - direct_instruction_counter
+  - dynamic_instruction_counter
+  - active_cycle_counter
 ```
 
-### 6. Add Report Generation
+Example:
 
-Add Markdown and JSON reports.
+```yaml
+probe: register_file.bank_sweep
+concept: operand_delivery_conflict_behavior
+requires:
+  - controllable_instruction_sequence
+  - controllable_register_assignment
+  - disassembly_or_binary_verification
+optional:
+  - stall_counters
+  - dynamic_instruction_counter
+```
 
-Markdown report sections:
+If requirements are not met, the runner skips or downgrades the probe before
+execution.
 
-1. Target identity
-2. Probe coverage matrix
-3. High-confidence repo parameter estimates
-4. Medium/low-confidence estimates
-5. Coupled parameters requiring additional probes
-6. Raw benchmark summary
-7. Suggested simulator config overrides
+### Layer 4: Backend Interpretation And Evidence Fusion
 
-JSON report should be machine-readable and stable enough for future scripts to
-generate simulator config fragments.
+Backend interpretation maps a normalized measurement onto a backend-specific
+architectural fact or behavior.
 
-### 7. Add Accelerator Portability Layer
+Examples:
 
-Because the goal includes arbitrary GPUs and AI accelerators with an ISA, keep
-the suite backend-oriented.
+- NVIDIA SASS `FFMA` throughput interpreted as FP32 pipe behavior.
+- AMD GCN/CDNA `v_add_f32` latency interpreted in wavefront execution context.
+- Intel Xe metric interpreted against EU/Xe-core organization.
+- TPU matrix-unit throughput interpreted against systolic or MXU semantics.
 
-Required backend capabilities:
+The backend interpretation must record:
 
-| Capability | Required | Purpose |
-|---|---:|---|
-| Device allocation | Yes | Allocate buffers and scratch regions |
-| Kernel launch | Yes | Run probes |
-| ISA assembly or binary injection | Yes | Preserve exact instruction sequences |
-| Device timer access | Yes | Measure latency without host noise |
-| Global memory atomics | Preferred | Topology / occupancy probes |
-| Performance counters | Optional | Improve confidence, not required |
-| Cache controls | Optional | Force cache path where ISA supports it |
+- instruction or operation semantics,
+- architectural block relationship,
+- tool metrics used,
+- timer domain,
+- observed variance,
+- known confounders,
+- validation result.
 
-Backend interface should expose unsupported features explicitly so the runner can
-skip incompatible probes rather than silently returning misleading data.
+### Layer 5: Simulator Mapping And Fitting
 
-## Assumptions & Decisions
+Simulator mapping converts backend-interpreted measurements into simulator
+parameters only through mapping contracts.
 
-1. Primary target is real hardware, not simulator-only calibration.
-2. Probe kernels are ISA-level microkernels; portable APIs are allowed only for
-   launch, memory allocation, and result collection.
-3. The first suite version should produce measured parameter reports, not modify
-   simulator config files automatically.
-4. Repo-defined parameter names are the canonical output vocabulary.
-5. Some parameters are not directly observable and must be reported as coupled
-   estimates with confidence scores.
-6. The suite should be accelerator-neutral at the framework level, but Nvidia
-   should be the first concrete backend because the repo architecture and naming
-   are Nvidia/GPGPU-Sim oriented.
-7. The suite should avoid relying on vendor performance counters for correctness;
-   counters are supplemental evidence.
+A mapping contract defines:
 
-## Verification Steps
+- `parameter`
+- `simulator_component`
+- `hardware_behavior`
+- `backend_interpretation_required`
+- `observability`
+- `primary_evidence`
+- `validation_evidence`
+- `formula_or_fit`
+- `fit_status_required`
+- `scalar_output_allowed`
+- `known_mismatches`
+- `fallback`
 
-### Static Verification
+Example:
 
-1. Validate `hardware_profile.schema.json` and `probe_result.schema.json`.
-2. Validate `simulator_parameter_map.yaml` contains only repo-defined parameter
-   names or documented class/member names.
-3. Run unit tests for model fitting:
-   - latency slope extraction
-   - throughput plateau detection
-   - cache capacity knee detection
-   - bank conflict periodicity detection
-   - confidence score calculation
+```yaml
+parameter: shader_core_config::max_sp_latency
+simulator_component: shader_core
+hardware_behavior: dependent scalar FP32 operation latency
+observability: direct_or_conditionally_identified
+primary_evidence: backend_instruction_latency
+validation_evidence:
+  - direct_instruction_counter_if_available
+  - disassembly_hash
+  - dynamic_instruction_stream_if_available
+formula_or_fit: cycles_per_instruction_after_overhead_subtraction_or_counter_normalization
+fit_status_required: direct_or_conditionally_identified
+scalar_output_allowed: true
+known_mismatches:
+  - instruction fusion
+  - operand delivery stalls
+  - scheduler effects at low occupancy
+fallback: report normalized latency measurement only
+```
 
-### Backend Verification
+Example:
 
-1. Run a no-op ISA kernel and verify launch/result plumbing.
-2. Run a timer calibration kernel and verify monotonic device timing.
-3. Run a dependent ALU chain with known instruction count and verify stable
-   cycle-per-instruction output.
-4. Run repeated probes and verify median/MAD stability across runs.
+```yaml
+parameter: routing_delay
+simulator_component: interconnect
+hardware_behavior: latency increase under controlled injection pressure
+observability: behavioral_only
+primary_evidence: injection_rate_curve
+validation_evidence:
+  - fabric_or_partition_counters_if_available
+  - simulator_trace
+formula_or_fit: effective_latency_curve_fit
+fit_status_required: behavioral_only_or_bounded
+scalar_output_allowed: false
+known_mismatches:
+  - real fabric topology not represented by simulator router model
+  - downstream memory backpressure can mimic routing delay
+fallback: report saturation curve and no scalar estimate
+```
 
-### Probe Verification
+## Evidence Policy
 
-1. Arithmetic probes should recover internally consistent latency and throughput:
-   dependent chains report higher cycles/instruction than independent saturated
-   streams.
-2. Shared-memory stride probes should show periodic conflict behavior.
-3. Cache probes should show clear latency knees as working set crosses cache
-   levels.
-4. DRAM streaming probes should show a bandwidth plateau.
-5. Tensor probes should report throughput scaling until tensor unit saturation.
-6. TMA / async-copy probes should report distinct issue latency, transfer
-   bandwidth, and completion/wait latency when the ISA supports such operations.
+The evidence source with the closest semantic match should be primary.
 
-### Acceptance Criteria
+| Evidence Source | Primary When | Validation When | Main Risk |
+|---|---|---|---|
+| Published parameter | Vendor exposes stable hardware or architectural value | Checking inferred values | Specs may omit mode-specific behavior |
+| Runtime metadata | Runtime-visible limit maps directly to a concept | Checking profiler launch metadata | May expose policy, not physical structure |
+| Direct profiler counter | Metric directly matches the behavior | Checking timing or fitted model | Naming, derivation, replay, permission |
+| Derived profiler metric | Formula and normalization are clear | Sanity-checking trends | Hidden derivation and architecture dependence |
+| Sampling profiler | Phase behavior matters | Explaining time-varying behavior | Attribution and sampling granularity |
+| ISA microkernel timing | Timing behavior is the target or no direct metric exists | Cross-checking counters | Runtime fog and clock variation |
+| Binary/dynamic instrumentation | Need executed instruction or memory stream | Validating microkernel design | Instrumentation overhead |
+| Simulator trace | Need simulator-internal state | Validating simulator mapping | Simulator may miss hardware mechanisms |
 
-The plan is implemented successfully when:
+This policy intentionally differs from a "microkernels first" rule. Microkernels
+are essential for generating controlled workloads, but timing alone is affected
+by runtime fog. Direct profiler metrics are stronger when their semantics match
+the measurement contract.
 
-1. The suite can run at least one ISA backend on real hardware.
-2. It emits a Markdown report and JSON hardware profile.
-3. The report includes estimates for at least these repo names:
-   - `shader_core_config::warp_size`
-   - `shader_core_config::max_warps_per_shader`
-   - `shader_core_config::gpgpu_shmem_size`
-   - `shader_core_config::gpgpu_shmem_num_banks`
-   - `shader_core_config::gpgpu_smem_latency`
-   - `shader_core_config::max_sp_latency`
-   - `shader_core_config::gpgpu_num_sched_per_core`
-   - `shader_core_config::pipeline_widths_string`
-   - `cache_config::m_line_sz`
-   - `cache_config::m_assoc`
-   - `l1d_cache_config::l1_latency`
-   - `memory_config::m_n_mem`
-   - `memory_config::busW`
-   - `memory_config::BL`
-   - `dram_latency`
-4. Each estimate includes value, unit, confidence, probe IDs, and notes.
-5. Unsupported probes are skipped with explicit reasons.
+## ISA Semantics Strategy
 
-## Rollout Plan
+ISA support is not binary. AMORA should classify the information level available
+for each accelerator.
 
-1. Land schemas and parameter map first.
-2. Implement the backend interface and one Nvidia ISA backend.
-3. Implement arithmetic latency, shared memory, and cache probes first because
-   they validate the runner and statistics model.
-4. Add scheduler, register file, L2/DRAM, and interconnect probes.
-5. Add tensor and TMA probes after the base timing harness is stable.
-6. Add report generation once raw probe results and parameter estimates are
-   stable.
+### ISA Information Levels
 
-## Risks and Mitigations
+| Level | Description | Probe Strategy |
+|---|---|---|
+| `isa_public` | ISA syntax and semantics are public enough for handwritten kernels | Generate low-level probes and verify binary/disassembly |
+| `isa_disassemblable` | ISA can be inspected but not reliably authored | Generate high-level kernels, verify output, reject unstable patterns |
+| `compiler_only` | Only compiler-level control is available | Use constrained source patterns and profiler validation; lower confidence |
+| `runtime_only` | No useful ISA or disassembly path | Use metadata, profiler counters, and black-box timing only |
+| `published_only` | Only public specs and docs exist | Trust-and-verify against any observable runtime data |
+| `black_box` | Very limited docs/tools | Emit behavioral observations and unsupported mappings |
 
-| Risk | Mitigation |
-|---|---|
-| ISA changes across vendors or generations | Keep ISA templates backend-local and feature-gated. |
-| Compiler/assembler rewrites probe loops | Use explicit ISA assembly and disassemble binaries during verification. |
-| Host timing noise | Prefer device-side cycle counters and repeat runs with robust statistics. |
-| Coupled parameters misidentified as direct estimates | Emit coupled estimates and confidence metadata. |
-| Cache and memory policies adapt dynamically | Use multiple access patterns and report policy-dependent results. |
-| Performance counters unavailable | Treat counters as optional; rely on timing and controlled microkernels. |
-| Arbitrary AI accelerators lack CUDA-like launch APIs | Keep launch/assembly/timer capabilities abstract in `ISABackend`. |
+### ISA Semantic Records
+
+Every backend should maintain instruction semantic records:
+
+```yaml
+instruction: FFMA
+backend: nvidia_sass
+semantic_class: fp32_fma
+architectural_block:
+  primary: fp32_pipe
+  secondary:
+    - scheduler
+    - register_file
+required_operands:
+  sources: 3
+  destinations: 1
+control_level: handwritten_sass_or_inline_ptx
+verification:
+  disassembly_required: true
+  dynamic_instruction_count_optional: true
+mapping_confidence: high
+known_mismatches:
+  - compiler may generate alternate opcode from high-level source
+```
+
+This record is the bridge between instruction-level probing and architectural
+blocks. Without it, a portable probe cannot safely claim it measured a specific
+hardware subsystem.
+
+## Profiler And Tool Support Strategy
+
+NCU, CUPTI, and NVBit are NVIDIA-specific. The generic framework must represent
+them as one backend's tool stack, then provide equivalent layered support for
+other vendors where possible.
+
+### Tool Layers
+
+| Tool Layer | Purpose | NVIDIA Examples | Other Vendor Examples |
+|---|---|---|---|
+| runtime metadata | device limits, launch metadata, memory properties | CUDA runtime/driver | HIP/ROCm runtime, Level Zero, Metal, vendor SDKs |
+| exact counters | per-kernel or per-range metrics | NCU, CUPTI Range Profiling | rocprof/rocprofiler-sdk, Intel metrics discovery, Xcode GPU counters, vendor profilers |
+| sampling counters | time-varying PM state | CUPTI PM Sampling | rocprof sampling, VTune timelines, vendor trace tools |
+| PC/stall attribution | instruction/source stall attribution | CUPTI PC Sampling, SASS Metrics | AMD profiler attribution, VTune GPU hotspots where available |
+| dynamic instrumentation | executed instruction/memory stream | NVBit | vendor DBI if available, binary trace tools, emulator/simulator traces |
+| disassembly/binary validation | verify generated code | nvdisasm, cuobjdump | llvm-objdump, roc-objdump, Intel tools, vendor disassemblers |
+
+### Backend Tool Registry
+
+Each backend defines:
+
+- available tools,
+- supported metric concepts,
+- candidate metric names,
+- normalization formulas,
+- permission requirements,
+- replay/sampling behavior,
+- unsupported reasons,
+- fallback tools.
+
+Example:
+
+```yaml
+backend: nvidia_cuda
+logical_metric: fp32_instruction_count
+tool_candidates:
+  - ncu
+  - cupti_range
+metric_candidates:
+  - smsp__sass_thread_inst_executed_op_fadd_pred_on.sum
+  - smsp__sass_thread_inst_executed_op_ffma_pred_on.sum
+normalization: divide by active lanes or expected dynamic instruction count as contract requires
+fallback:
+  - nvbit_opcode_histogram
+  - disassembly_static_count
+```
+
+## Layered Output Schema
+
+The output must preserve the transition from raw observation to simulator
+estimate.
+
+```yaml
+raw_observation:
+  source: cupti_range
+  raw_values:
+    smsp__cycles_active.avg: 100000
+    smsp__inst_executed.sum: 25000
+  probe_id: arithmetic_latency.fp32_add.nvidia
+  binary_hash: string
+
+normalized_measurement:
+  concept: scalar_instruction_latency
+  value: 4
+  unit: backend_core_cycles
+  variance:
+    count: 20
+    median: 4
+    mad: 0
+    min: 4
+    max: 5
+
+backend_interpretation:
+  backend: nvidia_cuda
+  instruction_semantics: fp32_add
+  architectural_block: fp32_pipe
+  clock_domain: SM
+  primary_evidence: direct_counter
+  validation_evidence:
+    - disassembly_hash
+    - timing_cross_check
+
+simulator_estimate:
+  parameter: shader_core_config::max_sp_latency
+  value: 4
+  unit: cycles
+  evidence_tier: direct_counter
+  fit_status: conditionally_identified
+  uncertainty_category: conditional_scalar
+  assumptions:
+    - metric maps to the intended opcode class
+    - active cycle normalization is valid
+  coupled_with:
+    - operand_delivery
+    - scheduler_issue
+```
+
+## Fitting, Identifiability, And Uncertainty
+
+Every non-direct simulator estimate should carry fitting metadata:
+
+- `fit_status`
+- `fit_residual`
+- `lower_bound`
+- `upper_bound`
+- `alternative_fits`
+- `assumptions`
+- `coupled_with`
+- `identifiability`
+
+Fit status values:
+
+- `direct`
+- `uniquely_identified`
+- `bounded`
+- `conditionally_identified`
+- `underconstrained`
+- `behavioral_only`
+- `unsupported`
+
+Compact uncertainty categories:
+
+- `stable_scalar`: low variance and direct semantic match.
+- `bounded_range`: lower/upper bounds are more defensible than one exact value.
+- `conditional_scalar`: scalar valid only under stated assumptions.
+- `multi_fit`: multiple parameter sets explain the data.
+- `behavioral_class`: emit class or curve, not hardware scalar.
+- `indeterminate`: evidence insufficient or contradictory.
+
+Variance fields:
+
+- sample count,
+- median,
+- MAD,
+- min,
+- max,
+- coefficient of variation,
+- per-pass/per-run counter variance when available.
+
+## Clock-Domain Policy
+
+Every timing-derived or rate-derived measurement must record:
+
+- `clock_domain`
+- `clock_source`
+- `clock_locked`
+- `observed_clock_range`
+- `native_unit`
+- `conversion_method`
+- `clock_assumptions`
+
+Clock domains include:
+
+- `core`
+- `simd_or_simt_lane_group`
+- `l1_or_local_memory`
+- `l2_or_shared_cache`
+- `dram_or_hbm`
+- `fabric`
+- `copy_engine`
+- `host`
+- `mixed`
+- `unknown`
+
+Keep native units unless a simulator mapping contract explicitly defines a
+conversion.
+
+## Capability-Gated Probe Families
+
+### Topology And Residency
+
+Concepts:
+
+- compute-unit count,
+- lane/warp/wave/subgroup size,
+- max resident workgroups,
+- register and scratch/shared-memory limits.
+
+Primary evidence:
+
+- published specs,
+- runtime metadata,
+- launch/profiler metadata.
+
+Fallback:
+
+- persistent-workgroup probe where safe.
+
+Simulator mapping:
+
+- scalar allowed for direct metadata-backed limits,
+- topology decomposition may be architecture-specific or fitted.
+
+### Instruction Latency
+
+Concept:
+
+- dependent operation latency for a specific instruction semantic class.
+
+Requires:
+
+- controllable instruction sequence or verified compiler output,
+- device timer or direct counter,
+- binary/disassembly verification.
+
+Primary evidence:
+
+- direct profiler counters if semantic match exists,
+- otherwise validated dependent-chain timing.
+
+Fallback:
+
+- normalized behavioral latency with no simulator scalar.
+
+### Instruction Throughput And Issue
+
+Concept:
+
+- reciprocal throughput and issue saturation for an instruction semantic class.
+
+Requires:
+
+- independent instruction stream or counter-supported workload,
+- active-cycle/rate measurement,
+- instruction stream validation.
+
+Simulator mapping:
+
+- throughput plateau can be stable,
+- unit count and issue width are conditionally identified unless published.
+
+### Operand Delivery And Register File
+
+Concept:
+
+- register-bank, operand-port, collector, or operand-delivery conflict behavior.
+
+Requires:
+
+- controllable register assignment for scalar claims.
+
+Fallback:
+
+- emit behavior under register pressure or mark unsupported.
+
+Simulator mapping:
+
+- scalar output only with repeated periodicity and independent validation.
+
+### Local / Shared / Scratchpad Memory
+
+Concept:
+
+- explicitly managed local memory latency, bandwidth, and conflict behavior.
+
+Backend names:
+
+- NVIDIA shared memory,
+- AMD LDS,
+- Intel SLM,
+- accelerator scratchpad SRAM,
+- unsupported if no comparable structure exists.
+
+Simulator mapping:
+
+- map only after backend-specific equivalence is declared.
+
+### Cache-Like Structures
+
+Concept:
+
+- latency plateaus, capacity knees, transaction granularity, conflict behavior.
+
+Primary evidence:
+
+- profiler cache metrics if direct,
+- pointer-chase and working-set probes for behavior.
+
+Simulator mapping:
+
+- capacity often bounded,
+- associativity/MSHR/replacement often fitted or behavioral only.
+
+### Global / External Memory
+
+Concept:
+
+- global memory latency, bandwidth, partitioning, row/bank behavior.
+
+Primary evidence:
+
+- profiler memory metrics where direct,
+- published bandwidth specs as trust-and-verify anchors,
+- streaming and pointer-chase probes.
+
+Simulator mapping:
+
+- bandwidth plateau can constrain parameters,
+- DRAM timing internals usually underconstrained or multi-fit.
+
+### Tensor / Matrix Engines
+
+Concept:
+
+- matrix operation latency, throughput, supported shapes, and data types.
+
+Requires:
+
+- operation semantic record for shape/datatype/layout.
+
+Primary evidence:
+
+- direct tensor/matrix profiler metrics when available,
+- validated instruction streams or kernel libraries otherwise.
+
+Simulator mapping:
+
+- tensor rate may be stable,
+- unit count and shape-specific latency are conditional or fitted unless
+  published.
+
+### DMA / Async Copy / TMA-Like Engines
+
+Concept:
+
+- command issue, transfer bandwidth, in-flight capacity, completion semantics.
+
+Primary evidence:
+
+- backend-specific copy-engine metrics and feature checks,
+- transfer microkernels,
+- phase sampling when exact replay perturbs overlap.
+
+Simulator mapping:
+
+- internal queue names are simulator equivalents unless direct evidence exists.
+
+### Synchronization
+
+Concept:
+
+- barrier, fence, event, and completion latency under controlled arrival and
+  traffic patterns.
+
+Primary evidence:
+
+- direct stall/attribution metrics when available,
+- synchronization microkernels.
+
+Simulator mapping:
+
+- report per-scope/per-pattern behavior, not one universal scalar.
+
+### Interconnect / Fabric
+
+Concept:
+
+- saturation behavior, routing/partitioning effects, injection pressure.
+
+Primary evidence:
+
+- fabric/partition counters if available,
+- balanced and imbalanced traffic probes,
+- simulator traces for mapping.
+
+Simulator mapping:
+
+- router microparameters are usually behavioral-only or bounded effective
+  simulator values.
+
+## Backend Families
+
+### NVIDIA
+
+Tool stack:
+
+- CUDA runtime/driver metadata,
+- NCU,
+- CUPTI Range Profiling,
+- CUPTI Host Profiling,
+- CUPTI PM Sampling,
+- CUPTI PC Sampling,
+- CUPTI SASS Metrics,
+- NVBit,
+- nvdisasm/cuobjdump.
+
+Strategy:
+
+- Use NCU/CUPTI direct metrics as primary when metric contracts are direct.
+- Use microkernels to generate controlled workloads and cross-check.
+- Use NVBit for dynamic instruction and memory streams in separate runs.
+
+### AMD
+
+Expected tool stack:
+
+- ROCm/HIP runtime metadata,
+- rocprof,
+- rocprofiler-sdk,
+- rocm-smi where useful,
+- LLVM/ROCm disassembly tools,
+- architecture ISA docs where public.
+
+Strategy:
+
+- Map NVIDIA-like concepts to AMD-specific wavefront, CU, SIMD, LDS, cache, and
+  matrix-core semantics before simulator mapping.
+- Treat LDS/shared-memory mappings as backend-specific equivalence, not a global
+  assumption.
+
+### Intel
+
+Expected tool stack:
+
+- Level Zero runtime and metrics,
+- oneAPI/SYCL metadata where used,
+- VTune GPU Hotspots,
+- Intel metrics discovery tools,
+- disassembly tools where available.
+
+Strategy:
+
+- Map concepts through EU/Xe-core/subslice or tile organization as documented.
+- Avoid forcing SIMT-specific parameters before backend interpretation.
+
+### Apple, Mobile GPUs, TPUs, NPUs, And Less-Documented Accelerators
+
+Expected support may range from runtime metadata and profilers to black-box
+timing only.
+
+Strategy:
+
+- Start with capability discovery and published facts.
+- Emit hardware-neutral measurements first.
+- Add backend-specific mappings only when architecture docs or tool evidence
+  justify them.
+- Prefer `unsupported`, `behavioral_only`, or `underconstrained` over forced
+  GPGPU-style scalar estimates.
+
+## Proposed Repository Structure
+
+Use the existing `amora/` package rather than a separate `tools/probe_suite/`
+implementation tree.
+
+```text
+amora/
+  core/
+    capabilities.py
+    statistics.py
+    fitting.py
+    clock.py
+    measurement.py
+    parameter_model.py
+    runner.py
+  backends/
+    base.py
+    nvidia/
+      cuda_tools.py
+      metrics.py
+      ncu.py
+      cupti.py
+      nvbit.py
+      isa_semantics.yaml
+    amd/
+      rocm_tools.py
+      metrics.py
+      isa_semantics.yaml
+    intel/
+      level_zero.py
+      metrics.py
+      isa_semantics.yaml
+  probes/
+    concepts/
+      arithmetic_latency.yaml
+      throughput.yaml
+      local_memory.yaml
+      cache_behavior.yaml
+      global_memory.yaml
+      tensor_matrix.yaml
+      synchronization.yaml
+      interconnect.yaml
+    nvidia/
+    amd/
+    intel/
+  schemas/
+    backend_capability.schema.json
+    isa_semantics.schema.json
+    metric_mapping.schema.json
+    measurement_contract.schema.json
+    probe_result.schema.json
+    hardware_profile.schema.json
+    simulator_parameter_map.yaml
+  reports/
+    json_report.py
+    markdown.py
+```
+
+## Implementation Phases
+
+### Phase 0: Schema And Contracts
+
+Deliver:
+
+- backend capability schema,
+- ISA semantics schema,
+- metric mapping schema,
+- measurement contract schema,
+- layered result schema,
+- simulator mapping contract registry.
+
+Acceptance:
+
+- A parameter cannot be emitted without a contract.
+- A probe cannot run unless required capabilities are present or explicitly
+  downgraded.
+
+### Phase 1: NVIDIA Backend As Reference
+
+Deliver:
+
+- CUDA capability discovery,
+- NCU/CUPTI metric resolver,
+- NVBit/disassembly validation hooks,
+- baseline probes updated to layered evidence output.
+
+Acceptance:
+
+- NVIDIA baseline produces raw observations, normalized measurements, backend
+  interpretations, and simulator estimates with fit metadata.
+
+### Phase 2: Add AMD Or Second Backend
+
+Deliver:
+
+- second backend capability discovery,
+- at least topology, arithmetic latency, throughput, and local-memory concept
+  support where available.
+
+Acceptance:
+
+- The same hardware-neutral concepts can be represented with backend-specific
+  semantics.
+- Unsupported simulator mappings are explicit.
+
+### Phase 3: Fitting And Simulator Trace Integration
+
+Deliver:
+
+- simulator trace backend,
+- queue/cache/scheduler/pipeline trace contracts,
+- fitting models with alternatives and residuals.
+
+Acceptance:
+
+- Hardware observations can be compared against simulator dynamic state.
+- Coupled simulator parameters report identifiability status.
+
+### Phase 4: Broader Vendor Tooling
+
+Deliver:
+
+- profiler/tool registry entries for AMD, Intel, Apple/mobile, and selected AI
+  accelerators,
+- documentation-backed published-fact ingestion,
+- backend-specific metric mapping candidates.
+
+Acceptance:
+
+- A new backend can start in `published_only`, `runtime_only`, or `black_box`
+  mode and still produce honest reports.
+
+## Acceptance Criteria
+
+The generalized suite is ready for implementation when:
+
+- hardware-neutral measurement concepts are defined separately from simulator
+  parameters,
+- every backend declares trust-critical capabilities,
+- every backend records ISA semantics availability and instruction-to-block
+  relationships,
+- every backend has a profiler/tool registry, even if sparse,
+- every probe declares required and optional capabilities,
+- every result preserves raw observation, normalized measurement, backend
+  interpretation, and simulator estimate layers,
+- every simulator parameter estimate references a mapping contract,
+- direct counters can be primary evidence when semantically direct,
+- microkernel timing is used as controlled workload evidence, validation, or
+  fallback according to contract,
+- published parameters are used as trust-and-verify anchors,
+- simulator dynamic states are traceable for calibration,
+- fitted estimates include fit status, variance, bounds or alternatives,
+  assumptions, and coupled parameters,
+- clock domains and conversion methods are explicit,
+- unsupported or unsafe mappings are reported honestly.
+
+## First Concrete Milestone
+
+The first implementation milestone should not require all GPGPU-Sim parameters
+to be estimated. It should require the framework to show the full evidence flow
+for a small set of concepts:
+
+- topology metadata,
+- scalar FP32 or integer instruction latency,
+- scalar FP32 or integer throughput,
+- local/shared/scratchpad memory latency or unsupported status,
+- global memory bandwidth plateau,
+- one simulator mapping contract with a direct scalar,
+- one simulator mapping contract with `bounded` or `conditionally_identified`,
+- one simulator mapping contract with `unsupported` or `behavioral_only`.
+
+This milestone proves AMORA can measure, interpret, and map without pretending
+that every accelerator exposes every simulator parameter.

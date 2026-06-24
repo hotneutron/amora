@@ -1,7 +1,5 @@
-"""Module entrypoint for `python -m amora`."""
+"""Allow `python -m amora` to dispatch to the CLI."""
 
-from .cli import main
+from amora.cli import main
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

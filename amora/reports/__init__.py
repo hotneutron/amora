@@ -1,1 +1,1 @@
-"""Report rendering helpers."""
+"""Report renderers."""

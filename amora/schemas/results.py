@@ -2,107 +2,177 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
+from dataclasses import asdict, dataclass, field
+from typing import Any, Mapping
+
+from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 
 
-class EvidenceTier(str, Enum):
-    """How directly a measurement supports a parameter estimate."""
+JsonDict = dict[str, Any]
 
-    DIRECT_METADATA = "direct_metadata"
-    DIRECT_COUNTER = "direct_counter"
-    TIMING_DIRECT = "timing_direct"
-    INSTRUMENTED_STREAM = "instrumented_stream"
-    COUPLED_INFERENCE = "coupled_inference"
-    UNSUPPORTED = "unsupported"
+
+def _clean(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {k: _clean(v) for k, v in value.items() if v is not None}
+    if isinstance(value, list):
+        return [_clean(v) for v in value]
+    if isinstance(value, tuple):
+        return [_clean(v) for v in value]
+    if isinstance(value, set):
+        return sorted(_clean(v) for v in value)
+    if hasattr(value, "value"):
+        return value.value
+    return value
 
 
 @dataclass(frozen=True)
-class ParameterEstimate:
-    """A simulator-parameter estimate derived from one or more observations."""
+class ProbeIdentity:
+    """Stable identity for a probe result."""
+
+    probe_id: str
+    backend: str = "nvidia_cuda"
+    family: str = "baseline"
+    source_hash: str | None = None
+    binary_hash: str | None = None
+    disassembly_hash: str | None = None
+
+
+@dataclass(frozen=True)
+class ToolContext:
+    """Tool and device versions relevant to a probe run."""
+
+    device: Mapping[str, Any] = field(default_factory=dict)
+    tools: Mapping[str, Any] = field(default_factory=dict)
+    environment: Mapping[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class LaunchDescriptor:
+    """Kernel launch shape and execution mode."""
+
+    grid: tuple[int, int, int] | None = None
+    block: tuple[int, int, int] | None = None
+    dynamic_shared_memory_bytes: int | None = None
+    mode: str = "metadata"
+    extras: Mapping[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class RawObservation:
+    """Raw evidence before normalization."""
+
+    evidence_tier: EvidenceTier
+    values: Mapping[str, Any] = field(default_factory=dict)
+    metrics: Mapping[str, Any] = field(default_factory=dict)
+    units: Mapping[str, str] = field(default_factory=dict)
+    source: str | None = None
+    unsupported_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class NormalizedMeasurement:
+    """Hardware-neutral measurement derived from raw evidence."""
 
     name: str
-    value: Any
-    evidence: EvidenceTier
-    confidence: float
+    value: Any = None
     unit: str | None = None
-    risk: str = "medium"
-    notes: tuple[str, ...] = ()
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "name": self.name,
-            "value": self.value,
-            "evidence": self.evidence.value,
-            "confidence": self.confidence,
-            "unit": self.unit,
-            "risk": self.risk,
-            "notes": list(self.notes),
-        }
+    fit_status: FitStatus = FitStatus.UNSUPPORTED
+    uncertainty: UncertaintyCategory = UncertaintyCategory.INDETERMINATE
+    variance: Mapping[str, Any] = field(default_factory=dict)
+    assumptions: list[str] = field(default_factory=list)
+    coupled_with: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
-class ProbeArtifact:
-    """A source, binary, disassembly, or raw-output artifact."""
+class BackendInterpretation:
+    """NVIDIA-specific interpretation of a normalized measurement."""
 
-    kind: str
-    path: str
-    sha256: str | None = None
+    concept: str
+    interpretation: Mapping[str, Any] = field(default_factory=dict)
+    metric_resolver: Mapping[str, Any] = field(default_factory=dict)
+    sass_validation: Mapping[str, Any] = field(default_factory=dict)
+    downgrade_reason: str | None = None
 
-    def to_dict(self) -> dict[str, Any]:
-        return {"kind": self.kind, "path": self.path, "sha256": self.sha256}
+
+@dataclass(frozen=True)
+class SimulatorEstimate:
+    """Simulator-facing estimate derived through a mapping contract."""
+
+    parameter: str
+    value: Any = None
+    unit: str | None = None
+    evidence_tier: EvidenceTier = EvidenceTier.UNSUPPORTED
+    fit_status: FitStatus = FitStatus.UNSUPPORTED
+    uncertainty: UncertaintyCategory = UncertaintyCategory.INDETERMINATE
+    mapping_contract: str = ""
+    assumptions: list[str] = field(default_factory=list)
+    coupled_with: list[str] = field(default_factory=list)
+    unsupported_reason: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ProbeResult:
-    """Normalized output from one AMORA probe."""
+    """Complete layered result for a probe."""
 
-    name: str
-    tier: str
-    status: str
-    measurements: dict[str, Any] = field(default_factory=dict)
-    estimates: list[ParameterEstimate] = field(default_factory=list)
-    artifacts: list[ProbeArtifact] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
+    identity: ProbeIdentity
+    tool_context: ToolContext = field(default_factory=ToolContext)
+    launch: LaunchDescriptor = field(default_factory=LaunchDescriptor)
+    raw_observation: RawObservation = field(
+        default_factory=lambda: RawObservation(EvidenceTier.UNSUPPORTED)
+    )
+    normalized_measurement: NormalizedMeasurement = field(
+        default_factory=lambda: NormalizedMeasurement(name="unsupported")
+    )
+    backend_interpretation: BackendInterpretation = field(
+        default_factory=lambda: BackendInterpretation(concept="unsupported")
+    )
+    simulator_estimate: SimulatorEstimate = field(
+        default_factory=lambda: SimulatorEstimate(
+            parameter="unsupported",
+            mapping_contract="unsupported",
+            unsupported_reason="unsupported",
+        )
+    )
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "name": self.name,
-            "tier": self.tier,
-            "status": self.status,
-            "measurements": self.measurements,
-            "estimates": [estimate.to_dict() for estimate in self.estimates],
-            "artifacts": [artifact.to_dict() for artifact in self.artifacts],
-            "warnings": self.warnings,
-        }
+    def to_dict(self) -> JsonDict:
+        return _clean(asdict(self))
 
-
-@dataclass
-class HardwareProfile:
-    """A target profile assembled from multiple probe results."""
-
-    target: dict[str, Any]
-    raw_results: list[ProbeResult] = field(default_factory=list)
-
-    def repo_parameter_estimates(self) -> dict[str, Any]:
-        estimates: dict[str, Any] = {}
-        for result in self.raw_results:
-            for estimate in result.estimates:
-                estimates[estimate.name] = estimate.value
-        return estimates
-
-    def confidence(self) -> dict[str, float]:
-        values: dict[str, float] = {}
-        for result in self.raw_results:
-            for estimate in result.estimates:
-                values[estimate.name] = estimate.confidence
-        return values
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "target": self.target,
-            "repo_parameter_estimates": self.repo_parameter_estimates(),
-            "confidence": self.confidence(),
-            "raw_results": [result.to_dict() for result in self.raw_results],
-        }
+    @classmethod
+    def unsupported(
+        cls,
+        probe_id: str,
+        reason: str,
+        *,
+        backend: str = "nvidia_cuda",
+        family: str = "baseline",
+        tool_context: ToolContext | None = None,
+        raw_values: Mapping[str, Any] | None = None,
+    ) -> "ProbeResult":
+        identity = ProbeIdentity(probe_id=probe_id, backend=backend, family=family)
+        return cls(
+            identity=identity,
+            tool_context=tool_context or ToolContext(),
+            raw_observation=RawObservation(
+                evidence_tier=EvidenceTier.UNSUPPORTED,
+                values=dict(raw_values) if raw_values else {},
+                unsupported_reason=reason,
+            ),
+            normalized_measurement=NormalizedMeasurement(
+                name=probe_id,
+                fit_status=FitStatus.UNSUPPORTED,
+                uncertainty=UncertaintyCategory.INDETERMINATE,
+                assumptions=[reason],
+            ),
+            backend_interpretation=BackendInterpretation(
+                concept=probe_id,
+                downgrade_reason=reason,
+            ),
+            simulator_estimate=SimulatorEstimate(
+                parameter=probe_id,
+                evidence_tier=EvidenceTier.UNSUPPORTED,
+                fit_status=FitStatus.UNSUPPORTED,
+                uncertainty=UncertaintyCategory.INDETERMINATE,
+                mapping_contract="unsupported",
+                unsupported_reason=reason,
+            ),
+        )

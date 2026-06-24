@@ -1,0 +1,72 @@
+"""Logical NVIDIA metric resolver for baseline probes."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+
+@dataclass(frozen=True)
+class MetricResolution:
+    logical_name: str
+    selected_name: str | None
+    candidates: tuple[str, ...]
+    available: bool
+    reason: str | None = None
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "logical_name": self.logical_name,
+            "selected_name": self.selected_name,
+            "candidates": list(self.candidates),
+            "available": self.available,
+            "reason": self.reason,
+        }
+
+
+@dataclass(frozen=True)
+class MetricResolver:
+    supported_metrics: frozenset[str] = field(default_factory=frozenset)
+
+    CANDIDATES = {
+        "sm_active_cycles": (
+            "sm__cycles_active.avg",
+            "smsp__cycles_active.avg",
+        ),
+        "inst_executed": (
+            "smsp__inst_executed.sum",
+            "sm__inst_executed.sum",
+        ),
+        "shared_transactions": (
+            "l1tex__data_pipe_lsu_wavefronts_mem_shared.sum",
+            "l1tex__t_sectors_pipe_lsu_mem_shared_op_ld.sum",
+        ),
+        "shared_conflicts": (
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared.sum",
+        ),
+    }
+
+    def resolve(self, logical_name: str) -> MetricResolution:
+        candidates = self.CANDIDATES.get(logical_name, ())
+        if not candidates:
+            return MetricResolution(
+                logical_name=logical_name,
+                selected_name=None,
+                candidates=(),
+                available=False,
+                reason="unknown logical metric",
+            )
+        for candidate in candidates:
+            if candidate in self.supported_metrics:
+                return MetricResolution(
+                    logical_name=logical_name,
+                    selected_name=candidate,
+                    candidates=candidates,
+                    available=True,
+                )
+        return MetricResolution(
+            logical_name=logical_name,
+            selected_name=None,
+            candidates=candidates,
+            available=False,
+            reason="no candidate metric supported",
+        )

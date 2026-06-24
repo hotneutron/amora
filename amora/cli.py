@@ -3,58 +3,96 @@
 from __future__ import annotations
 
 import argparse
+import json
+import sys
 from pathlib import Path
 
-from amora.backends.nvidia import CudaToolchain
-from amora.probes.nvidia.p0 import (
-    arithmetic_source_probe,
-    device_attribute_probe,
-    occupancy_plan_probe,
-    shared_memory_source_probe,
-)
-from amora.reports.json_report import render_json
-from amora.schemas.results import HardwareProfile, ProbeResult
+from amora.backends.nvidia.cuda import discover_capabilities
+from amora.probes.nvidia import baseline as baseline_probes
+from amora.reports.json_report import render_report, write_report
+from amora.reports.markdown_report import write_reports_from_json
 
 
-def run_nvidia_p0(*, dry_run: bool) -> HardwareProfile:
-    toolchain = CudaToolchain()
-    results: list[ProbeResult] = [
-        device_attribute_probe(toolchain=toolchain),
-        occupancy_plan_probe(),
-        arithmetic_source_probe(),
-        shared_memory_source_probe(),
-    ]
-    target = toolchain.target_summary()
-    target["dry_run"] = dry_run
-    return HardwareProfile(target=target, raw_results=results)
+def _print_json(data: object) -> None:
+    print(json.dumps(data, indent=2, sort_keys=True))
+
+
+def _cmd_list(_: argparse.Namespace) -> int:
+    _print_json({"probes": baseline_probes.list_probes()})
+    return 0
+
+
+def _cmd_capabilities(_: argparse.Namespace) -> int:
+    _print_json(discover_capabilities().to_dict())
+    return 0
+
+
+def _cmd_run(args: argparse.Namespace) -> int:
+    capabilities = discover_capabilities()
+    if args.all:
+        results = baseline_probes.run_all(capabilities)
+    else:
+        results = baseline_probes.run_probe(args.probe, capabilities)
+    metadata = {"backend_capabilities": capabilities.to_dict()}
+    if args.output:
+        write_report(Path(args.output), results, metadata=metadata)
+    else:
+        _print_json(render_report(results, metadata=metadata))
+    return 0
+
+
+def _cmd_report(args: argparse.Namespace) -> int:
+    written = write_reports_from_json(
+        Path(args.input),
+        Path(args.out_dir),
+        vendor=args.vendor,
+        family=args.family,
+        sku=args.sku,
+    )
+    print(written)
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="amora")
-    parser.add_argument("--target", choices=("nvidia",), default="nvidia")
-    parser.add_argument("--tier", choices=("p0",), default="p0")
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Plan probes and inspect tools without launching CUDA kernels.",
-    )
-    parser.add_argument("--output", type=Path, help="Optional JSON output path.")
+    subparsers = parser.add_subparsers(dest="backend")
+
+    nvidia = subparsers.add_parser("nvidia")
+    nvidia_sub = nvidia.add_subparsers(dest="command")
+
+    list_parser = nvidia_sub.add_parser("list")
+    list_parser.set_defaults(func=_cmd_list)
+
+    capabilities_parser = nvidia_sub.add_parser("inspect-capabilities")
+    capabilities_parser.set_defaults(func=_cmd_capabilities)
+
+    run_parser = nvidia_sub.add_parser("run")
+    target = run_parser.add_mutually_exclusive_group(required=True)
+    target.add_argument("--probe", choices=baseline_probes.PLANNED_PROBES)
+    target.add_argument("--all", action="store_true")
+    run_parser.add_argument("--output")
+    run_parser.set_defaults(func=_cmd_run)
+
+    report_parser = nvidia_sub.add_parser("report")
+    report_parser.add_argument("--input", required=True)
+    report_parser.add_argument("--out-dir", default="reports")
+    report_parser.add_argument("--vendor", default=None)
+    report_parser.add_argument("--family", default=None)
+    report_parser.add_argument("--sku", default=None)
+    report_parser.set_defaults(func=_cmd_report)
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    func = getattr(args, "func", None)
+    if func is None:
+        parser.print_help(sys.stderr)
+        return 2
+    return int(func(args))
 
-    if args.target == "nvidia" and args.tier == "p0":
-        profile = run_nvidia_p0(dry_run=args.dry_run)
-    else:
-        parser.error("unsupported target/tier combination")
 
-    rendered = render_json(profile.to_dict())
-    if args.output:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(rendered, encoding="utf-8")
-    else:
-        print(rendered, end="")
-    return 0
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())
