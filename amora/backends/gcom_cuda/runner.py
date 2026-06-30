@@ -58,14 +58,13 @@ def parse_stats(stdout: str) -> dict[str, float]:
     return stats
 
 
-def _find_kernelslist(trace_dir: Path) -> Path:
-    for name in ("kernelslist.g", "kernelslist"):
-        p = trace_dir / name
-        if p.exists():
-            return p
-    candidates = list(trace_dir.rglob("kernelslist.g")) or list(trace_dir.rglob("kernelslist"))
+def _find_trace_pb(trace_dir: Path) -> Path:
+    pb = trace_dir / "dynamic_trace.pb"
+    if pb.exists():
+        return pb
+    candidates = list(trace_dir.rglob("dynamic_trace.pb"))
     if not candidates:
-        raise SimulateError(f"no kernelslist found under {trace_dir}")
+        raise SimulateError(f"no dynamic_trace.pb found under {trace_dir}")
     return candidates[0]
 
 
@@ -95,10 +94,10 @@ def simulate(
 
     if not cfg.SIM_BIN.exists():
         raise SimulateError(f"simulator binary not built: {cfg.SIM_BIN}")
-    kernelslist = _find_kernelslist(trace_dir)
+    trace_pb = _find_trace_pb(trace_dir)
     args = [
         str(cfg.SIM_BIN),
-        "-trace", str(kernelslist),
+        "-trace", str(trace_pb),
         "-config", str(profile.gpgpusim_config),
         "-config", str(profile.trace_config),
     ]

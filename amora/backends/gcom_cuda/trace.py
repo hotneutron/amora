@@ -30,16 +30,6 @@ def _tracer_tool_so() -> Path:
     return candidates[0]
 
 
-def _post_processor() -> Path:
-    proc = cfg.TRACER_DIR / "tracer_tool" / "traces-processing" / "post-traces-processing-compressed"
-    if not proc.exists():
-        candidates = list(cfg.TRACER_DIR.rglob("post-traces-processing-compressed"))
-        if not candidates:
-            raise TraceError("post-traces-processing-compressed not found")
-        proc = candidates[0]
-    return proc
-
-
 def compile_probe(src: Path, out_dir: Path, *, defines: tuple[str, ...] = ()) -> Path:
     """Compile a probe ``.cu`` to a static executable; return the binary path.
 
@@ -83,11 +73,13 @@ def trace_probe(
 
     tracer_so = _tracer_tool_so()
     env = dict(os.environ)
+    # Mirror util/tracer_nvbit/run_hw_trace.py: USER_DEFINED_FOLDERS makes the
+    # tracer honor TRACES_FOLDER; DYNAMIC_KERNEL_LIMIT_END=0 traces all kernels.
+    env["USER_DEFINED_FOLDERS"] = "1"
     env["TRACES_FOLDER"] = str(trace_dir)
     env["CUDA_INJECTION64_PATH"] = str(tracer_so)
     env["LD_PRELOAD"] = str(tracer_so)
-    if kernel_limit is not None:
-        env["DYNAMIC_KERNEL_LIMIT_END"] = str(kernel_limit)
+    env["DYNAMIC_KERNEL_LIMIT_END"] = str(kernel_limit if kernel_limit is not None else 0)
 
     run = subprocess.run(
         [str(binary), *argv], env=env, capture_output=True, text=True, timeout=600
@@ -98,20 +90,11 @@ def trace_probe(
             f"stderr={(run.stderr or '').strip()[:400]}"
         )
 
-    kernelslist = trace_dir / "kernelslist"
-    if kernelslist.exists():
-        post = subprocess.run(
-            [str(_post_processor()), str(kernelslist)],
-            capture_output=True, text=True, timeout=600,
-        )
-        if post.returncode != 0:
-            raise TraceError(
-                f"post-processing {probe_id} failed rc={post.returncode}: "
-                f"stderr={(post.stderr or '').strip()[:400]}"
-            )
-
-    if not any(trace_dir.glob("*.traceg")) and not (trace_dir / "kernelslist.g").exists():
-        raise TraceError(f"no traces produced for {probe_id} in {trace_dir}")
+    # This tracer version emits a protobuf trace (dynamic_trace.pb) directly;
+    # the simulator consumes it (no kernelslist post-processing needed).
+    pb = trace_dir / "dynamic_trace.pb"
+    if not pb.exists():
+        raise TraceError(f"no dynamic_trace.pb produced for {probe_id} in {trace_dir}")
     return trace_dir
 
 

@@ -14,14 +14,30 @@ as work lands.
 | item | value | source |
 |---|---|---|
 | GCOM_ROOT | `${GCOM_ROOT}` (default `~/wk/modern-gpu-simulator-micro-2025/simulator-remodeled`) | env / config.py |
-| sim binary built? | unknown | `build.py::ensure_sim_built` |
-| NVBit tracer built? | unknown | `build.py::ensure_tracer_built` |
-| nvcc available? | unknown | capability discovery |
-| real GPU available? | unknown | nvidia-smi |
-| H100 gpgpusim.config present? | unknown | SKU profile |
-| CUDA toolkit version | unknown | version contract |
-| NVIDIA driver version | unknown | version contract |
-| HW baseline JSON | `out/nvidia/hopper/h100-80g.json` (regenerate from `amora nvidia run --all`) | nvidia backend |
+| sim binary built? | **yes** (rebuilt 2026-06-30 against system protobuf 3.21) | `build.py::ensure_sim_built` |
+| NVBit tracer built? | **yes** (built 2026-06-30, NVBit v1.7.5, tracer_tool.so) | `build.py::ensure_tracer_built` |
+| nvcc available? | **yes** — `/usr/local/cuda-12.8/bin/nvcc` (set CUDA_INSTALL_PATH + PATH) | capability discovery |
+| real GPU available? | **yes** — 8× NVIDIA H100 80GB HBM3, driver 595.71.05 | nvidia-smi |
+| H100 gpgpusim.config present? | **yes** | SKU profile |
+| HW baseline JSON | `/tmp/amora_full.json` (H100 nvidia run); regenerate with `amora nvidia run --all` | nvidia backend |
+
+### Build environment (CRITICAL — protobuf version match)
+
+GCoM's generated `*.pb.*` and the simulator link **system protobuf 3.21.12**
+(`/usr/bin/protoc`, `libprotobuf.so.32`). A conda env on this host
+(`torch21`) ships protobuf 28.2; if its headers leak via `CPATH` or its
+`protoc` is first on `PATH`, the tracer/sim build fails (mismatched
+`PROTOBUF_NAMESPACE_*` / `runtime_version.h`). Build with:
+
+```bash
+unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH LIBRARY_PATH
+export CUDA_INSTALL_PATH=/usr/local/cuda-12.8
+export PATH=/usr/bin:$CUDA_INSTALL_PATH/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/sbin:/bin
+```
+
+The prebuilt `accel-sim.out` (Apr 17) was stale vs. its own H100 config
+(rejected `-memory_shared_memory_extra_latency_stsm_multiple_matrix`); rebuilding
+the simulator from source resolved it. No GCoM source/config was edited.
 
 ## Open Decisions (from plan §Open Decisions)
 
