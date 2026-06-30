@@ -122,3 +122,11 @@ Goal: cycle-derived comparison driven by the canonical probe inventory + `compar
   not_applicable=14/missing_stat=16/unsupported=5/proxy_only=1), and `compare` writes md+json.
   Categories: comparable=10, approximate=10, unavailable=16 (lane_patterns classed proxy_only, not
   approximate — counter proxy, not a probe scalar). Numeric trace+sim derivation pending GPU+tracer.
+- 2026-06-30 (cont.) - Wired the real trace->simulate->derive path into the runner factory: per_op /
+  throughput / bandwidth derivations (bandwidth from sim DRAM bytes), per-run archival under
+  out/gcom_cuda/<family>/<sku>/<run_id>/, GCoM-derived logical counters attached for the
+  counter-comparison layer. Grounded the metrics_map HW-denominator field names against the real
+  report (chain, chain_length, barriers, chase_len, steps; mma_throughput -> proxy; bandwidth probes
+  use sim DRAM bytes). Sweep/differential probes return honest missing_stat (multi-trace reduction is
+  a later phase). Fixed the .cu source path (parents[2]) and absolute -trace/config paths. CLI smoke
+  verified end-to-end: tier=simulator_trace, finite cycles_per_fma, logical counters. pytest=49.

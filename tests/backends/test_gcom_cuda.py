@@ -59,14 +59,31 @@ def test_parse_stats_extracts_numeric_keys():
     assert stats["L2_total_cache_miss_rate"] == 0.25
 
 
-def test_run_all_returns_full_inventory_with_states():
+def test_unavailable_probes_short_circuit_without_execution():
+    # Analysis-only / unsupported probes resolve to their policy state without
+    # ever attempting a trace+simulate (safe regardless of tooling presence).
     caps = discover_capabilities()
-    results = gbaseline.run_all(caps, gbaseline.RunContext())
-    assert len(results) == len(NVIDIA_PROBES)
-    # Analysis-only probes report not_applicable regardless of sim availability.
-    by_id = {r.identity.probe_id: r for r in results}
-    analyze = by_id["l1_cache.analyze"]
-    assert analyze.raw_observation.values.get("gcom_state") == mm.NOT_APPLICABLE
+    ctx = gbaseline.RunContext()  # no hw_baseline
+    for probe_id, expect in [
+        ("l1_cache.analyze", mm.NOT_APPLICABLE),
+        ("shared_memory.bank_stride", mm.UNSUPPORTED),
+        ("memory_pipeline.lane_patterns", mm.PROXY_ONLY),
+    ]:
+        r = gbaseline.run_probe(probe_id, caps, ctx)[0]
+        assert r.raw_observation.values.get("gcom_state") == expect
+
+
+def test_comparable_probe_without_hw_baseline_is_missing_stat():
+    # Without a HW denominator, a comparable per-op probe must report
+    # missing_stat rather than execute or fabricate a value.
+    caps = discover_capabilities()
+    r = gbaseline.run_probe("arithmetic_latency.dependent_chain", caps,
+                            gbaseline.RunContext())[0]
+    state = r.raw_observation.values.get("gcom_state")
+    # missing_stat when sim is built but denominator absent; also acceptable if
+    # the simulator isn't built in this environment.
+    assert state == mm.MISSING_STAT
+    assert r.raw_observation.evidence_tier.value == "unsupported"
 
 
 def test_derive_logical_metrics_from_stats():

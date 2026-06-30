@@ -65,8 +65,8 @@ METRICS_MAP: dict[str, ProbePolicy] = {
         architecture_scope="nvidia_generic", limitations="sim FP latency from config",
     ),
     "arithmetic_throughput.independent_chains": ProbePolicy(
-        COMPARABLE, PER_OP, hw_denominator="total_ops", fidelity="direct",
-        limitations="ILP-saturated FP32",
+        COMPARABLE, PER_OP, hw_denominator="chain_length", fidelity="direct",
+        limitations="ILP-saturated FP32; per-op over the dependent chain length",
     ),
     "scheduler_policy.ready_warps": ProbePolicy(
         APPROXIMATE, SWEEP, hw_denominator="total_ops", fidelity="proportional",
@@ -92,12 +92,13 @@ METRICS_MAP: dict[str, ProbePolicy] = {
     ),
     "register_file.analyze": _u(NOT_APPLICABLE, "analysis-only"),
     "tensor_core.mma_latency": ProbePolicy(
-        COMPARABLE, PER_OP, hw_denominator="chain_length", fidelity="direct",
+        COMPARABLE, PER_OP, hw_denominator="chain", fidelity="direct",
         architecture_scope="nvidia_hopper", limitations="HMMA dep; sim tensor latency from config",
     ),
     "tensor_core.mma_throughput": ProbePolicy(
-        COMPARABLE, THROUGHPUT, hw_denominator="mma_count", fidelity="direct",
-        architecture_scope="nvidia_hopper", limitations="independent HMMA",
+        APPROXIMATE, THROUGHPUT, hw_denominator="mma_per_cycle_per_warp", fidelity="proxy",
+        architecture_scope="nvidia_hopper",
+        limitations="HW reports mma/cycle directly; sim throughput is a proxy comparison",
     ),
     "synchronization.barrier_latency": ProbePolicy(
         COMPARABLE, PER_OP, hw_denominator="barriers", fidelity="direct",
@@ -139,8 +140,8 @@ METRICS_MAP: dict[str, ProbePolicy] = {
     "memory_pipeline.analyze": _u(NOT_APPLICABLE, "analysis-only"),
     # --- Global Memory & DRAM ---
     "global_memory.streaming": ProbePolicy(
-        COMPARABLE, BANDWIDTH, hw_denominator="bytes_moved", fidelity="proportional",
-        limitations="sim DRAM bytes + core clock",
+        COMPARABLE, BANDWIDTH, hw_denominator=None, fidelity="proportional",
+        limitations="sim DRAM bytes (reads+writes x atom) / sim time at core clock",
     ),
     "global_memory.partition_sweep": _u(UNSUPPORTED, "partition camping not modeled"),
     "global_memory.row_policy_sweep": ProbePolicy(
@@ -160,8 +161,8 @@ METRICS_MAP: dict[str, ProbePolicy] = {
     ),
     "tma_copy.analyze": _u(NOT_APPLICABLE, "analysis-only"),
     "interconnect.injection_rate": ProbePolicy(
-        COMPARABLE, BANDWIDTH, hw_denominator="bytes_moved", fidelity="proportional",
-        limitations="aggregate injection",
+        COMPARABLE, BANDWIDTH, hw_denominator=None, fidelity="proportional",
+        limitations="aggregate injection: sim DRAM bytes / sim time",
     ),
     "interconnect.address_mapping": _u(UNSUPPORTED, "address mapping not comparable"),
     "interconnect.analyze": _u(NOT_APPLICABLE, "analysis-only"),

@@ -71,9 +71,10 @@ def _find_trace_pb(trace_dir: Path) -> Path:
 def _sim_env() -> dict[str, str]:
     env = dict(os.environ)
     cuda = env.get("CUDA_INSTALL_PATH", "/usr/local/cuda")
-    sim_lib = cfg.SIM_BIN.parent.parent.parent / "gpgpu-sim" / "lib"
-    lib_paths = [str(p) for p in sim_lib.rglob("*release*") if p.is_dir()]
+    sim_lib_root = cfg.SIM_BIN.parent.parent.parent / "gpgpu-sim" / "lib"
+    lib_paths = [str(p) for p in sim_lib_root.rglob("release") if p.is_dir()]
     lib_paths.append(f"{cuda}/lib64")
+    lib_paths.append("/lib/x86_64-linux-gnu")  # system protobuf the sim links
     existing = env.get("LD_LIBRARY_PATH", "")
     env["LD_LIBRARY_PATH"] = ":".join(filter(None, [*lib_paths, existing]))
     # OMP tuning per accorde reference.
@@ -94,12 +95,12 @@ def simulate(
 
     if not cfg.SIM_BIN.exists():
         raise SimulateError(f"simulator binary not built: {cfg.SIM_BIN}")
-    trace_pb = _find_trace_pb(trace_dir)
+    trace_pb = _find_trace_pb(trace_dir).resolve()
     args = [
         str(cfg.SIM_BIN),
         "-trace", str(trace_pb),
-        "-config", str(profile.gpgpusim_config),
-        "-config", str(profile.trace_config),
+        "-config", str(profile.gpgpusim_config.resolve()),
+        "-config", str(profile.trace_config.resolve()),
     ]
     completed = subprocess.run(
         args, cwd=str(trace_dir), env=_sim_env(),
