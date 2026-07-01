@@ -130,3 +130,10 @@ Goal: cycle-derived comparison driven by the canonical probe inventory + `compar
   use sim DRAM bytes). Sweep/differential probes return honest missing_stat (multi-trace reduction is
   a later phase). Fixed the .cu source path (parents[2]) and absolute -trace/config paths. CLI smoke
   verified end-to-end: tier=simulator_trace, finite cycles_per_fma, logical counters. pytest=49.
+- 2026-06-30 (partial run) - Kicked off full `gcom_cuda run --all --hw-baseline` on H100. Cycle-accurate
+  sim is very slow on latency-bound probes (shared/L1/L2 pointer-chase: 20-90+ min each), so produced
+  a PARTIAL sim-vs-hw report from completed probes: shared_memory.pointer_chase sim=34.3 vs HW=29.0
+  (18% - LDS latency tracks well); FFMA latency/throughput are far off (152%/884%) due to launch-shape
+  mismatch in the naive single-trace per_op derivation (surfaced, not hidden; anchors reliable=False).
+  Fixed compare markdown to collapse composite/behavioral HW values to "(composite)". Full run still
+  executing in background. Report: reports/gcom_cuda/hopper/sim-vs-hw-gcom_h100.{md,json}.

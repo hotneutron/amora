@@ -231,7 +231,12 @@ def _fmt(v: Any) -> str:
         return "—"
     if isinstance(v, float):
         return f"{v:.4g}"
-    return str(v)
+    if isinstance(v, (dict, list)):
+        # Composite/behavioral HW values (occupancy sweeps, analyze summaries)
+        # are not scalar-comparable; keep the table readable.
+        return "(composite)"
+    s = str(v)
+    return s if len(s) <= 40 else s[:37] + "..."
 
 
 def render_markdown(comparison: dict[str, Any], *, sku: str) -> str:
