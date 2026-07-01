@@ -14,6 +14,7 @@ number.
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 import time
@@ -59,6 +60,8 @@ class RunContext:
     hw_baseline: dict[str, Any] | None = None  # {probe_id: hw ProbeResult dict}
     sim_timeout: int = 1200  # per-probe sim wall-clock cap (s); latency-bound
     # probes that exceed it degrade to missing_stat instead of blocking the run.
+    max_workers: int = 8  # probes run concurrently (GCoM is CPU sim; each sim is
+    # OMP-threaded, so keep workers x OMP under the core count).
 
 
 def _tool_context(caps: GcomCapabilities) -> ToolContext:
@@ -277,7 +280,25 @@ def run_all(caps: GcomCapabilities | None = None,
             ctx: RunContext | None = None) -> list[ProbeResult]:
     capabilities = caps or discover_capabilities()
     context = ctx or RunContext()
-    results: list[ProbeResult] = []
+
+    # GCoM is a CPU simulator with no shared state between probes, so run them
+    # concurrently. Results are reassembled in canonical probe order.
+    workers = max(1, min(context.max_workers, len(PLANNED_PROBES)))
+    if workers == 1:
+        results: list[ProbeResult] = []
+        for probe_id in PLANNED_PROBES:
+            results.extend(run_probe(probe_id, capabilities, context))
+        return results
+
+    by_id: dict[str, list[ProbeResult]] = {}
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {
+            pool.submit(run_probe, probe_id, capabilities, context): probe_id
+            for probe_id in PLANNED_PROBES
+        }
+        for future, probe_id in ((f, futures[f]) for f in futures):
+            by_id[probe_id] = future.result()
+    ordered: list[ProbeResult] = []
     for probe_id in PLANNED_PROBES:
-        results.extend(run_probe(probe_id, capabilities, context))
-    return results
+        ordered.extend(by_id.get(probe_id, []))
+    return ordered

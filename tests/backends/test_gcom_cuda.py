@@ -86,6 +86,23 @@ def test_comparable_probe_without_hw_baseline_is_missing_stat():
     assert r.raw_observation.evidence_tier.value == "unsupported"
 
 
+def test_run_all_parallel_preserves_order_and_inventory():
+    # Parallel run_all must return every probe exactly once, in canonical NVIDIA
+    # order. Force the no-execution fast path (simulator_built=False) so the test
+    # is fast and GPU-independent: every probe short-circuits to a state.
+    import dataclasses
+
+    caps = dataclasses.replace(discover_capabilities(), simulator_built=False)
+    ctx = gbaseline.RunContext(max_workers=4)
+    results = gbaseline.run_all(caps, ctx)
+    ids = [r.identity.probe_id for r in results]
+    assert ids == list(gbaseline.PLANNED_PROBES)
+    # Same result as the serial path (workers=1).
+    serial = [r.identity.probe_id
+              for r in gbaseline.run_all(caps, gbaseline.RunContext(max_workers=1))]
+    assert serial == ids
+
+
 def test_derive_logical_metrics_from_stats():
     from amora.backends.gcom_cuda.runner import derive_logical_metrics
 
