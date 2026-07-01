@@ -30,7 +30,8 @@ def _tracer_tool_so() -> Path:
     return candidates[0]
 
 
-def compile_probe(src: Path, out_dir: Path, *, defines: tuple[str, ...] = ()) -> Path:
+def compile_probe(src: Path, out_dir: Path, *, defines: tuple[str, ...] = (),
+                  timeout: int = 300) -> Path:
     """Compile a probe ``.cu`` to a static executable; return the binary path.
 
     ``defines`` (e.g. ``("AMORA_WORKING_SET_KIB=64",)``) enables sweep variants.
@@ -43,7 +44,10 @@ def compile_probe(src: Path, out_dir: Path, *, defines: tuple[str, ...] = ()) ->
     for d in defines:
         args.append(f"-D{d}")
     args += [str(src), "-o", str(binary)]
-    completed = subprocess.run(args, capture_output=True, text=True, timeout=300)
+    try:
+        completed = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as exc:
+        raise TraceError(f"nvcc timed out after {timeout}s for {src.name}") from exc
     if completed.returncode != 0 or not binary.exists():
         raise TraceError(
             f"nvcc failed for {src.name}: rc={completed.returncode} "
@@ -60,11 +64,13 @@ def trace_probe(
     defines: tuple[str, ...] = (),
     argv: tuple[str, ...] = (),
     kernel_limit: int | None = None,
+    timeout: int = 1800,
 ) -> Path:
     """Compile + trace one probe variant; return the trace directory.
 
-    The returned directory contains the simulator-ready ``kernelslist.g`` and
-    per-kernel ``.traceg`` files.
+    ``timeout`` bounds the (instrumented) kernel execution; on expiry a
+    ``TraceError`` is raised so callers can degrade to ``missing_stat`` rather
+    than crash. The returned directory contains ``dynamic_trace.pb``.
     """
 
     binary = compile_probe(src, out_dir, defines=defines)
@@ -81,9 +87,12 @@ def trace_probe(
     env["LD_PRELOAD"] = str(tracer_so)
     env["DYNAMIC_KERNEL_LIMIT_END"] = str(kernel_limit if kernel_limit is not None else 0)
 
-    run = subprocess.run(
-        [str(binary), *argv], env=env, capture_output=True, text=True, timeout=600
-    )
+    try:
+        run = subprocess.run(
+            [str(binary), *argv], env=env, capture_output=True, text=True, timeout=timeout
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise TraceError(f"tracing {probe_id} exceeded {timeout}s timeout") from exc
     if run.returncode != 0:
         raise TraceError(
             f"tracing {probe_id} exited rc={run.returncode}: "

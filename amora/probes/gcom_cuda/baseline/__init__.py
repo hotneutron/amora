@@ -60,6 +60,7 @@ class RunContext:
     hw_baseline: dict[str, Any] | None = None  # {probe_id: hw ProbeResult dict}
     sim_timeout: int = 1200  # per-probe sim wall-clock cap (s); latency-bound
     # probes that exceed it degrade to missing_stat instead of blocking the run.
+    trace_timeout: int = 1800  # per-probe trace (instrumented kernel) cap (s).
     max_workers: int = 8  # probes run concurrently (GCoM is CPU sim; each sim is
     # OMP-threaded, so keep workers x OMP under the core count).
 
@@ -224,7 +225,8 @@ def _make_runner(probe_id: str) -> Callable[[GcomCapabilities, RunContext], list
         run_id = f"{probe_id.replace('.', '_')}_{int(time.time())}"
         out_dir = cfg.run_output_dir(profile, run_id)
         try:
-            trace_dir = gcom_trace.trace_probe(probe_id, src, out_dir)
+            trace_dir = gcom_trace.trace_probe(probe_id, src, out_dir,
+                                               timeout=ctx.trace_timeout)
             sim = gcom_runner.simulate(profile, trace_dir, log_path=out_dir / "gcom_sim.log",
                                        timeout=ctx.sim_timeout)
         except (TraceError, SimulateError) as exc:
