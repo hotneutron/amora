@@ -57,6 +57,8 @@ class RunContext:
 
     sku: str = cfg.DEFAULT_SKU
     hw_baseline: dict[str, Any] | None = None  # {probe_id: hw ProbeResult dict}
+    sim_timeout: int = 1200  # per-probe sim wall-clock cap (s); latency-bound
+    # probes that exceed it degrade to missing_stat instead of blocking the run.
 
 
 def _tool_context(caps: GcomCapabilities) -> ToolContext:
@@ -220,7 +222,8 @@ def _make_runner(probe_id: str) -> Callable[[GcomCapabilities, RunContext], list
         out_dir = cfg.run_output_dir(profile, run_id)
         try:
             trace_dir = gcom_trace.trace_probe(probe_id, src, out_dir)
-            sim = gcom_runner.simulate(profile, trace_dir, log_path=out_dir / "gcom_sim.log")
+            sim = gcom_runner.simulate(profile, trace_dir, log_path=out_dir / "gcom_sim.log",
+                                       timeout=ctx.sim_timeout)
         except (TraceError, SimulateError) as exc:
             return [_unsupported(probe_id, f"trace/sim failed: {exc}", caps,
                                  state=mm.MISSING_STAT)]

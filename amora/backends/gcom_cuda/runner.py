@@ -102,10 +102,22 @@ def simulate(
         "-config", str(profile.gpgpusim_config.resolve()),
         "-config", str(profile.trace_config.resolve()),
     ]
-    completed = subprocess.run(
-        args, cwd=str(trace_dir), env=_sim_env(),
-        capture_output=True, text=True, timeout=timeout,
-    )
+    try:
+        completed = subprocess.run(
+            args, cwd=str(trace_dir), env=_sim_env(),
+            capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        # Latency-bound probes (pointer chase) can exceed the cycle-accurate sim
+        # budget. Degrade to a clean SimulateError so run_all continues and the
+        # probe records missing_stat rather than crashing the whole run.
+        if log_path is not None:
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            partial = (exc.stdout or b"")
+            if isinstance(partial, bytes):
+                partial = partial.decode(errors="ignore")
+            log_path.write_text((partial or "") + f"\n--- TIMEOUT after {timeout}s ---\n")
+        raise SimulateError(f"simulation exceeded {timeout}s timeout") from exc
     if log_path is not None:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         log_path.write_text(completed.stdout + "\n--- STDERR ---\n" + completed.stderr)
