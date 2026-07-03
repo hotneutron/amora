@@ -63,10 +63,24 @@ class RunContext:
     trace_timeout: int = 1800  # per-probe trace (instrumented kernel) cap (s).
     max_workers: int = 8  # probes run concurrently (GCoM is CPU sim; each sim is
     # OMP-threaded, so keep workers x OMP under the core count).
+    omp_threads: int | None = None  # OMP threads per sim; None -> auto (cores //
+    # max_workers, clamped 1..8) to avoid oversubscription when parallel.
 
 
 def _tool_context(caps: GcomCapabilities) -> ToolContext:
     return ToolContext(tools=caps.to_dict())
+
+
+def _resolve_omp_threads(ctx: RunContext) -> int:
+    """Per-sim OMP threads: explicit, else cores//max_workers clamped to 1..8."""
+
+    if ctx.omp_threads:
+        return max(1, ctx.omp_threads)
+    import os as _os
+
+    cores = _os.cpu_count() or 8
+    workers = max(1, ctx.max_workers)
+    return max(1, min(8, cores // workers))
 
 
 def _unsupported(probe_id: str, reason: str, caps: GcomCapabilities, *, state: str,
@@ -228,7 +242,8 @@ def _make_runner(probe_id: str) -> Callable[[GcomCapabilities, RunContext], list
             trace_dir = gcom_trace.trace_probe(probe_id, src, out_dir,
                                                timeout=ctx.trace_timeout)
             sim = gcom_runner.simulate(profile, trace_dir, log_path=out_dir / "gcom_sim.log",
-                                       timeout=ctx.sim_timeout)
+                                       timeout=ctx.sim_timeout,
+                                       omp_threads=_resolve_omp_threads(ctx))
         except (TraceError, SimulateError) as exc:
             return [_unsupported(probe_id, f"trace/sim failed: {exc}", caps,
                                  state=mm.MISSING_STAT)]

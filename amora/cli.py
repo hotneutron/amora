@@ -75,7 +75,8 @@ def _cmd_run_gcom(args: argparse.Namespace) -> int:
     ctx = gcom_baseline.RunContext(sku=args.sku, hw_baseline=hw_baseline,
                                    sim_timeout=args.sim_timeout,
                                    trace_timeout=args.trace_timeout,
-                                   max_workers=args.max_workers)
+                                   max_workers=args.max_workers,
+                                   omp_threads=args.omp_threads)
     if args.all:
         results = gcom_baseline.run_all(capabilities, ctx)
     else:
@@ -157,6 +158,8 @@ def build_parser() -> argparse.ArgumentParser:
                           help="per-probe trace (instrumented kernel) cap in seconds")
     gcom_run.add_argument("--max-workers", type=int, default=8,
                           help="probes to simulate concurrently (GCoM is a CPU sim)")
+    gcom_run.add_argument("--omp-threads", type=int, default=None,
+                          help="OMP threads per sim (default: cores//workers, clamped 1..8, unpinned)")
     gcom_run.set_defaults(func=_cmd_run_gcom)
 
     compare_parser = gcom_sub.add_parser("compare")

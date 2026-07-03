@@ -68,7 +68,7 @@ def _find_trace_pb(trace_dir: Path) -> Path:
     return candidates[0]
 
 
-def _sim_env() -> dict[str, str]:
+def _sim_env(omp_threads: int | None = None) -> dict[str, str]:
     env = dict(os.environ)
     cuda = env.get("CUDA_INSTALL_PATH", "/usr/local/cuda")
     sim_lib_root = cfg.SIM_BIN.parent.parent.parent / "gpgpu-sim" / "lib"
@@ -77,10 +77,18 @@ def _sim_env() -> dict[str, str]:
     lib_paths.append("/lib/x86_64-linux-gnu")  # system protobuf the sim links
     existing = env.get("LD_LIBRARY_PATH", "")
     env["LD_LIBRARY_PATH"] = ":".join(filter(None, [*lib_paths, existing]))
-    # OMP tuning per accorde reference.
-    env.setdefault("OMP_NUM_THREADS", "8")
-    env.setdefault("OMP_PROC_BIND", "close")
-    env.setdefault("OMP_PLACES", "cores")
+    # OMP tuning per accorde reference. When probes run concurrently, the caller
+    # passes a reduced per-sim thread count AND we drop thread pinning: multiple
+    # pinned sims bind to overlapping cores (OMP_PROC_BIND=close), causing severe
+    # contention that slows every sim. Unpinned, the OS spreads them.
+    if omp_threads:
+        env["OMP_NUM_THREADS"] = str(omp_threads)
+        env.pop("OMP_PROC_BIND", None)
+        env.pop("OMP_PLACES", None)
+    else:
+        env["OMP_NUM_THREADS"] = "8"
+        env.setdefault("OMP_PROC_BIND", "close")
+        env.setdefault("OMP_PLACES", "cores")
     return env
 
 
@@ -90,6 +98,7 @@ def simulate(
     *,
     log_path: Path | None = None,
     timeout: int = 7200,
+    omp_threads: int | None = None,
 ) -> SimResult:
     """Run accel-sim.out on a trace dir with the SKU configs; parse stats."""
 
@@ -104,7 +113,7 @@ def simulate(
     ]
     try:
         completed = subprocess.run(
-            args, cwd=str(trace_dir), env=_sim_env(),
+            args, cwd=str(trace_dir), env=_sim_env(omp_threads),
             capture_output=True, text=True, timeout=timeout,
         )
     except subprocess.TimeoutExpired as exc:
