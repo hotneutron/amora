@@ -1,20 +1,27 @@
 {
   "accuracy_rollup": {
     "Compute & Scheduling": {
-      "mean_pct_error": 5.179050081234145,
-      "median_pct_error": 5.179050081234145,
+      "mean_pct_error": 5.147500172956664,
+      "median_pct_error": 5.147500172956664,
       "n": 2
     },
     "On-chip Memory": {
-      "mean_pct_error": 0.18110493025494057,
-      "median_pct_error": 0.18110493025494057,
+      "mean_pct_error": 0.15555879356858265,
+      "median_pct_error": 0.15555879356858265,
+      "n": 1
+    },
+    "Register, Tensor & Sync": {
+      "mean_pct_error": 1.9897067674781728,
+      "median_pct_error": 1.9897067674781728,
       "n": 1
     }
   },
   "anchor_summary": {
     "failed": [
       "arithmetic_latency.dependent_chain",
-      "arithmetic_throughput.independent_chains"
+      "arithmetic_throughput.independent_chains",
+      "tensor_core.mma_latency",
+      "tensor_core.mma_throughput"
     ],
     "passed": [
       "shared_memory.pointer_chase"
@@ -22,8 +29,6 @@
     "reliable": false,
     "tolerance": 0.5,
     "unavailable": [
-      "tensor_core.mma_latency",
-      "tensor_core.mma_throughput",
       "synchronization.barrier_latency",
       "l1_cache.pointer_chase",
       "l2_cache.pointer_chase",
@@ -70,7 +75,7 @@
       "ncu_metric": null,
       "pct_error": null,
       "probe_id": "arithmetic_latency.dependent_chain",
-      "sim_gcom": 0.512
+      "sim_gcom": 0.31510000000000005
     },
     {
       "fidelity": "proportional",
@@ -79,7 +84,7 @@
       "ncu_metric": "lts__t_sectors_lookup_hit.sum",
       "pct_error": null,
       "probe_id": "arithmetic_latency.dependent_chain",
-      "sim_gcom": 1664.0
+      "sim_gcom": 1024.0
     },
     {
       "fidelity": "direct",
@@ -88,7 +93,7 @@
       "ncu_metric": "sm__cycles_active.avg",
       "pct_error": null,
       "probe_id": "arithmetic_latency.dependent_chain",
-      "sim_gcom": 45120.0
+      "sim_gcom": 45122.0
     },
     {
       "fidelity": "proportional",
@@ -97,7 +102,7 @@
       "ncu_metric": "dram__throughput.avg.pct_of_peak_sustained_elapsed",
       "pct_error": null,
       "probe_id": "arithmetic_throughput.independent_chains",
-      "sim_gcom": 0.0
+      "sim_gcom": 7.6e-05
     },
     {
       "fidelity": "direct",
@@ -124,7 +129,7 @@
       "ncu_metric": null,
       "pct_error": null,
       "probe_id": "arithmetic_throughput.independent_chains",
-      "sim_gcom": 0.6899
+      "sim_gcom": 0.7091000000000001
     },
     {
       "fidelity": "proportional",
@@ -133,7 +138,7 @@
       "ncu_metric": "lts__t_sectors_lookup_hit.sum",
       "pct_error": null,
       "probe_id": "arithmetic_throughput.independent_chains",
-      "sim_gcom": 3444.0
+      "sim_gcom": 3540.0
     },
     {
       "fidelity": "direct",
@@ -142,7 +147,7 @@
       "ncu_metric": "sm__cycles_active.avg",
       "pct_error": null,
       "probe_id": "arithmetic_throughput.independent_chains",
-      "sim_gcom": 46240.0
+      "sim_gcom": 45943.0
     },
     {
       "fidelity": "proportional",
@@ -151,7 +156,7 @@
       "ncu_metric": "dram__throughput.avg.pct_of_peak_sustained_elapsed",
       "pct_error": null,
       "probe_id": "shared_memory.pointer_chase",
-      "sim_gcom": 0.0
+      "sim_gcom": 1e-06
     },
     {
       "fidelity": "direct",
@@ -178,7 +183,7 @@
       "ncu_metric": null,
       "pct_error": null,
       "probe_id": "shared_memory.pointer_chase",
-      "sim_gcom": 0.42900000000000005
+      "sim_gcom": 0.9846
     },
     {
       "fidelity": "proportional",
@@ -187,7 +192,7 @@
       "ncu_metric": "lts__t_sectors_lookup_hit.sum",
       "pct_error": null,
       "probe_id": "shared_memory.pointer_chase",
-      "sim_gcom": 3064.0
+      "sim_gcom": 7032.0
     },
     {
       "fidelity": "direct",
@@ -196,25 +201,188 @@
       "ncu_metric": "sm__cycles_active.avg",
       "pct_error": null,
       "probe_id": "shared_memory.pointer_chase",
-      "sim_gcom": 140367.0
+      "sim_gcom": 137331.0
+    },
+    {
+      "fidelity": "proportional",
+      "hw_ncu": null,
+      "logical": "dram_throughput",
+      "ncu_metric": "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_latency",
+      "sim_gcom": 1.2e-05
+    },
+    {
+      "fidelity": "direct",
+      "hw_ncu": null,
+      "logical": "inst_executed",
+      "ncu_metric": "smsp__inst_executed.sum",
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_latency",
+      "sim_gcom": 1659108.0
+    },
+    {
+      "fidelity": "proxy",
+      "hw_ncu": null,
+      "logical": "interconnect_latency",
+      "ncu_metric": null,
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_latency",
+      "sim_gcom": 23.0
+    },
+    {
+      "fidelity": "proportional",
+      "hw_ncu": null,
+      "logical": "l2_hit_rate",
+      "ncu_metric": null,
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_latency",
+      "sim_gcom": 0.4696
+    },
+    {
+      "fidelity": "proportional",
+      "hw_ncu": null,
+      "logical": "l2_sector_hits",
+      "ncu_metric": "lts__t_sectors_lookup_hit.sum",
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_latency",
+      "sim_gcom": 13436.0
+    },
+    {
+      "fidelity": "direct",
+      "hw_ncu": null,
+      "logical": "sm_active_cycles",
+      "ncu_metric": "sm__cycles_active.avg",
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_latency",
+      "sim_gcom": 37449.0
+    },
+    {
+      "fidelity": "proportional",
+      "hw_ncu": null,
+      "logical": "dram_throughput",
+      "ncu_metric": "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_throughput",
+      "sim_gcom": 1.6e-05
+    },
+    {
+      "fidelity": "direct",
+      "hw_ncu": null,
+      "logical": "inst_executed",
+      "ncu_metric": "smsp__inst_executed.sum",
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_throughput",
+      "sim_gcom": 2285316.0
+    },
+    {
+      "fidelity": "proxy",
+      "hw_ncu": null,
+      "logical": "interconnect_latency",
+      "ncu_metric": null,
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_throughput",
+      "sim_gcom": 22.0
+    },
+    {
+      "fidelity": "proportional",
+      "hw_ncu": null,
+      "logical": "l2_hit_rate",
+      "ncu_metric": null,
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_throughput",
+      "sim_gcom": 0.32199999999999995
+    },
+    {
+      "fidelity": "proportional",
+      "hw_ncu": null,
+      "logical": "l2_sector_hits",
+      "ncu_metric": "lts__t_sectors_lookup_hit.sum",
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_throughput",
+      "sim_gcom": 3328.0
+    },
+    {
+      "fidelity": "direct",
+      "hw_ncu": null,
+      "logical": "sm_active_cycles",
+      "ncu_metric": "sm__cycles_active.avg",
+      "pct_error": null,
+      "probe_id": "tensor_core.mma_throughput",
+      "sim_gcom": 12932.0
+    },
+    {
+      "fidelity": "proportional",
+      "hw_ncu": null,
+      "logical": "dram_throughput",
+      "ncu_metric": "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+      "pct_error": null,
+      "probe_id": "tma_copy.async_copy_latency",
+      "sim_gcom": 0.0001
+    },
+    {
+      "fidelity": "direct",
+      "hw_ncu": null,
+      "logical": "inst_executed",
+      "ncu_metric": "smsp__inst_executed.sum",
+      "pct_error": null,
+      "probe_id": "tma_copy.async_copy_latency",
+      "sim_gcom": 15303750.0
+    },
+    {
+      "fidelity": "proxy",
+      "hw_ncu": null,
+      "logical": "interconnect_latency",
+      "ncu_metric": null,
+      "pct_error": null,
+      "probe_id": "tma_copy.async_copy_latency",
+      "sim_gcom": 2.0
+    },
+    {
+      "fidelity": "proportional",
+      "hw_ncu": null,
+      "logical": "l2_hit_rate",
+      "ncu_metric": null,
+      "pct_error": null,
+      "probe_id": "tma_copy.async_copy_latency",
+      "sim_gcom": 0.37570000000000003
+    },
+    {
+      "fidelity": "proportional",
+      "hw_ncu": null,
+      "logical": "l2_sector_hits",
+      "ncu_metric": "lts__t_sectors_lookup_hit.sum",
+      "pct_error": null,
+      "probe_id": "tma_copy.async_copy_latency",
+      "sim_gcom": 102940.0
+    },
+    {
+      "fidelity": "direct",
+      "hw_ncu": null,
+      "logical": "sm_active_cycles",
+      "ncu_metric": "sm__cycles_active.avg",
+      "pct_error": null,
+      "probe_id": "tma_copy.async_copy_latency",
+      "sim_gcom": 28331.0
     }
   ],
   "coverage": {
     "by_state": {
-      "approximate": 11,
-      "comparable": 9,
+      "approximate": 2,
+      "comparable": 4,
+      "missing_stat": 14,
       "not_applicable": 10,
       "proxy_only": 1,
       "unsupported": 5
     },
     "total_probes": 36,
     "with_hw_value": 20,
-    "with_sim_value": 3
+    "with_sim_value": 6
   },
   "mapping_version": "2026-06-gcom-cuda-v1",
   "probe_comparison": [
     {
-      "abs_error": 6.638625,
+      "abs_error": 6.63911328125,
       "architecture_scope": "nvidia_generic",
       "category": "comparable",
       "concept": "fp32_fma_dependent_pipeline_latency",
@@ -223,14 +391,14 @@
       "hw_value": 4.377,
       "is_anchor": true,
       "limitations": "sim FP latency from config",
-      "pct_error": 1.516706648389308,
+      "pct_error": 1.5168182045350698,
       "probe_id": "arithmetic_latency.dependent_chain",
-      "sim_value": 11.015625,
+      "sim_value": 11.01611328125,
       "state": "comparable",
       "unit": "cycles_per_op"
     },
     {
-      "abs_error": 10.1419625,
+      "abs_error": 10.069452734375,
       "architecture_scope": "nvidia_generic",
       "category": "comparable",
       "concept": "fp32_fma_independent_pipeline_throughput",
@@ -239,9 +407,9 @@
       "hw_value": 1.1471,
       "is_anchor": true,
       "limitations": "ILP-saturated FP32; per-op over the dependent chain length",
-      "pct_error": 8.841393514078982,
+      "pct_error": 8.778182141378258,
       "probe_id": "arithmetic_throughput.independent_chains",
-      "sim_value": 11.2890625,
+      "sim_value": 11.216552734375,
       "state": "comparable",
       "unit": "cycles_per_op"
     },
@@ -258,7 +426,7 @@
       "pct_error": null,
       "probe_id": "scheduler_policy.ready_warps",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "warps"
     },
     {
@@ -1107,7 +1275,7 @@
       "pct_error": null,
       "probe_id": "topology.persistent_cta",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "blocks"
     },
     {
@@ -1123,7 +1291,7 @@
       "pct_error": null,
       "probe_id": "register_file.register_bank_sweep",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "accumulators"
     },
     {
@@ -1139,7 +1307,7 @@
       "pct_error": null,
       "probe_id": "register_file.register_latency",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "cycles"
     },
     {
@@ -1162,7 +1330,7 @@
       "unit": null
     },
     {
-      "abs_error": null,
+      "abs_error": 48.677778125,
       "architecture_scope": "nvidia_hopper",
       "category": "comparable",
       "concept": "tensor_core_mma_latency",
@@ -1171,14 +1339,14 @@
       "hw_value": 24.4648,
       "is_anchor": true,
       "limitations": "HMMA dep; sim tensor latency from config",
-      "pct_error": null,
+      "pct_error": 1.9897067674781728,
       "probe_id": "tensor_core.mma_latency",
-      "sim_value": null,
-      "state": null,
+      "sim_value": 73.142578125,
+      "state": "comparable",
       "unit": "cycles_per_op"
     },
     {
-      "abs_error": null,
+      "abs_error": 0.1598876353232292,
       "architecture_scope": "nvidia_hopper",
       "category": "approximate",
       "concept": "tensor_core_mma_throughput",
@@ -1187,10 +1355,10 @@
       "hw_value": 0.1599,
       "is_anchor": true,
       "limitations": "HW reports mma/cycle directly; sim throughput is a proxy comparison",
-      "pct_error": null,
+      "pct_error": 0.9999226724404578,
       "probe_id": "tensor_core.mma_throughput",
-      "sim_value": null,
-      "state": null,
+      "sim_value": 1.2364676770801112e-05,
+      "state": "approximate",
       "unit": "mma/cycle"
     },
     {
@@ -1206,7 +1374,7 @@
       "pct_error": null,
       "probe_id": "synchronization.barrier_latency",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "cycles"
     },
     {
@@ -1222,11 +1390,11 @@
       "pct_error": null,
       "probe_id": "synchronization.fence_latency",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "cycles"
     },
     {
-      "abs_error": 5.2546871093749985,
+      "abs_error": 4.5134761718749985,
       "architecture_scope": "nvidia_generic",
       "category": "comparable",
       "concept": "shared_memory_load_to_use_latency",
@@ -1235,9 +1403,9 @@
       "hw_value": 29.0146,
       "is_anchor": true,
       "limitations": "LDS dep latency",
-      "pct_error": 0.18110493025494057,
+      "pct_error": 0.15555879356858265,
       "probe_id": "shared_memory.pointer_chase",
-      "sim_value": 34.269287109375,
+      "sim_value": 33.528076171875,
       "state": "comparable",
       "unit": "cycles"
     },
@@ -1290,7 +1458,7 @@
       "pct_error": null,
       "probe_id": "l1_cache.pointer_chase",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "cycles"
     },
     {
@@ -1306,7 +1474,7 @@
       "pct_error": null,
       "probe_id": "l1_cache.working_set",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "KiB"
     },
     {
@@ -1357,7 +1525,7 @@
       "pct_error": null,
       "probe_id": "l2_cache.pointer_chase",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "cycles"
     },
     {
@@ -1373,7 +1541,7 @@
       "pct_error": null,
       "probe_id": "memory_pipeline.outstanding_requests",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "loads"
     },
     {
@@ -1429,7 +1597,7 @@
       "pct_error": null,
       "probe_id": "global_memory.streaming",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "GB/s"
     },
     {
@@ -1461,7 +1629,7 @@
       "pct_error": null,
       "probe_id": "global_memory.row_policy_sweep",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "ratio"
     },
     {
@@ -1485,7 +1653,7 @@
       "unit": null
     },
     {
-      "abs_error": null,
+      "abs_error": 280.56252500000005,
       "architecture_scope": "nvidia_hopper",
       "category": "approximate",
       "concept": "async_copy_latency",
@@ -1494,10 +1662,10 @@
       "hw_value": 723.2344,
       "is_anchor": false,
       "limitations": "LDGSTS modeled; native TMA not",
-      "pct_error": null,
+      "pct_error": 0.38792751699863837,
       "probe_id": "tma_copy.async_copy_latency",
-      "sim_value": null,
-      "state": null,
+      "sim_value": 442.671875,
+      "state": "approximate",
       "unit": "cycles"
     },
     {
@@ -1513,7 +1681,7 @@
       "pct_error": null,
       "probe_id": "tma_copy.tma_transfer_sweep",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "GB/s"
     },
     {
@@ -1548,7 +1716,7 @@
       "pct_error": null,
       "probe_id": "interconnect.injection_rate",
       "sim_value": null,
-      "state": null,
+      "state": "missing_stat",
       "unit": "GB/s"
     },
     {
@@ -1637,7 +1805,7 @@
       ],
       "family": "hopper",
       "gpu_available": true,
-      "nvcc_available": false,
+      "nvcc_available": true,
       "simulator_built": true,
       "sku": "gcom_h100",
       "sku_profile": {
@@ -1657,11 +1825,11 @@
       },
       "tools": {
         "nvcc": {
-          "available": false,
-          "error": "nvcc not found",
+          "available": true,
+          "error": null,
           "name": "nvcc",
-          "path": null,
-          "version": null
+          "path": "/usr/local/cuda-12.8/bin/nvcc",
+          "version": "nvcc: NVIDIA (R) Cuda compiler driver"
         },
         "nvidia-smi": {
           "available": true,
@@ -1672,10 +1840,101 @@
         }
       },
       "tracer_built": true,
-      "unsupported_reasons": [
-        "nvcc not available"
-      ]
+      "unsupported_reasons": []
     },
-    "partial": true
+    "version": {
+      "amora_git": {
+        "available": true,
+        "branch": "gcom_cuda",
+        "commit": "47bef92dde14b4bd28aba7bfcbbaa4fc9c77cff9",
+        "dirty": true
+      },
+      "config_hashes": {
+        "gpgpusim_config": "6ec79bfed9197da303ac7a4be08366f5bae5b1de99df5f63880142763372c4fe",
+        "trace_config": "a4d2d01079241db28ee3601c7a25adacdf64dd5a6656560fce893493ce77fbf1"
+      },
+      "environment": {
+        "AMORA_GCOM_NVCC_ARCH": null,
+        "CUDA_INSTALL_PATH": "/usr/local/cuda-12.8",
+        "GCOM_ROOT": "/home/cliu/wk/modern-gpu-simulator-micro-2025/simulator-remodeled",
+        "LD_LIBRARY_PATH": "/lib/x86_64-linux-gnu:/usr/local/cuda-12.8/lib64",
+        "OMP_NUM_THREADS": null
+      },
+      "gcom_git": {
+        "available": true,
+        "branch": "tma-impl",
+        "commit": "06053797d9044391eeeece353e3fec698b634eb9",
+        "dirty": null
+      },
+      "gpu_devices": [
+        {
+          "driver_version": "595.71.05",
+          "index": 0,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-c80fe196-e3ba-82ff-7233-d9804f701864"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 1,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-4aae1f51-fb63-a02f-2980-271fde921f2e"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 2,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-d662fc1b-8afa-7d17-6877-8ca096f9c89a"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 3,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-69a548f0-cca4-48b1-30a7-77bb8928a43c"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 4,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-4dc55dbe-e752-a828-f69b-b7c2c04b24d6"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 5,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-01e9e7f2-6a35-5554-524c-8bf7ad6040b5"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 6,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-b356e84d-b220-a33c-dd68-3ea01ec109ea"
+        }
+      ],
+      "mapping_version": null,
+      "simulator": {
+        "binary_path": "/home/cliu/wk/modern-gpu-simulator-micro-2025/simulator-remodeled/gpu-simulator/bin/release/accel-sim.out",
+        "build_mtime": 1782820708.483715,
+        "exists": true
+      },
+      "sku_profile": {
+        "architecture_scope": "nvidia_hopper",
+        "core_clock_hz": 1800000000.0,
+        "dram_clock_hz": 8000000000.0,
+        "family": "hopper",
+        "gpgpusim_config": "/home/cliu/wk/modern-gpu-simulator-micro-2025/simulator-remodeled/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM90_H100_L2_50MB_80GB/gpgpusim.config",
+        "hardware_reference": {
+          "backend": "nvidia",
+          "boost_clock_hz": 1830000000.0,
+          "family": "hopper",
+          "sku": "h100-80g"
+        },
+        "sku": "gcom_h100",
+        "trace_config": "/home/cliu/wk/modern-gpu-simulator-micro-2025/simulator-remodeled/gpu-simulator/configs/tested-cfgs/SM90_H100_L2_50MB_80GB/trace.config"
+      },
+      "toolkit": {
+        "driver_version": "595.71.05\n595.71.05\n595.71.05\n595.71.05\n595.71.05\n595.71.05\n595.71.05",
+        "nvcc_version": "Build cuda_12.8.r12.8/compiler.35583870_0"
+      }
+    }
   }
 }

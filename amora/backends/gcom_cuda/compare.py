@@ -239,6 +239,13 @@ def _fmt(v: Any) -> str:
     return s if len(s) <= 40 else s[:37] + "..."
 
 
+def _pct(v: Any) -> str:
+    """Render a fractional error (e.g. 1.517) as a percentage (e.g. 151.7%)."""
+    if not isinstance(v, (int, float)):
+        return "—"
+    return f"{v * 100:.1f}%"
+
+
 def render_markdown(comparison: dict[str, Any], *, sku: str) -> str:
     lines: list[str] = [f"# gcom_cuda sim-vs-HW comparison: {sku}", ""]
     lines.append(f"- mapping version: `{comparison['mapping_version']}`")
@@ -258,8 +265,8 @@ def render_markdown(comparison: dict[str, Any], *, sku: str) -> str:
     lines += ["## Accuracy rollup (comparable probes)", "",
               "| group | n | mean |pct err| | median |pct err| |", "|---|---|---|---|"]
     for group, r in sorted(comparison["accuracy_rollup"].items()):
-        lines.append(f"| {group} | {r['n']} | {_fmt(r['mean_pct_error'])} | "
-                     f"{_fmt(r['median_pct_error'])} |")
+        lines.append(f"| {group} | {r['n']} | {_pct(r['mean_pct_error'])} | "
+                     f"{_pct(r['median_pct_error'])} |")
     lines.append("")
 
     lines += ["## Probe-level comparison", "",
@@ -268,7 +275,7 @@ def render_markdown(comparison: dict[str, Any], *, sku: str) -> str:
     for r in comparison["probe_comparison"]:
         lines.append(
             f"| {r['probe_id']} | {r['group']} | {r['category']} | {_fmt(r['state'])} | "
-            f"{_fmt(r['hw_value'])} | {_fmt(r['sim_value'])} | {_fmt(r['pct_error'])} | "
+            f"{_fmt(r['hw_value'])} | {_fmt(r['sim_value'])} | {_pct(r['pct_error'])} | "
             f"{'✓' if r['is_anchor'] else ''} |"
         )
     lines.append("")
@@ -280,7 +287,7 @@ def render_markdown(comparison: dict[str, Any], *, sku: str) -> str:
         for r in comparison["counter_comparison"]:
             lines.append(
                 f"| {r['probe_id']} | {r['logical']} | {_fmt(r['fidelity'])} | "
-                f"{_fmt(r['hw_ncu'])} | {_fmt(r['sim_gcom'])} | {_fmt(r['pct_error'])} |"
+                f"{_fmt(r['hw_ncu'])} | {_fmt(r['sim_gcom'])} | {_pct(r['pct_error'])} |"
             )
         lines.append("")
 
