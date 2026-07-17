@@ -13,7 +13,12 @@ from pathlib import Path
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation
-from amora.probes.nvidia.baseline._sources import apply_sass_gating, source_descriptor
+from amora.probes.nvidia.baseline._sources import (
+    apply_sass_gating,
+    collect_gcom_counter_comparison,
+    collect_stall_attribution,
+    source_descriptor,
+)
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -72,6 +77,14 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             )
         ]
 
+    stall_record = collect_stall_attribution(
+        capabilities, SOURCE, kernel_name="amora_tc_mma_latency"
+    )
+    ncu_record = collect_gcom_counter_comparison(
+        capabilities, SOURCE, kernel_name="amora_tc_mma_latency",
+        extra_logicals=("tensor_pipe_active",),
+    )
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
@@ -79,6 +92,10 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     }
     if sass is not None:
         values["sass"] = sass.to_dict()
+    if stall_record is not None:
+        values["stall_attribution"] = stall_record
+    if ncu_record is not None:
+        values["gcom_counter_comparison"] = ncu_record
     assumptions = [
         "dependent wmma::mma_sync chain (FP16 m16n16k16) timed via clock64 in one warp",
         "median across launches",
@@ -116,6 +133,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                     "nvidia_backend": "dependent FP16 16x16x16 MMA latency in cycles",
                     "mma_shape": payload["mma_shape"],
                 },
+                metric_resolver=ncu_record or {},
                 sass_validation=sass.to_dict() if sass else {},
                 downgrade_reason=downgrade_reason,
             ),

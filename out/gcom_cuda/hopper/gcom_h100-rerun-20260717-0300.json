@@ -1,0 +1,3803 @@
+{
+  "metadata": {
+    "backend_capabilities": {
+      "backend": "gcom_cuda",
+      "config_present": true,
+      "devices": [
+        {
+          "driver_version": "595.71.05",
+          "index": 0,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-c80fe196-e3ba-82ff-7233-d9804f701864"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 1,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-4aae1f51-fb63-a02f-2980-271fde921f2e"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 2,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-d662fc1b-8afa-7d17-6877-8ca096f9c89a"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 3,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-69a548f0-cca4-48b1-30a7-77bb8928a43c"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 4,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-4dc55dbe-e752-a828-f69b-b7c2c04b24d6"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 5,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-01e9e7f2-6a35-5554-524c-8bf7ad6040b5"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 6,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-b356e84d-b220-a33c-dd68-3ea01ec109ea"
+        }
+      ],
+      "family": "hopper",
+      "gpu_available": true,
+      "nvcc_available": true,
+      "simulator_built": true,
+      "sku": "gcom_h100",
+      "sku_profile": {
+        "architecture_scope": "nvidia_hopper",
+        "core_clock_hz": 1800000000.0,
+        "dram_clock_hz": 8000000000.0,
+        "family": "hopper",
+        "gpgpusim_config": "/home/cliu/wk/modern-gpu-simulator-micro-2025/simulator-remodeled/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM90_H100_L2_50MB_80GB/gpgpusim.config",
+        "hardware_reference": {
+          "backend": "nvidia",
+          "boost_clock_hz": 1830000000.0,
+          "family": "hopper",
+          "sku": "h100-80g"
+        },
+        "sku": "gcom_h100",
+        "trace_config": "/home/cliu/wk/modern-gpu-simulator-micro-2025/simulator-remodeled/gpu-simulator/configs/tested-cfgs/SM90_H100_L2_50MB_80GB/trace.config"
+      },
+      "tools": {
+        "nvcc": {
+          "available": true,
+          "error": null,
+          "name": "nvcc",
+          "path": "/usr/local/cuda-12.8/bin/nvcc",
+          "version": "nvcc: NVIDIA (R) Cuda compiler driver"
+        },
+        "nvidia-smi": {
+          "available": true,
+          "error": null,
+          "name": "nvidia-smi",
+          "path": "/usr/bin/nvidia-smi",
+          "version": "NVIDIA-SMI version  : 595.71.05"
+        }
+      },
+      "tracer_built": true,
+      "unsupported_reasons": []
+    },
+    "version": {
+      "amora_git": {
+        "available": true,
+        "branch": "gcom_cuda",
+        "commit": "1b92ff6735112daea1b27a6cacdd836cd6947688",
+        "dirty": true
+      },
+      "config_hashes": {
+        "gpgpusim_config": "3d4e7f1f766be2df18ea489e5cc4d58489b4a29fb1ae7dbbc105594bd7860402",
+        "trace_config": "a4d2d01079241db28ee3601c7a25adacdf64dd5a6656560fce893493ce77fbf1"
+      },
+      "environment": {
+        "AMORA_GCOM_NVCC_ARCH": null,
+        "CUDA_INSTALL_PATH": "/usr/local/cuda-12.8",
+        "GCOM_ROOT": null,
+        "LD_LIBRARY_PATH": null,
+        "OMP_NUM_THREADS": null
+      },
+      "gcom_git": {
+        "available": true,
+        "branch": "tma-impl",
+        "commit": "689f84592ddc2105c64f99974f1c9ee372c949d4",
+        "dirty": null
+      },
+      "gpu_devices": [
+        {
+          "driver_version": "595.71.05",
+          "index": 0,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-c80fe196-e3ba-82ff-7233-d9804f701864"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 1,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-4aae1f51-fb63-a02f-2980-271fde921f2e"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 2,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-d662fc1b-8afa-7d17-6877-8ca096f9c89a"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 3,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-69a548f0-cca4-48b1-30a7-77bb8928a43c"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 4,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-4dc55dbe-e752-a828-f69b-b7c2c04b24d6"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 5,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-01e9e7f2-6a35-5554-524c-8bf7ad6040b5"
+        },
+        {
+          "driver_version": "595.71.05",
+          "index": 6,
+          "name": "NVIDIA H100 80GB HBM3",
+          "uuid": "GPU-b356e84d-b220-a33c-dd68-3ea01ec109ea"
+        }
+      ],
+      "mapping_version": null,
+      "simulator": {
+        "binary_path": "/home/cliu/wk/modern-gpu-simulator-micro-2025/simulator-remodeled/gpu-simulator/bin/release/accel-sim.out",
+        "build_mtime": 1784281399.5941594,
+        "exists": true
+      },
+      "sku_profile": {
+        "architecture_scope": "nvidia_hopper",
+        "core_clock_hz": 1800000000.0,
+        "dram_clock_hz": 8000000000.0,
+        "family": "hopper",
+        "gpgpusim_config": "/home/cliu/wk/modern-gpu-simulator-micro-2025/simulator-remodeled/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM90_H100_L2_50MB_80GB/gpgpusim.config",
+        "hardware_reference": {
+          "backend": "nvidia",
+          "boost_clock_hz": 1830000000.0,
+          "family": "hopper",
+          "sku": "h100-80g"
+        },
+        "sku": "gcom_h100",
+        "trace_config": "/home/cliu/wk/modern-gpu-simulator-micro-2025/simulator-remodeled/gpu-simulator/configs/tested-cfgs/SM90_H100_L2_50MB_80GB/trace.config"
+      },
+      "toolkit": {
+        "driver_version": "595.71.05\n595.71.05\n595.71.05\n595.71.05\n595.71.05\n595.71.05\n595.71.05",
+        "nvcc_version": "Build cuda_12.8.r12.8/compiler.35583870_0"
+      }
+    }
+  },
+  "results": [
+    {
+      "backend_interpretation": {
+        "concept": "topology.device_attributes",
+        "downgrade_reason": "metadata, not a sim output",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "topology.device_attributes"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "metadata, not a sim output"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "topology.device_attributes",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "metadata, not a sim output",
+        "values": {
+          "gcom_state": "not_applicable"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "topology.device_attributes",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "metadata, not a sim output"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "topology.occupancy",
+        "downgrade_reason": "planning artifact, no kernel",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "topology.occupancy"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "planning artifact, no kernel"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "topology.occupancy",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "planning artifact, no kernel",
+        "values": {
+          "gcom_state": "not_applicable"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "topology.occupancy",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "planning artifact, no kernel"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "topology.persistent_cta",
+        "downgrade_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "topology.persistent_cta"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "derivation 'sweep' needs multi-trace reduction (not yet wired)"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "topology.persistent_cta",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)",
+        "values": {
+          "category": "approximate",
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "topology.persistent_cta",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "fp32_fma_dependent_pipeline_latency",
+        "interpretation": {
+          "architecture_scope": "nvidia_generic",
+          "derivation": "per_op"
+        },
+        "metric_resolver": {
+          "dram_throughput": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "bwutil"
+            ],
+            "ncu_metric": "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+            "value": 2.1e-05
+          },
+          "inst_executed": {
+            "architecture_scope": "generic_cuda",
+            "fidelity": "direct",
+            "gcom_keys": [
+              "gpu_tot_sim_insn"
+            ],
+            "ncu_metric": "smsp__inst_executed.sum",
+            "value": 314665.0
+          },
+          "interconnect_latency": {
+            "architecture_scope": "gcom_simulator_only",
+            "fidelity": "proxy",
+            "gcom_keys": [
+              "avg_icnt2mem_latency"
+            ],
+            "value": 582.0
+          },
+          "l2_hit_rate": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "L2_total_cache_miss_rate"
+            ],
+            "value": 0.52
+          },
+          "l2_sector_hits": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "L2_total_cache_accesses",
+              "L2_total_cache_misses"
+            ],
+            "ncu_metric": "lts__t_sectors_lookup_hit.sum",
+            "value": 76596.0
+          },
+          "sm_active_cycles": {
+            "architecture_scope": "generic_cuda",
+            "fidelity": "direct",
+            "gcom_keys": [
+              "gpu_sim_cycle"
+            ],
+            "ncu_metric": "sm__cycles_active.avg",
+            "value": 44734.0
+          },
+          "stall_barrier_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_barrier_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_branch_resolving_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_branch_resolving_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_branch_resolving_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_dispatch_stall_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_dispatch_stall_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_drain_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_drain_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_drain_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_imc_miss_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_imc_miss_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_imc_miss_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_lg_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_lg_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_lg_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_long_scoreboard_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_long_scoreboard_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_math_pipe_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_math_pipe_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_math_pipe_throttle_per_issue_active.ratio",
+            "value": 1.2005
+          },
+          "stall_membar_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_membar_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_membar_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_mio_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_mio_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_misc_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_misc_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_misc_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_mma_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_mma_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_mma_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_no_instructions_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_no_instructions_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_no_instructions_per_issue_active.ratio",
+            "value": 3.3659
+          },
+          "stall_not_selected_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_not_selected_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_not_selected_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_selected_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_selected_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_selected_per_issue_active.ratio",
+            "value": 10.7001
+          },
+          "stall_short_scoreboard_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_short_scoreboard_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio",
+            "value": 85.0434
+          },
+          "stall_sleeping_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_sleeping_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_sleeping_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_tex_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_tex_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_tex_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_wait_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_wait_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_wait_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_warpgroup_arrive_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_warpgroup_arrive_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_warpgroup_arrive_per_issue_active.ratio",
+            "value": 0.0
+          }
+        },
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "arithmetic_latency.dependent_chain"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "sim FP latency from config"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "fp32_fma_dependent_pipeline_latency",
+        "uncertainty": "stable_scalar",
+        "unit": "cycles",
+        "value": 10.92138671875,
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "simulator_trace",
+        "metrics": {
+          "gcom_stall_reason_complete": true,
+          "gcom_stall_reason_denominator": 2810158.0,
+          "gcom_stall_reason_denominator_key": "total_num_cycles_issue_stage_evaluated",
+          "gcom_stall_reason_histogram": {
+            "barrier": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "branch_resolving": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "dispatch_stall": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "drain": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "imc_miss": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "lg_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "long_scoreboard": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "math_pipe_throttle": {
+              "count": 33735.0,
+              "pct": 1.2005
+            },
+            "membar": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "mio_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "misc": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "mma": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "no_instructions": {
+              "count": 94588.0,
+              "pct": 3.3659
+            },
+            "not_selected": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "selected": {
+              "count": 300690.0,
+              "pct": 10.7001
+            },
+            "short_scoreboard": {
+              "count": 2389855.0,
+              "pct": 85.0434
+            },
+            "sleeping": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "tex_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "wait": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "warpgroup_arrive": {
+              "count": 0.0,
+              "pct": 0.0
+            }
+          },
+          "gcom_stall_reason_schema": "ncu-stall-v1",
+          "gpu_ipc": 0.1082,
+          "gpu_sim_cycle": 44734.0,
+          "gpu_tot_sim_insn": 314665.0
+        },
+        "source": "gcom_cuda:accel-sim.out",
+        "units": {
+          "gpu_sim_cycle": "cycles"
+        },
+        "values": {
+          "gcom_state": "comparable",
+          "sim_log": "out/gcom_cuda/hopper/gcom_h100/arithmetic_latency_dependent_chain_1784282455/gcom_sim.log",
+          "stat_count": 952
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "simulator_trace",
+        "fit_status": "direct",
+        "mapping_contract": "GCoM per_op from gpu_sim_cycle (fidelity=direct)",
+        "parameter": "fp32_fma_dependent_pipeline_latency",
+        "uncertainty": "stable_scalar",
+        "unit": "cycles",
+        "value": 10.92138671875
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "fp32_fma_independent_pipeline_throughput",
+        "interpretation": {
+          "architecture_scope": "nvidia_generic",
+          "derivation": "per_op"
+        },
+        "metric_resolver": {
+          "dram_throughput": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "bwutil"
+            ],
+            "ncu_metric": "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+            "value": 0.000407
+          },
+          "inst_executed": {
+            "architecture_scope": "generic_cuda",
+            "fidelity": "direct",
+            "gcom_keys": [
+              "gpu_tot_sim_insn"
+            ],
+            "ncu_metric": "smsp__inst_executed.sum",
+            "value": 70885376.0
+          },
+          "interconnect_latency": {
+            "architecture_scope": "gcom_simulator_only",
+            "fidelity": "proxy",
+            "gcom_keys": [
+              "avg_icnt2mem_latency"
+            ],
+            "value": 94.0
+          },
+          "l2_hit_rate": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "L2_total_cache_miss_rate"
+            ],
+            "value": 0.9357
+          },
+          "l2_sector_hits": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "L2_total_cache_accesses",
+              "L2_total_cache_misses"
+            ],
+            "ncu_metric": "lts__t_sectors_lookup_hit.sum",
+            "value": 59360.0
+          },
+          "sm_active_cycles": {
+            "architecture_scope": "generic_cuda",
+            "fidelity": "direct",
+            "gcom_keys": [
+              "gpu_sim_cycle"
+            ],
+            "ncu_metric": "sm__cycles_active.avg",
+            "value": 48054.0
+          },
+          "stall_barrier_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_barrier_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_branch_resolving_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_branch_resolving_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_branch_resolving_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_dispatch_stall_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_dispatch_stall_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.ratio",
+            "value": 0.0064
+          },
+          "stall_drain_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_drain_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_drain_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_imc_miss_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_imc_miss_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_imc_miss_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_lg_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_lg_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_lg_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_long_scoreboard_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_long_scoreboard_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_math_pipe_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_math_pipe_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_math_pipe_throttle_per_issue_active.ratio",
+            "value": 27.2511
+          },
+          "stall_membar_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_membar_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_membar_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_mio_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_mio_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_misc_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_misc_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_misc_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_mma_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_mma_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_mma_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_no_instructions_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_no_instructions_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_no_instructions_per_issue_active.ratio",
+            "value": 3.3546
+          },
+          "stall_not_selected_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_not_selected_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_not_selected_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_selected_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_selected_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_selected_per_issue_active.ratio",
+            "value": 36.8177
+          },
+          "stall_short_scoreboard_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_short_scoreboard_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio",
+            "value": 57.0028
+          },
+          "stall_sleeping_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_sleeping_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_sleeping_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_tex_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_tex_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_tex_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_wait_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_wait_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_wait_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_warpgroup_arrive_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_warpgroup_arrive_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_warpgroup_arrive_per_issue_active.ratio",
+            "value": 0.0
+          }
+        },
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "arithmetic_throughput.independent_chains"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "ILP-saturated FP32; per-op over the dependent chain length"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "fp32_fma_independent_pipeline_throughput",
+        "uncertainty": "stable_scalar",
+        "unit": "cycles",
+        "value": 11.73193359375,
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "simulator_trace",
+        "metrics": {
+          "gcom_stall_reason_complete": true,
+          "gcom_stall_reason_denominator": 6016935.0,
+          "gcom_stall_reason_denominator_key": "total_num_cycles_issue_stage_evaluated",
+          "gcom_stall_reason_histogram": {
+            "barrier": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "branch_resolving": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "dispatch_stall": {
+              "count": 384.0,
+              "pct": 0.0064
+            },
+            "drain": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "imc_miss": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "lg_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "long_scoreboard": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "math_pipe_throttle": {
+              "count": 1639683.0,
+              "pct": 27.2511
+            },
+            "membar": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "mio_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "misc": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "mma": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "no_instructions": {
+              "count": 201846.0,
+              "pct": 3.3546
+            },
+            "not_selected": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "selected": {
+              "count": 2215296.0,
+              "pct": 36.8177
+            },
+            "short_scoreboard": {
+              "count": 3429819.0,
+              "pct": 57.0028
+            },
+            "sleeping": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "tex_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "wait": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "warpgroup_arrive": {
+              "count": 0.0,
+              "pct": 0.0
+            }
+          },
+          "gcom_stall_reason_schema": "ncu-stall-v1",
+          "gpu_ipc": 737.5596,
+          "gpu_sim_cycle": 48054.0,
+          "gpu_tot_sim_insn": 70885376.0
+        },
+        "source": "gcom_cuda:accel-sim.out",
+        "units": {
+          "gpu_sim_cycle": "cycles"
+        },
+        "values": {
+          "gcom_state": "comparable",
+          "sim_log": "out/gcom_cuda/hopper/gcom_h100/arithmetic_throughput_independent_chains_1784282455/gcom_sim.log",
+          "stat_count": 952
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "simulator_trace",
+        "fit_status": "direct",
+        "mapping_contract": "GCoM per_op from gpu_sim_cycle (fidelity=direct)",
+        "parameter": "fp32_fma_independent_pipeline_throughput",
+        "uncertainty": "stable_scalar",
+        "unit": "cycles",
+        "value": 11.73193359375
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "shared_memory.pointer_chase",
+        "downgrade_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "shared_memory.pointer_chase"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "trace/sim failed: simulation exceeded 7200s timeout"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "shared_memory.pointer_chase",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "values": {
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "shared_memory.pointer_chase",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "shared_memory.bank_stride",
+        "downgrade_reason": "bank count is a sim input (shmem_num_banks)",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "shared_memory.bank_stride"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "bank count is a sim input (shmem_num_banks)"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "shared_memory.bank_stride",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "bank count is a sim input (shmem_num_banks)",
+        "values": {
+          "gcom_state": "unsupported"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "shared_memory.bank_stride",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "bank count is a sim input (shmem_num_banks)"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "shared_memory.analyze",
+        "downgrade_reason": "analysis-only",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "shared_memory.analyze"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "analysis-only"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "shared_memory.analyze",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "analysis-only",
+        "values": {
+          "gcom_state": "not_applicable"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "shared_memory.analyze",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "analysis-only"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "l1_cache.pointer_chase",
+        "downgrade_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "l1_cache.pointer_chase"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "trace/sim failed: simulation exceeded 7200s timeout"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "l1_cache.pointer_chase",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "values": {
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "l1_cache.pointer_chase",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "l1_cache.working_set",
+        "downgrade_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "l1_cache.working_set"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "derivation 'sweep' needs multi-trace reduction (not yet wired)"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "l1_cache.working_set",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)",
+        "values": {
+          "category": "approximate",
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "l1_cache.working_set",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "l1_cache.conflict_sets",
+        "downgrade_reason": "associativity knee not identifiable from one trace",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "l1_cache.conflict_sets"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "associativity knee not identifiable from one trace"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "l1_cache.conflict_sets",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "associativity knee not identifiable from one trace",
+        "values": {
+          "gcom_state": "unsupported"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "l1_cache.conflict_sets",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "associativity knee not identifiable from one trace"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "l1_cache.analyze",
+        "downgrade_reason": "analysis-only",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "l1_cache.analyze"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "analysis-only"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "l1_cache.analyze",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "analysis-only",
+        "values": {
+          "gcom_state": "not_applicable"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "l1_cache.analyze",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "analysis-only"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "scheduler_policy.ready_warps",
+        "downgrade_reason": "HW baseline denominator 'total_ops' required (pass --hw-baseline)",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "scheduler_policy.ready_warps"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "HW baseline denominator 'total_ops' required (pass --hw-baseline)"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "scheduler_policy.ready_warps",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "HW baseline denominator 'total_ops' required (pass --hw-baseline)",
+        "values": {
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "scheduler_policy.ready_warps",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "HW baseline denominator 'total_ops' required (pass --hw-baseline)"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "scheduler_policy.mixed_issue",
+        "downgrade_reason": "behavioral pipe-overlap class, NCU-coupled",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "scheduler_policy.mixed_issue"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "behavioral pipe-overlap class, NCU-coupled"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "scheduler_policy.mixed_issue",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "behavioral pipe-overlap class, NCU-coupled",
+        "values": {
+          "gcom_state": "unsupported"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "scheduler_policy.mixed_issue",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "behavioral pipe-overlap class, NCU-coupled"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "scheduler_policy.analyze",
+        "downgrade_reason": "analysis-only, no kernel",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "scheduler_policy.analyze"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "analysis-only, no kernel"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "scheduler_policy.analyze",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "analysis-only, no kernel",
+        "values": {
+          "gcom_state": "not_applicable"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "scheduler_policy.analyze",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "analysis-only, no kernel"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "register_file.register_bank_sweep",
+        "downgrade_reason": "HW baseline denominator 'total_ops' required (pass --hw-baseline)",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "register_file.register_bank_sweep"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "HW baseline denominator 'total_ops' required (pass --hw-baseline)"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "register_file.register_bank_sweep",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "HW baseline denominator 'total_ops' required (pass --hw-baseline)",
+        "values": {
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "register_file.register_bank_sweep",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "HW baseline denominator 'total_ops' required (pass --hw-baseline)"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "register_file.register_latency",
+        "downgrade_reason": "derivation 'differential' needs multi-trace reduction (not yet wired)",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "register_file.register_latency"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "derivation 'differential' needs multi-trace reduction (not yet wired)"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "register_file.register_latency",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "derivation 'differential' needs multi-trace reduction (not yet wired)",
+        "values": {
+          "category": "approximate",
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "register_file.register_latency",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "derivation 'differential' needs multi-trace reduction (not yet wired)"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "register_file.analyze",
+        "downgrade_reason": "analysis-only",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "register_file.analyze"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "analysis-only"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "register_file.analyze",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "analysis-only",
+        "values": {
+          "gcom_state": "not_applicable"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "register_file.analyze",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "analysis-only"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "synchronization.barrier_latency",
+        "downgrade_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "synchronization.barrier_latency"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "trace/sim failed: simulation exceeded 7200s timeout"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "synchronization.barrier_latency",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "values": {
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "synchronization.barrier_latency",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "global_memory.streaming",
+        "downgrade_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "global_memory.streaming"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "trace/sim failed: simulation exceeded 7200s timeout"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "global_memory.streaming",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "values": {
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "global_memory.streaming",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "l2_cache.pointer_chase",
+        "downgrade_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "l2_cache.pointer_chase"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "trace/sim failed: simulation exceeded 7200s timeout"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "l2_cache.pointer_chase",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "values": {
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "l2_cache.pointer_chase",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "memory_pipeline.outstanding_requests",
+        "downgrade_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "memory_pipeline.outstanding_requests"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "derivation 'sweep' needs multi-trace reduction (not yet wired)"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "memory_pipeline.outstanding_requests",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)",
+        "values": {
+          "category": "approximate",
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "memory_pipeline.outstanding_requests",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "memory_pipeline.lane_patterns",
+        "downgrade_reason": "sectors/request via counter proxy only (not a probe scalar)",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "memory_pipeline.lane_patterns"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "sectors/request via counter proxy only (not a probe scalar)"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "memory_pipeline.lane_patterns",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "sectors/request via counter proxy only (not a probe scalar)",
+        "values": {
+          "gcom_state": "proxy_only"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "memory_pipeline.lane_patterns",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "sectors/request via counter proxy only (not a probe scalar)"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "memory_pipeline.analyze",
+        "downgrade_reason": "analysis-only",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "memory_pipeline.analyze"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "analysis-only"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "memory_pipeline.analyze",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "analysis-only",
+        "values": {
+          "gcom_state": "not_applicable"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "memory_pipeline.analyze",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "analysis-only"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "global_memory.partition_sweep",
+        "downgrade_reason": "partition camping not modeled",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "global_memory.partition_sweep"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "partition camping not modeled"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "global_memory.partition_sweep",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "partition camping not modeled",
+        "values": {
+          "gcom_state": "unsupported"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "global_memory.partition_sweep",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "partition camping not modeled"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "global_memory.row_policy_sweep",
+        "downgrade_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "global_memory.row_policy_sweep"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "derivation 'sweep' needs multi-trace reduction (not yet wired)"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "global_memory.row_policy_sweep",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)",
+        "values": {
+          "category": "approximate",
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "global_memory.row_policy_sweep",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "global_memory.analyze",
+        "downgrade_reason": "analysis-only",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "global_memory.analyze"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "analysis-only"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "global_memory.analyze",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "analysis-only",
+        "values": {
+          "gcom_state": "not_applicable"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "global_memory.analyze",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "analysis-only"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "tensor_core_mma_latency",
+        "interpretation": {
+          "architecture_scope": "nvidia_hopper",
+          "derivation": "per_op"
+        },
+        "metric_resolver": {
+          "dram_throughput": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "bwutil"
+            ],
+            "ncu_metric": "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+            "value": 5.1e-05
+          },
+          "inst_executed": {
+            "architecture_scope": "generic_cuda",
+            "fidelity": "direct",
+            "gcom_keys": [
+              "gpu_tot_sim_insn"
+            ],
+            "ncu_metric": "smsp__inst_executed.sum",
+            "value": 1659108.0
+          },
+          "interconnect_latency": {
+            "architecture_scope": "gcom_simulator_only",
+            "fidelity": "proxy",
+            "gcom_keys": [
+              "avg_icnt2mem_latency"
+            ],
+            "value": 23.0
+          },
+          "l2_hit_rate": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "L2_total_cache_miss_rate"
+            ],
+            "value": 0.48109999999999997
+          },
+          "l2_sector_hits": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "L2_total_cache_accesses",
+              "L2_total_cache_misses"
+            ],
+            "ncu_metric": "lts__t_sectors_lookup_hit.sum",
+            "value": 14204.0
+          },
+          "sm_active_cycles": {
+            "architecture_scope": "generic_cuda",
+            "fidelity": "direct",
+            "gcom_keys": [
+              "gpu_sim_cycle"
+            ],
+            "ncu_metric": "sm__cycles_active.avg",
+            "value": 16953.0
+          },
+          "stall_barrier_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_barrier_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_branch_resolving_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_branch_resolving_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_branch_resolving_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_dispatch_stall_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_dispatch_stall_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.ratio",
+            "value": 0.0193
+          },
+          "stall_drain_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_drain_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_drain_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_imc_miss_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_imc_miss_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_imc_miss_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_lg_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_lg_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_lg_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_long_scoreboard_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_long_scoreboard_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_math_pipe_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_math_pipe_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_math_pipe_throttle_per_issue_active.ratio",
+            "value": 0.1161
+          },
+          "stall_membar_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_membar_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_membar_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_mio_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_mio_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_misc_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_misc_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_misc_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_mma_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_mma_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_mma_per_issue_active.ratio",
+            "value": 7.1781
+          },
+          "stall_no_instructions_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_no_instructions_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_no_instructions_per_issue_active.ratio",
+            "value": 58.9486
+          },
+          "stall_not_selected_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_not_selected_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_not_selected_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_selected_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_selected_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_selected_per_issue_active.ratio",
+            "value": 10.1302
+          },
+          "stall_short_scoreboard_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_short_scoreboard_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio",
+            "value": 25.3799
+          },
+          "stall_sleeping_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_sleeping_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_sleeping_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_tex_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_tex_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_tex_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_wait_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_wait_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_wait_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_warpgroup_arrive_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_warpgroup_arrive_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_warpgroup_arrive_per_issue_active.ratio",
+            "value": 22.4888
+          }
+        },
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "tensor_core.mma_latency"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "HMMA dep; sim tensor latency from config"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "tensor_core_mma_latency",
+        "uncertainty": "stable_scalar",
+        "unit": "cycles",
+        "value": 33.111328125,
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "simulator_trace",
+        "metrics": {
+          "gcom_stall_reason_complete": true,
+          "gcom_stall_reason_denominator": 513398.0,
+          "gcom_stall_reason_denominator_key": "total_num_cycles_issue_stage_evaluated",
+          "gcom_stall_reason_histogram": {
+            "barrier": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "branch_resolving": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "dispatch_stall": {
+              "count": 99.0,
+              "pct": 0.0193
+            },
+            "drain": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "imc_miss": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "lg_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "long_scoreboard": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "math_pipe_throttle": {
+              "count": 596.0,
+              "pct": 0.1161
+            },
+            "membar": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "mio_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "misc": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "mma": {
+              "count": 36852.0,
+              "pct": 7.1781
+            },
+            "no_instructions": {
+              "count": 302641.0,
+              "pct": 58.9486
+            },
+            "not_selected": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "selected": {
+              "count": 52008.0,
+              "pct": 10.1302
+            },
+            "short_scoreboard": {
+              "count": 130300.0,
+              "pct": 25.3799
+            },
+            "sleeping": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "tex_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "wait": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "warpgroup_arrive": {
+              "count": 115457.0,
+              "pct": 22.4888
+            }
+          },
+          "gcom_stall_reason_schema": "ncu-stall-v1",
+          "gpu_ipc": 2.9656,
+          "gpu_sim_cycle": 16953.0,
+          "gpu_tot_sim_insn": 1659108.0
+        },
+        "source": "gcom_cuda:accel-sim.out",
+        "units": {
+          "gpu_sim_cycle": "cycles"
+        },
+        "values": {
+          "gcom_state": "comparable",
+          "sim_log": "out/gcom_cuda/hopper/gcom_h100/tensor_core_mma_latency_1784289726/gcom_sim.log",
+          "stat_count": 956
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "simulator_trace",
+        "fit_status": "direct",
+        "mapping_contract": "GCoM per_op from gpu_sim_cycle (fidelity=direct)",
+        "parameter": "tensor_core_mma_latency",
+        "uncertainty": "stable_scalar",
+        "unit": "cycles",
+        "value": 33.111328125
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "tensor_core_mma_throughput",
+        "interpretation": {
+          "architecture_scope": "nvidia_hopper",
+          "derivation": "throughput"
+        },
+        "metric_resolver": {
+          "dram_throughput": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "bwutil"
+            ],
+            "ncu_metric": "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+            "value": 7e-05
+          },
+          "inst_executed": {
+            "architecture_scope": "generic_cuda",
+            "fidelity": "direct",
+            "gcom_keys": [
+              "gpu_tot_sim_insn"
+            ],
+            "ncu_metric": "smsp__inst_executed.sum",
+            "value": 2285316.0
+          },
+          "interconnect_latency": {
+            "architecture_scope": "gcom_simulator_only",
+            "fidelity": "proxy",
+            "gcom_keys": [
+              "avg_icnt2mem_latency"
+            ],
+            "value": 23.0
+          },
+          "l2_hit_rate": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "L2_total_cache_miss_rate"
+            ],
+            "value": 0.5526
+          },
+          "l2_sector_hits": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "L2_total_cache_accesses",
+              "L2_total_cache_misses"
+            ],
+            "ncu_metric": "lts__t_sectors_lookup_hit.sum",
+            "value": 6444.0
+          },
+          "sm_active_cycles": {
+            "architecture_scope": "generic_cuda",
+            "fidelity": "direct",
+            "gcom_keys": [
+              "gpu_sim_cycle"
+            ],
+            "ncu_metric": "sm__cycles_active.avg",
+            "value": 6264.0
+          },
+          "stall_barrier_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_barrier_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_branch_resolving_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_branch_resolving_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_branch_resolving_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_dispatch_stall_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_dispatch_stall_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.ratio",
+            "value": 0.0668
+          },
+          "stall_drain_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_drain_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_drain_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_imc_miss_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_imc_miss_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_imc_miss_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_lg_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_lg_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_lg_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_long_scoreboard_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_long_scoreboard_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_math_pipe_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_math_pipe_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_math_pipe_throttle_per_issue_active.ratio",
+            "value": 0.178
+          },
+          "stall_membar_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_membar_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_membar_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_mio_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_mio_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_misc_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_misc_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_misc_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_mma_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_mma_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_mma_per_issue_active.ratio",
+            "value": 5.5208
+          },
+          "stall_no_instructions_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_no_instructions_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_no_instructions_per_issue_active.ratio",
+            "value": 27.0985
+          },
+          "stall_not_selected_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_not_selected_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_not_selected_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_selected_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_selected_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_selected_per_issue_active.ratio",
+            "value": 12.1265
+          },
+          "stall_short_scoreboard_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_short_scoreboard_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio",
+            "value": 60.2076
+          },
+          "stall_sleeping_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_sleeping_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_sleeping_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_tex_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_tex_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_tex_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_wait_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_wait_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_wait_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_warpgroup_arrive_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_warpgroup_arrive_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_warpgroup_arrive_per_issue_active.ratio",
+            "value": 49.6825
+          }
+        },
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "tensor_core.mma_throughput"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "HW reports mma/cycle directly; sim throughput is a proxy comparison"
+        ],
+        "coupled_with": [],
+        "fit_status": "bounded",
+        "name": "tensor_core_mma_throughput",
+        "uncertainty": "stable_scalar",
+        "unit": "ops/cycle",
+        "value": 2.5526819923371646e-05,
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "simulator_trace",
+        "metrics": {
+          "gcom_stall_reason_complete": true,
+          "gcom_stall_reason_denominator": 593247.0,
+          "gcom_stall_reason_denominator_key": "total_num_cycles_issue_stage_evaluated",
+          "gcom_stall_reason_histogram": {
+            "barrier": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "branch_resolving": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "dispatch_stall": {
+              "count": 396.0,
+              "pct": 0.0668
+            },
+            "drain": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "imc_miss": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "lg_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "long_scoreboard": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "math_pipe_throttle": {
+              "count": 1056.0,
+              "pct": 0.178
+            },
+            "membar": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "mio_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "misc": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "mma": {
+              "count": 32752.0,
+              "pct": 5.5208
+            },
+            "no_instructions": {
+              "count": 160761.0,
+              "pct": 27.0985
+            },
+            "not_selected": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "selected": {
+              "count": 71940.0,
+              "pct": 12.1265
+            },
+            "short_scoreboard": {
+              "count": 357180.0,
+              "pct": 60.2076
+            },
+            "sleeping": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "tex_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "wait": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "warpgroup_arrive": {
+              "count": 294740.0,
+              "pct": 49.6825
+            }
+          },
+          "gcom_stall_reason_schema": "ncu-stall-v1",
+          "gpu_ipc": 11.0556,
+          "gpu_sim_cycle": 6264.0,
+          "gpu_tot_sim_insn": 2285316.0
+        },
+        "source": "gcom_cuda:accel-sim.out",
+        "units": {
+          "gpu_sim_cycle": "cycles"
+        },
+        "values": {
+          "gcom_state": "approximate",
+          "sim_log": "out/gcom_cuda/hopper/gcom_h100/tensor_core_mma_throughput_1784289841/gcom_sim.log",
+          "stat_count": 956
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "simulator_trace",
+        "fit_status": "bounded",
+        "mapping_contract": "GCoM throughput from gpu_sim_cycle (fidelity=proxy)",
+        "parameter": "tensor_core_mma_throughput",
+        "uncertainty": "stable_scalar",
+        "unit": "ops/cycle",
+        "value": 2.5526819923371646e-05
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "synchronization.fence_latency",
+        "downgrade_reason": "derivation 'differential' needs multi-trace reduction (not yet wired)",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "synchronization.fence_latency"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "derivation 'differential' needs multi-trace reduction (not yet wired)"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "synchronization.fence_latency",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "derivation 'differential' needs multi-trace reduction (not yet wired)",
+        "values": {
+          "category": "approximate",
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "synchronization.fence_latency",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "derivation 'differential' needs multi-trace reduction (not yet wired)"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "async_copy_latency",
+        "interpretation": {
+          "architecture_scope": "nvidia_hopper",
+          "derivation": "per_op"
+        },
+        "metric_resolver": {
+          "dram_throughput": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "bwutil"
+            ],
+            "ncu_metric": "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+            "value": 0.000199
+          },
+          "inst_executed": {
+            "architecture_scope": "generic_cuda",
+            "fidelity": "direct",
+            "gcom_keys": [
+              "gpu_tot_sim_insn"
+            ],
+            "ncu_metric": "smsp__inst_executed.sum",
+            "value": 15303750.0
+          },
+          "interconnect_latency": {
+            "architecture_scope": "gcom_simulator_only",
+            "fidelity": "proxy",
+            "gcom_keys": [
+              "avg_icnt2mem_latency"
+            ],
+            "value": 2.0
+          },
+          "l2_hit_rate": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "L2_total_cache_miss_rate"
+            ],
+            "value": 0.4808
+          },
+          "l2_sector_hits": {
+            "architecture_scope": "nvidia_generic",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "L2_total_cache_accesses",
+              "L2_total_cache_misses"
+            ],
+            "ncu_metric": "lts__t_sectors_lookup_hit.sum",
+            "value": 148096.0
+          },
+          "sm_active_cycles": {
+            "architecture_scope": "generic_cuda",
+            "fidelity": "direct",
+            "gcom_keys": [
+              "gpu_sim_cycle"
+            ],
+            "ncu_metric": "sm__cycles_active.avg",
+            "value": 27972.0
+          },
+          "stall_barrier_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_barrier_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio",
+            "value": 4.6193
+          },
+          "stall_branch_resolving_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_branch_resolving_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_branch_resolving_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_dispatch_stall_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_dispatch_stall_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.ratio",
+            "value": 4.1454
+          },
+          "stall_drain_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_drain_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_drain_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_imc_miss_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_imc_miss_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_imc_miss_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_lg_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_lg_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_lg_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_long_scoreboard_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_long_scoreboard_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_math_pipe_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_math_pipe_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_math_pipe_throttle_per_issue_active.ratio",
+            "value": 10.3171
+          },
+          "stall_membar_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_membar_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_membar_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_mio_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_mio_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_misc_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_misc_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_misc_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_mma_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_mma_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_mma_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_no_instructions_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_no_instructions_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_no_instructions_per_issue_active.ratio",
+            "value": 2.1857
+          },
+          "stall_not_selected_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_not_selected_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_not_selected_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_selected_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_selected_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_selected_per_issue_active.ratio",
+            "value": 18.0507
+          },
+          "stall_short_scoreboard_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_short_scoreboard_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio",
+            "value": 67.5287
+          },
+          "stall_sleeping_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_sleeping_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_sleeping_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_tex_throttle_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_tex_throttle_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_tex_throttle_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_wait_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_wait_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_wait_per_issue_active.ratio",
+            "value": 0.0
+          },
+          "stall_warpgroup_arrive_pct": {
+            "architecture_scope": "nvidia_hopper",
+            "fidelity": "proportional",
+            "gcom_keys": [
+              "ncu_stall_warpgroup_arrive_pct"
+            ],
+            "ncu_metric": "smsp__average_warps_issue_stalled_warpgroup_arrive_per_issue_active.ratio",
+            "value": 0.0
+          }
+        },
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "tma_copy.async_copy_latency"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "LDGSTS modeled; native TMA not"
+        ],
+        "coupled_with": [],
+        "fit_status": "bounded",
+        "name": "async_copy_latency",
+        "uncertainty": "stable_scalar",
+        "unit": "cycles",
+        "value": 437.0625,
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "simulator_trace",
+        "metrics": {
+          "gcom_stall_reason_complete": true,
+          "gcom_stall_reason_denominator": 3497132.0,
+          "gcom_stall_reason_denominator_key": "total_num_cycles_issue_stage_evaluated",
+          "gcom_stall_reason_histogram": {
+            "barrier": {
+              "count": 161543.0,
+              "pct": 4.6193
+            },
+            "branch_resolving": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "dispatch_stall": {
+              "count": 144969.0,
+              "pct": 4.1454
+            },
+            "drain": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "imc_miss": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "lg_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "long_scoreboard": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "math_pipe_throttle": {
+              "count": 360801.0,
+              "pct": 10.3171
+            },
+            "membar": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "mio_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "misc": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "mma": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "no_instructions": {
+              "count": 76437.0,
+              "pct": 2.1857
+            },
+            "not_selected": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "selected": {
+              "count": 631257.0,
+              "pct": 18.0507
+            },
+            "short_scoreboard": {
+              "count": 2361567.0,
+              "pct": 67.5287
+            },
+            "sleeping": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "tex_throttle": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "wait": {
+              "count": 0.0,
+              "pct": 0.0
+            },
+            "warpgroup_arrive": {
+              "count": 0.0,
+              "pct": 0.0
+            }
+          },
+          "gcom_stall_reason_schema": "ncu-stall-v1",
+          "gpu_ipc": 16.5791,
+          "gpu_sim_cycle": 27972.0,
+          "gpu_tot_sim_insn": 15303750.0
+        },
+        "source": "gcom_cuda:accel-sim.out",
+        "units": {
+          "gpu_sim_cycle": "cycles"
+        },
+        "values": {
+          "gcom_state": "approximate",
+          "sim_log": "out/gcom_cuda/hopper/gcom_h100/tma_copy_async_copy_latency_1784289888/gcom_sim.log",
+          "stat_count": 954
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "simulator_trace",
+        "fit_status": "bounded",
+        "mapping_contract": "GCoM per_op from gpu_sim_cycle (fidelity=proxy)",
+        "parameter": "async_copy_latency",
+        "uncertainty": "stable_scalar",
+        "unit": "cycles",
+        "value": 437.0625
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "tma_copy.tma_transfer_sweep",
+        "downgrade_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "tma_copy.tma_transfer_sweep"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "derivation 'sweep' needs multi-trace reduction (not yet wired)"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "tma_copy.tma_transfer_sweep",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)",
+        "values": {
+          "category": "approximate",
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "tma_copy.tma_transfer_sweep",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "derivation 'sweep' needs multi-trace reduction (not yet wired)"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "tma_copy.analyze",
+        "downgrade_reason": "analysis-only",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "tma_copy.analyze"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "analysis-only"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "tma_copy.analyze",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "analysis-only",
+        "values": {
+          "gcom_state": "not_applicable"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "tma_copy.analyze",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "analysis-only"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.injection_rate",
+        "downgrade_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "interconnect.injection_rate"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "trace/sim failed: simulation exceeded 7200s timeout"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "interconnect.injection_rate",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout",
+        "values": {
+          "gcom_state": "missing_stat"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "interconnect.injection_rate",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "trace/sim failed: simulation exceeded 7200s timeout"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.address_mapping",
+        "downgrade_reason": "address mapping not comparable",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "interconnect.address_mapping"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "address mapping not comparable"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "interconnect.address_mapping",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "address mapping not comparable",
+        "values": {
+          "gcom_state": "unsupported"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "interconnect.address_mapping",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "address mapping not comparable"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.analyze",
+        "downgrade_reason": "analysis-only",
+        "interpretation": {},
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "gcom_cuda",
+        "family": "baseline",
+        "probe_id": "interconnect.analyze"
+      },
+      "launch": {
+        "extras": {},
+        "mode": "metadata"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "analysis-only"
+        ],
+        "coupled_with": [],
+        "fit_status": "unsupported",
+        "name": "interconnect.analyze",
+        "uncertainty": "indeterminate",
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "unsupported",
+        "metrics": {},
+        "units": {},
+        "unsupported_reason": "analysis-only",
+        "values": {
+          "gcom_state": "not_applicable"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "interconnect.analyze",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "analysis-only"
+      },
+      "tool_context": {
+        "device": {},
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    }
+  ],
+  "schema_version": 1
+}

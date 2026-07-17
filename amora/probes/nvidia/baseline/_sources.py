@@ -138,14 +138,26 @@ def collect_ncu_metrics(capabilities, source, logical_names, *, kernel_name, rol
 
 
 _STALL_LOGICALS = (
+    "stall_selected",
+    "stall_not_selected",
+    "stall_dispatch_stall",
+    "stall_warpgroup_arrive",
     "stall_long_scoreboard",
     "stall_short_scoreboard",
-    "stall_wait",
     "stall_barrier",
-    "stall_lg_throttle",
+    "stall_wait",
     "stall_mio_throttle",
     "stall_math_pipe_throttle",
-    "stall_not_selected",
+    "stall_mma",
+    "stall_no_instructions",
+    "stall_imc_miss",
+    "stall_sleeping",
+    "stall_branch_resolving",
+    "stall_membar",
+    "stall_drain",
+    "stall_lg_throttle",
+    "stall_tex_throttle",
+    "stall_misc",
 )
 
 
@@ -175,6 +187,35 @@ def collect_stall_attribution(capabilities, source, *, kernel_name, launch_count
         "stalls": stalls,
         "resolved": record["resolved"],
     }
+
+
+def collect_gcom_counter_comparison(capabilities, source, *, kernel_name,
+                                    extra_logicals=(), launch_count=4, args=()):
+    """Collect NCU counters used by the GCoM non-stall comparison table.
+
+    This is intentionally best-effort and separate from timing evidence. It
+    covers the NCU-backed logicals that GCoM commonly derives for simulated
+    probes; simulator-only proxies such as interconnect latency have no NCU
+    counterpart and remain empty in the report.
+    """
+
+    logicals = (
+        "sm_active_cycles",
+        "inst_executed",
+        "dram_throughput",
+        "l2_sector_hits",
+        *extra_logicals,
+    )
+    return collect_ncu_metrics(
+        capabilities,
+        source,
+        logicals,
+        kernel_name=kernel_name,
+        role="gcom_counter_comparison",
+        launch_count=launch_count,
+        aggregate="max",
+        args=args,
+    )
 
 
 def feature_gate(capabilities, probe_id, feature, *, tool_context):

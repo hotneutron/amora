@@ -19,6 +19,7 @@ import statistics
 from pathlib import Path
 from typing import Any
 
+from amora.backends.gcom_cuda.runner import STALL_REASON_KEYS
 from amora.probes.gcom_cuda.baseline import metrics_map as mm
 
 # Validation anchors (plan §Accuracy Validation Anchors): subset of canonical IDs.
@@ -133,10 +134,10 @@ def compare_counters(real: dict[str, dict[str, Any]],
         hw_metrics = (hw_result.get("raw_observation") or {}).get("metrics") or {}
         hw_resolver = (hw_result.get("backend_interpretation") or {}).get("metric_resolver") or {}
         for logical, info in derived.items():
+            if isinstance(logical, str) and logical.startswith("stall_"):
+                continue
             sim_val = info.get("value") if isinstance(info, dict) else info
-            hw_val = hw_metrics.get(logical)
-            if hw_val is None and isinstance(hw_resolver, dict):
-                hw_val = hw_resolver.get(logical)
+            hw_val = _logical_ncu_value(hw_result, logical)
             pct = None
             if isinstance(hw_val, (int, float)) and isinstance(sim_val, (int, float)):
                 pct = _pct_error(float(hw_val), float(sim_val))
@@ -150,6 +151,159 @@ def compare_counters(real: dict[str, dict[str, Any]],
                 "pct_error": pct,
             })
     return rows
+
+
+def _logical_ncu_value(result: dict[str, Any], logical: str) -> Any:
+    raw = result.get("raw_observation") or {}
+    metrics = raw.get("metrics") or {}
+    if logical in metrics:
+        return metrics[logical]
+
+    values = raw.get("values") or {}
+    for key in ("gcom_counter_comparison", "ncu"):
+        record = values.get(key)
+        record_values = record.get("values") if isinstance(record, dict) else None
+        if isinstance(record_values, dict) and logical in record_values:
+            return record_values[logical]
+
+    resolver = (result.get("backend_interpretation") or {}).get("metric_resolver") or {}
+    if logical in resolver:
+        return resolver[logical]
+    resolver_values = resolver.get("values") if isinstance(resolver, dict) else None
+    if isinstance(resolver_values, dict):
+        return resolver_values.get(logical)
+    return None
+
+
+def _numeric(value: Any) -> float | None:
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, dict) and isinstance(value.get("value"), (int, float)):
+        return float(value["value"])
+    return None
+
+
+def _ncu_stall_histogram(result: dict[str, Any] | None) -> dict[str, float]:
+    """Return {reason: pct} from the NVIDIA report, when collected.
+
+    NVIDIA probes currently expose stall attribution either as
+    raw_observation.values.stall_attribution.stalls or as logical
+    stall_<reason> values in metrics / metric_resolver. All values are treated
+    as NCU percentages and normalized to the GCoM reason names.
+    """
+
+    if not result:
+        return {}
+    raw = result.get("raw_observation") or {}
+    values = raw.get("values") or {}
+    metrics = raw.get("metrics") or {}
+    resolver = (result.get("backend_interpretation") or {}).get("metric_resolver") or {}
+    hist: dict[str, float] = {}
+
+    attribution = values.get("stall_attribution")
+    stalls = attribution.get("stalls") if isinstance(attribution, dict) else None
+    if isinstance(stalls, dict):
+        for reason, value in stalls.items():
+            pct = _numeric(value)
+            if pct is not None:
+                hist[str(reason)] = pct
+
+    for reason in STALL_REASON_KEYS:
+        for key in (f"stall_{reason}", f"stall_{reason}_pct"):
+            pct = _numeric(metrics.get(key))
+            if pct is None:
+                pct = _numeric(resolver.get(key))
+            if pct is not None:
+                hist[reason] = pct
+                break
+    return hist
+
+
+def _gcom_stall_histogram(result: dict[str, Any] | None) -> dict[str, dict[str, float]]:
+    if not result:
+        return {}
+    metrics = (result.get("raw_observation") or {}).get("metrics") or {}
+    hist = metrics.get("gcom_stall_reason_histogram")
+    return hist if isinstance(hist, dict) else {}
+
+
+def compare_stall_reason_histograms(
+    real: dict[str, dict[str, Any]],
+    sim: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Compare NCU and GCoM stall-reason histograms per probe."""
+
+    rows: list[dict[str, Any]] = []
+    for probe_id in sorted(set(real) | set(sim)):
+        hw_hist = _ncu_stall_histogram(real.get(probe_id))
+        sim_hist = _gcom_stall_histogram(sim.get(probe_id))
+        if not hw_hist and not sim_hist:
+            continue
+
+        reasons: dict[str, dict[str, Any]] = {}
+        abs_errors: list[float] = []
+        for reason in STALL_REASON_KEYS:
+            hw_pct = hw_hist.get(reason)
+            sim_entry = sim_hist.get(reason)
+            sim_pct = None
+            sim_count = None
+            if isinstance(sim_entry, dict):
+                sim_pct = _numeric(sim_entry.get("pct"))
+                sim_count = _numeric(sim_entry.get("count"))
+            abs_delta = None
+            if hw_pct is not None and sim_pct is not None:
+                abs_delta = abs(sim_pct - hw_pct)
+                abs_errors.append(abs_delta)
+            reasons[reason] = {
+                "ncu_pct": hw_pct,
+                "gcom_pct": sim_pct,
+                "gcom_count": sim_count,
+                "abs_pct_point_error": abs_delta,
+            }
+
+        metrics = (sim.get(probe_id, {}).get("raw_observation") or {}).get("metrics") or {}
+        rows.append({
+            "probe_id": probe_id,
+            "ncu_available": bool(hw_hist),
+            "gcom_available": bool(sim_hist),
+            "gcom_complete": metrics.get("gcom_stall_reason_complete") if sim_hist else None,
+            "gcom_denominator": metrics.get("gcom_stall_reason_denominator") if sim_hist else None,
+            "mean_abs_pct_point_error": statistics.fmean(abs_errors) if abs_errors else None,
+            "max_abs_pct_point_error": max(abs_errors) if abs_errors else None,
+            "reasons": reasons,
+        })
+    return rows
+
+
+def summarize_stall_reason_comparison(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Aggregate NCU-vs-GCoM stall percentages across comparable probe rows."""
+
+    summary: list[dict[str, Any]] = []
+    for reason in STALL_REASON_KEYS:
+        ncu_vals: list[float] = []
+        gcom_vals: list[float] = []
+        abs_errors: list[float] = []
+        probe_ids: list[str] = []
+        for row in rows:
+            entry = (row.get("reasons") or {}).get(reason) or {}
+            ncu_pct = _numeric(entry.get("ncu_pct"))
+            gcom_pct = _numeric(entry.get("gcom_pct"))
+            if ncu_pct is None or gcom_pct is None:
+                continue
+            ncu_vals.append(ncu_pct)
+            gcom_vals.append(gcom_pct)
+            abs_errors.append(abs(gcom_pct - ncu_pct))
+            probe_ids.append(row["probe_id"])
+        summary.append({
+            "reason": reason,
+            "probe_count": len(probe_ids),
+            "probes": probe_ids,
+            "ncu_mean_pct": statistics.fmean(ncu_vals) if ncu_vals else None,
+            "gcom_mean_pct": statistics.fmean(gcom_vals) if gcom_vals else None,
+            "mean_abs_pct_point_error": statistics.fmean(abs_errors) if abs_errors else None,
+            "max_abs_pct_point_error": max(abs_errors) if abs_errors else None,
+        })
+    return summary
 
 
 def _accuracy_rollup(rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -203,19 +357,52 @@ def _coverage(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _stall_histogram_coverage(sim: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    complete: list[str] = []
+    partial: list[str] = []
+    missing: list[str] = []
+    missing_reasons: dict[str, int] = {}
+    for probe_id, result in sim.items():
+        metrics = (result.get("raw_observation") or {}).get("metrics") or {}
+        hist = metrics.get("gcom_stall_reason_histogram")
+        if not hist:
+            missing.append(probe_id)
+            continue
+        if metrics.get("gcom_stall_reason_complete") is False:
+            partial.append(probe_id)
+            for reason in metrics.get("gcom_stall_reason_missing") or ():
+                missing_reasons[reason] = missing_reasons.get(reason, 0) + 1
+        else:
+            complete.append(probe_id)
+    return {
+        "complete": complete,
+        "partial": partial,
+        "missing": missing,
+        "complete_count": len(complete),
+        "partial_count": len(partial),
+        "missing_count": len(missing),
+        "missing_reasons": missing_reasons,
+    }
+
+
 def build_comparison(real_path: str | Path, sim_path: str | Path) -> dict[str, Any]:
     real = load_backend_report(real_path)
     sim = load_backend_report(sim_path)
     probe_rows = compare_probes(real, sim)
     counter_rows = compare_counters(real, sim)
+    stall_rows = compare_stall_reason_histograms(real, sim)
+    stall_summary = summarize_stall_reason_comparison(stall_rows)
     sim_meta = json.loads(Path(sim_path).read_text()).get("metadata", {})
     return {
         "mapping_version": mm_mapping_version(),
         "probe_comparison": probe_rows,
         "counter_comparison": counter_rows,
+        "stall_reason_comparison": stall_rows,
+        "stall_reason_summary": stall_summary,
         "accuracy_rollup": _accuracy_rollup(probe_rows),
         "anchor_summary": _anchor_summary(probe_rows),
         "coverage": _coverage(probe_rows),
+        "stall_reason_coverage": _stall_histogram_coverage(sim),
         "category_counts": mm.category_counts(),
         "sim_metadata": sim_meta,
     }
@@ -244,6 +431,115 @@ def _pct(v: Any) -> str:
     if not isinstance(v, (int, float)):
         return "—"
     return f"{v * 100:.1f}%"
+
+
+def _pct_points(v: Any) -> str:
+    """Render a percentage-valued metric as percentage points."""
+    if not isinstance(v, (int, float)):
+        return "—"
+    return f"{v:.2f}"
+
+
+def _bar(v: Any, *, width: int = 18) -> str:
+    if not isinstance(v, (int, float)):
+        return "—"
+    filled = max(0, min(width, round((float(v) / 100.0) * width)))
+    return "#" * filled + "." * (width - filled)
+
+
+def _svg_escape(value: Any) -> str:
+    return (
+        str(value)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
+def render_stall_summary_svg(comparison: dict[str, Any], *, sku: str) -> str:
+    summary = comparison.get("stall_reason_summary") or []
+    rows = [r for r in summary if r.get("probe_count")]
+    if not rows:
+        rows = summary
+
+    left = 170
+    right = 28
+    top = 72
+    row_h = 26
+    axis_h = 44
+    plot_w = 420
+    height = top + len(rows) * row_h + axis_h
+    width = left + plot_w + right
+    ncu_color = "#2563eb"
+    gcom_color = "#dc2626"
+    grid_color = "#e5e7eb"
+    text_color = "#111827"
+    muted = "#6b7280"
+
+    lines = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">',
+        f"<title id=\"title\">NCU vs GCoM stall reason summary for {_svg_escape(sku)}</title>",
+        "<desc id=\"desc\">Grouped horizontal bar chart comparing average stall reason "
+        "percentages across probes where both NCU and GCoM values are available.</desc>",
+        '<rect width="100%" height="100%" fill="white"/>',
+        f'<text x="20" y="28" font-family="Arial, sans-serif" font-size="18" '
+        f'font-weight="700" fill="{text_color}">NCU vs GCoM Stall Reasons</text>',
+        f'<text x="20" y="50" font-family="Arial, sans-serif" font-size="12" '
+        f'fill="{muted}">Average percentage across probes with both values</text>',
+        f'<rect x="{left}" y="20" width="12" height="12" fill="{ncu_color}"/>',
+        f'<text x="{left + 18}" y="31" font-family="Arial, sans-serif" font-size="12" '
+        f'fill="{text_color}">NCU</text>',
+        f'<rect x="{left + 68}" y="20" width="12" height="12" fill="{gcom_color}"/>',
+        f'<text x="{left + 86}" y="31" font-family="Arial, sans-serif" font-size="12" '
+        f'fill="{text_color}">GCoM</text>',
+    ]
+
+    for pct in (0, 25, 50, 75, 100):
+        x = left + (pct / 100.0) * plot_w
+        lines.extend([
+            f'<line x1="{x:.1f}" y1="{top - 10}" x2="{x:.1f}" '
+            f'y2="{height - axis_h + 4}" stroke="{grid_color}" stroke-width="1"/>',
+            f'<text x="{x:.1f}" y="{height - 18}" text-anchor="middle" '
+            f'font-family="Arial, sans-serif" font-size="11" fill="{muted}">{pct}%</text>',
+        ])
+
+    for i, row in enumerate(rows):
+        y = top + i * row_h
+        reason = row.get("reason", "")
+        ncu = row.get("ncu_mean_pct")
+        gcom = row.get("gcom_mean_pct")
+        probes = row.get("probe_count", 0)
+        ncu_w = 0 if not isinstance(ncu, (int, float)) else max(0, min(plot_w, ncu / 100.0 * plot_w))
+        gcom_w = 0 if not isinstance(gcom, (int, float)) else max(0, min(plot_w, gcom / 100.0 * plot_w))
+        lines.extend([
+            f'<text x="{left - 10}" y="{y + 16}" text-anchor="end" '
+            f'font-family="Arial, sans-serif" font-size="12" fill="{text_color}">'
+            f'{_svg_escape(reason)}</text>',
+            f'<rect x="{left}" y="{y + 3}" width="{ncu_w:.1f}" height="9" '
+            f'rx="2" fill="{ncu_color}"/>',
+            f'<rect x="{left}" y="{y + 14}" width="{gcom_w:.1f}" height="9" '
+            f'rx="2" fill="{gcom_color}"/>',
+        ])
+        if isinstance(ncu, (int, float)):
+            lines.append(
+                f'<text x="{left + ncu_w + 4:.1f}" y="{y + 11}" '
+                f'font-family="Arial, sans-serif" font-size="10" fill="{muted}">{ncu:.1f}</text>'
+            )
+        if isinstance(gcom, (int, float)):
+            lines.append(
+                f'<text x="{left + gcom_w + 4:.1f}" y="{y + 22}" '
+                f'font-family="Arial, sans-serif" font-size="10" fill="{muted}">{gcom:.1f}</text>'
+            )
+        if probes:
+            lines.append(
+                f'<text x="{width - 6}" y="{y + 16}" text-anchor="end" '
+                f'font-family="Arial, sans-serif" font-size="10" fill="{muted}">n={probes}</text>'
+            )
+
+    lines.append("</svg>")
+    return "\n".join(lines) + "\n"
 
 
 def render_markdown(comparison: dict[str, Any], *, sku: str) -> str:
@@ -280,8 +576,69 @@ def render_markdown(comparison: dict[str, Any], *, sku: str) -> str:
         )
     lines.append("")
 
+    stall_cov = comparison.get("stall_reason_coverage") or {}
+    if stall_cov:
+        lines += ["## GCoM stall-reason coverage", "",
+                  f"- complete histograms: {stall_cov.get('complete_count', 0)}",
+                  f"- partial histograms: {stall_cov.get('partial_count', 0)}",
+                  f"- no histogram: {stall_cov.get('missing_count', 0)}"]
+        missing_reasons = stall_cov.get("missing_reasons") or {}
+        if missing_reasons:
+            formatted = ", ".join(
+                f"{reason}={count}" for reason, count in sorted(missing_reasons.items())
+            )
+            lines.append(f"- missing reasons in partial histograms: {formatted}")
+        lines.append("")
+
+    stall_cmp = comparison.get("stall_reason_comparison") or []
+    if stall_cmp:
+        lines += ["## Stall-reason histogram comparison (NCU vs GCoM)", ""]
+        stall_summary = comparison.get("stall_reason_summary") or []
+        if stall_summary:
+            lines += [
+                "### All-Probe Stall Summary",
+                "",
+                f"![NCU vs GCoM stall reason summary](sim-vs-hw-{sku}-stall-summary.svg)",
+                "",
+                "| reason | probes | ncu avg pct | ncu | gcom avg pct | gcom | mean abs pp err | max abs pp err |",
+                "|---|---:|---:|---|---:|---|---:|---:|",
+            ]
+            for row in stall_summary:
+                lines.append(
+                    f"| {row['reason']} | {row['probe_count']} | "
+                    f"{_pct_points(row['ncu_mean_pct'])} | {_bar(row['ncu_mean_pct'])} | "
+                    f"{_pct_points(row['gcom_mean_pct'])} | {_bar(row['gcom_mean_pct'])} | "
+                    f"{_pct_points(row['mean_abs_pct_point_error'])} | "
+                    f"{_pct_points(row['max_abs_pct_point_error'])} |"
+                )
+            lines.append("")
+
+        for row in stall_cmp:
+            lines += [
+                f"### {row['probe_id']}",
+                "",
+                f"- NCU histogram: {'yes' if row['ncu_available'] else 'no'}",
+                f"- GCoM histogram: {'yes' if row['gcom_available'] else 'no'}"
+                f" · complete: {_fmt(row['gcom_complete'])}"
+                f" · denominator: {_fmt(row['gcom_denominator'])}",
+                f"- mean absolute error: {_pct_points(row['mean_abs_pct_point_error'])} pp"
+                f" · max absolute error: {_pct_points(row['max_abs_pct_point_error'])} pp",
+                "",
+                "| reason | ncu pct | gcom pct | abs pp err | gcom count |",
+                "|---|---|---|---|---|",
+            ]
+            for reason in STALL_REASON_KEYS:
+                entry = row["reasons"][reason]
+                lines.append(
+                    f"| {reason} | {_pct_points(entry['ncu_pct'])} | "
+                    f"{_pct_points(entry['gcom_pct'])} | "
+                    f"{_pct_points(entry['abs_pct_point_error'])} | "
+                    f"{_fmt(entry['gcom_count'])} |"
+                )
+            lines.append("")
+
     if comparison["counter_comparison"]:
-        lines += ["## Counter-level comparison (GCoM-derived vs NCU)", "",
+        lines += ["## Non-stall counter comparison (GCoM-derived vs NCU)", "",
                   "| probe | logical | fidelity | hw ncu | sim gcom | pct err |",
                   "|---|---|---|---|---|---|"]
         for r in comparison["counter_comparison"]:
@@ -300,6 +657,8 @@ def write_outputs(comparison: dict[str, Any], out_dir: str | Path, *,
     base.mkdir(parents=True, exist_ok=True)
     json_path = base / f"sim-vs-hw-{sku}.json"
     md_path = base / f"sim-vs-hw-{sku}.md"
+    svg_path = base / f"sim-vs-hw-{sku}-stall-summary.svg"
     json_path.write_text(json.dumps(comparison, indent=2, sort_keys=True) + "\n")
+    svg_path.write_text(render_stall_summary_svg(comparison, sku=sku))
     md_path.write_text(render_markdown(comparison, sku=sku) + "\n")
-    return {"json": str(json_path), "markdown": str(md_path)}
+    return {"json": str(json_path), "markdown": str(md_path), "stall_summary_svg": str(svg_path)}

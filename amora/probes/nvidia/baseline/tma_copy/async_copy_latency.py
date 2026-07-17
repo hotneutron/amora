@@ -15,7 +15,13 @@ from pathlib import Path
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation
-from amora.probes.nvidia.baseline._sources import apply_sass_gating, feature_gate, source_descriptor
+from amora.probes.nvidia.baseline._sources import (
+    apply_sass_gating,
+    collect_gcom_counter_comparison,
+    collect_stall_attribution,
+    feature_gate,
+    source_descriptor,
+)
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -78,6 +84,13 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             )
         ]
 
+    stall_record = collect_stall_attribution(
+        capabilities, SOURCE, kernel_name="amora_tma_async_copy_latency"
+    )
+    ncu_record = collect_gcom_counter_comparison(
+        capabilities, SOURCE, kernel_name="amora_tma_async_copy_latency"
+    )
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
@@ -85,6 +98,10 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     }
     if sass is not None:
         values["sass"] = sass.to_dict()
+    if stall_record is not None:
+        values["stall_attribution"] = stall_record
+    if ncu_record is not None:
+        values["gcom_counter_comparison"] = ncu_record
     assumptions = [
         "one CTA stages tiles global->shared via cp.async (__pipeline_memcpy_async)",
         "cycles-per-tile brackets issue->commit->wait->use with clock64()",
@@ -123,6 +140,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                 interpretation={
                     "nvidia_backend": "cycles per cp.async-staged tile (issue->wait->use)",
                 },
+                metric_resolver=ncu_record or {},
                 sass_validation=sass.to_dict() if sass else {},
                 downgrade_reason=downgrade_reason,
             ),

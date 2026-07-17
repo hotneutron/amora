@@ -8,6 +8,8 @@ from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation, gate_decision
 from amora.probes.nvidia.baseline._sources import (
+    collect_gcom_counter_comparison,
+    collect_stall_attribution,
     downgrade_fit,
     soften_uncertainty,
     source_descriptor,
@@ -85,6 +87,13 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
         uncertainty = soften_uncertainty(uncertainty)
         downgrade_reason = f"SASS validation downgrade: {sass.reason}"
 
+    stall_record = collect_stall_attribution(
+        capabilities, SOURCE, kernel_name="amora_baseline_fp32_dependent_chain"
+    )
+    ncu_record = collect_gcom_counter_comparison(
+        capabilities, SOURCE, kernel_name="amora_baseline_fp32_dependent_chain"
+    )
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
@@ -92,6 +101,10 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     }
     if sass is not None:
         values["sass"] = sass.to_dict()
+    if stall_record is not None:
+        values["stall_attribution"] = stall_record
+    if ncu_record is not None:
+        values["gcom_counter_comparison"] = ncu_record
     assumptions = [
         "FP32 FMA dependent chain timed via clock64 inside a single warp",
         "median across N launches is reported to suppress one-shot kernel-launch jitter",
@@ -127,6 +140,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             backend_interpretation=BackendInterpretation(
                 concept="fp32_fma_dependent_pipeline_latency",
                 interpretation={"nvidia_backend": "cycles between issue and writeback for a dependent FMA"},
+                metric_resolver=ncu_record or {},
                 sass_validation=sass.to_dict() if sass else {},
                 downgrade_reason=downgrade_reason,
             ),

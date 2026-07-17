@@ -25,6 +25,32 @@ _STAT_LINE = re.compile(r"^\s*([A-Za-z0-9_:\.\[\]]+)\s*=\s*([-\d.eE+]+)\s*$")
 # A run is only meaningful if this core execution stat is present.
 REQUIRED_CORE_STAT = "gpu_sim_cycle"
 
+STALL_REASON_SCHEMA = "ncu-stall-v1"
+STALL_REASON_KEYS = (
+    "selected",
+    "not_selected",
+    "dispatch_stall",
+    "warpgroup_arrive",
+    "long_scoreboard",
+    "short_scoreboard",
+    "barrier",
+    "wait",
+    "mio_throttle",
+    "math_pipe_throttle",
+    "mma",
+    "no_instructions",
+    "imc_miss",
+    "sleeping",
+    "branch_resolving",
+    "membar",
+    "drain",
+    "lg_throttle",
+    "tex_throttle",
+    "misc",
+)
+
+STALL_REASON_DENOMINATOR = "total_num_cycles_issue_stage_evaluated"
+
 
 @dataclass(frozen=True)
 class SimResult:
@@ -58,6 +84,48 @@ def parse_stats(stdout: str) -> dict[str, float]:
     return stats
 
 
+def extract_stall_reason_histogram(stats: dict[str, float]) -> dict[str, Any] | None:
+    """Return the NCU-aligned stall histogram emitted by recent GCoM builds.
+
+    ``None`` means this simulator output has no NCU stall-taxonomy lines. A
+    partial histogram returns ``complete=False`` instead of fabricating missing
+    reasons as zero.
+    """
+
+    present = [
+        reason for reason in STALL_REASON_KEYS
+        if f"ncu_stall_{reason}" in stats
+    ]
+    if not present:
+        return None
+
+    denominator = stats.get(STALL_REASON_DENOMINATOR)
+    reasons: dict[str, dict[str, float]] = {}
+    missing: list[str] = []
+    for reason in STALL_REASON_KEYS:
+        count_key = f"ncu_stall_{reason}"
+        pct_key = f"{count_key}_pct"
+        if count_key not in stats:
+            missing.append(reason)
+            continue
+        entry = {"count": stats[count_key]}
+        if pct_key in stats:
+            entry["pct"] = stats[pct_key]
+        elif denominator not in (None, 0):
+            entry["pct"] = (stats[count_key] / denominator) * 100.0
+        reasons[reason] = entry
+
+    return {
+        "schema": STALL_REASON_SCHEMA,
+        "denominator": denominator,
+        "denominator_key": STALL_REASON_DENOMINATOR,
+        "denominator_missing": denominator is None,
+        "complete": not missing,
+        "missing_reasons": missing,
+        "reasons": reasons,
+    }
+
+
 def _find_trace_pb(trace_dir: Path) -> Path:
     pb = trace_dir / "dynamic_trace.pb"
     if pb.exists():
@@ -66,6 +134,24 @@ def _find_trace_pb(trace_dir: Path) -> Path:
     if not candidates:
         raise SimulateError(f"no dynamic_trace.pb found under {trace_dir}")
     return candidates[0]
+
+
+def _trace_compat_overrides(trace_dir: Path) -> list[str]:
+    """Return config overrides needed for AMORA microprobe traces.
+
+    Current H100 GCoM configs enable real-base TMA modeling by default, which is
+    correct for FA3 traces with TMA sidecars. AMORA baseline microprobes usually
+    have no TMA descriptors and no ``tma_pc_base_map.json``; the simulator
+    intentionally fatal-asserts in that case unless the feature is disabled.
+    """
+
+    base_map = trace_dir / "extra_info" / "tma_pc_base_map.json"
+    if base_map.exists():
+        return []
+    return [
+        "-tma_real_base_addr_enable", "0",
+        "-tma_operand_addr_tiling_enable", "0",
+    ]
 
 
 def _sim_env(omp_threads: int | None = None) -> dict[str, str]:
@@ -111,6 +197,7 @@ def simulate(
         "-config", str(profile.gpgpusim_config.resolve()),
         "-config", str(profile.trace_config.resolve()),
     ]
+    args.extend(_trace_compat_overrides(trace_pb.parent))
     try:
         completed = subprocess.run(
             args, cwd=str(trace_dir), env=_sim_env(omp_threads),

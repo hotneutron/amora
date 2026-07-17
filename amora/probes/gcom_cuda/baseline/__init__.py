@@ -147,9 +147,21 @@ def _result(probe_id: str, value: float, unit: str, policy: mm.ProbePolicy,
         "gpu_ipc": stats.get("gpu_ipc"),
     }
     # GCoM-derived logical counters (for the counter-comparison layer).
-    from amora.backends.gcom_cuda.runner import derive_logical_metrics
+    from amora.backends.gcom_cuda.runner import (
+        derive_logical_metrics,
+        extract_stall_reason_histogram,
+    )
 
     logical = derive_logical_metrics(stats)
+    stall_hist = extract_stall_reason_histogram(stats)
+    if stall_hist is not None:
+        derived_metrics["gcom_stall_reason_schema"] = stall_hist["schema"]
+        derived_metrics["gcom_stall_reason_denominator"] = stall_hist.get("denominator")
+        derived_metrics["gcom_stall_reason_denominator_key"] = stall_hist.get("denominator_key")
+        derived_metrics["gcom_stall_reason_histogram"] = stall_hist["reasons"]
+        derived_metrics["gcom_stall_reason_complete"] = stall_hist["complete"]
+        if not stall_hist["complete"]:
+            derived_metrics["gcom_stall_reason_missing"] = stall_hist["missing_reasons"]
     return ProbeResult(
         identity=ProbeIdentity(probe_id=probe_id, backend="gcom_cuda", family="baseline"),
         tool_context=_tool_context(caps),

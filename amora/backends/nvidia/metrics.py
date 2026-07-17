@@ -74,27 +74,71 @@ class MetricResolver:
         # NCU exposes these as a percentage of issue-stall cycles (.pct).
         "stall_long_scoreboard": (
             "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct",
+            "smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio",
         ),
         "stall_short_scoreboard": (
             "smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct",
+            "smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio",
         ),
         "stall_wait": (
             "smsp__warp_issue_stalled_wait_per_warp_active.pct",
+            "smsp__average_warps_issue_stalled_wait_per_issue_active.ratio",
         ),
         "stall_barrier": (
             "smsp__warp_issue_stalled_barrier_per_warp_active.pct",
+            "smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio",
         ),
         "stall_lg_throttle": (
             "smsp__warp_issue_stalled_lg_throttle_per_warp_active.pct",
+            "smsp__average_warps_issue_stalled_lg_throttle_per_issue_active.ratio",
         ),
         "stall_mio_throttle": (
             "smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct",
+            "smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio",
         ),
         "stall_math_pipe_throttle": (
             "smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct",
+            "smsp__average_warps_issue_stalled_math_pipe_throttle_per_issue_active.ratio",
         ),
         "stall_not_selected": (
             "smsp__warp_issue_stalled_not_selected_per_warp_active.pct",
+            "smsp__average_warps_issue_stalled_not_selected_per_issue_active.ratio",
+        ),
+        "stall_selected": (
+            "smsp__average_warps_issue_stalled_selected_per_issue_active.ratio",
+        ),
+        "stall_dispatch_stall": (
+            "smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.ratio",
+        ),
+        "stall_warpgroup_arrive": (
+            "smsp__average_warps_issue_stalled_warpgroup_arrive_per_issue_active.ratio",
+        ),
+        "stall_mma": (
+            "smsp__average_warps_issue_stalled_mma_per_issue_active.ratio",
+        ),
+        "stall_no_instructions": (
+            "smsp__average_warps_issue_stalled_no_instructions_per_issue_active.ratio",
+        ),
+        "stall_imc_miss": (
+            "smsp__average_warps_issue_stalled_imc_miss_per_issue_active.ratio",
+        ),
+        "stall_sleeping": (
+            "smsp__average_warps_issue_stalled_sleeping_per_issue_active.ratio",
+        ),
+        "stall_branch_resolving": (
+            "smsp__average_warps_issue_stalled_branch_resolving_per_issue_active.ratio",
+        ),
+        "stall_membar": (
+            "smsp__average_warps_issue_stalled_membar_per_issue_active.ratio",
+        ),
+        "stall_drain": (
+            "smsp__average_warps_issue_stalled_drain_per_issue_active.ratio",
+        ),
+        "stall_tex_throttle": (
+            "smsp__average_warps_issue_stalled_tex_throttle_per_issue_active.ratio",
+        ),
+        "stall_misc": (
+            "smsp__average_warps_issue_stalled_misc_per_issue_active.ratio",
         ),
     }
 

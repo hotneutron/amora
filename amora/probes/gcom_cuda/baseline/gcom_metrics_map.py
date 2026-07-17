@@ -17,7 +17,7 @@ from typing import Callable
 
 from amora.backends.gcom_cuda.config import DRAM_ATOM_BYTES
 
-MAPPING_VERSION = "2026-06-gcom-cuda-v1"
+MAPPING_VERSION = "2026-07-gcom-cuda-v2"
 
 # Fidelity tags (see plan Accuracy Model).
 DIRECT = "direct"
@@ -59,6 +59,19 @@ def _one_minus(key: str) -> Callable[[dict[str, float]], float | None]:
 
 def _diff(a: str, b: str) -> Callable[[dict[str, float]], float | None]:
     return lambda s: s[a] - s[b]
+
+
+def _stall_pct(reason: str) -> GcomMetric:
+    key = f"ncu_stall_{reason}_pct"
+    return GcomMetric(
+        f"stall_{reason}_pct",
+        (key,),
+        f"smsp__average_warps_issue_stalled_{reason}_per_issue_active.ratio",
+        PROPORTIONAL,
+        "nvidia_hopper",
+        _identity(key),
+        "GCoM NCU-aligned stall reason percentage",
+    )
 
 
 GCOM_TO_LOGICAL: tuple[GcomMetric, ...] = (
@@ -121,6 +134,26 @@ GCOM_TO_LOGICAL: tuple[GcomMetric, ...] = (
         PROXY, "gcom_simulator_only", _identity("avg_icnt2mem_latency"),
         "sim-only interconnect latency",
     ),
+    _stall_pct("selected"),
+    _stall_pct("not_selected"),
+    _stall_pct("dispatch_stall"),
+    _stall_pct("warpgroup_arrive"),
+    _stall_pct("long_scoreboard"),
+    _stall_pct("short_scoreboard"),
+    _stall_pct("barrier"),
+    _stall_pct("wait"),
+    _stall_pct("mio_throttle"),
+    _stall_pct("math_pipe_throttle"),
+    _stall_pct("mma"),
+    _stall_pct("no_instructions"),
+    _stall_pct("imc_miss"),
+    _stall_pct("sleeping"),
+    _stall_pct("branch_resolving"),
+    _stall_pct("membar"),
+    _stall_pct("drain"),
+    _stall_pct("lg_throttle"),
+    _stall_pct("tex_throttle"),
+    _stall_pct("misc"),
 )
 
 

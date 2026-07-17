@@ -13,7 +13,13 @@ from pathlib import Path
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation
-from amora.probes.nvidia.baseline._sources import apply_sass_gating, collect_ncu_metrics, source_descriptor
+from amora.probes.nvidia.baseline._sources import (
+    apply_sass_gating,
+    collect_gcom_counter_comparison,
+    collect_ncu_metrics,
+    collect_stall_attribution,
+    source_descriptor,
+)
 from amora.schemas.evidence import EvidenceTier, FitStatus, UncertaintyCategory
 from amora.schemas.results import (
     BackendInterpretation,
@@ -80,6 +86,13 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
         role="validation",
         aggregate="max",
     )
+    stall_record = collect_stall_attribution(
+        capabilities, SOURCE, kernel_name="amora_tc_mma_throughput"
+    )
+    comparison_record = collect_gcom_counter_comparison(
+        capabilities, SOURCE, kernel_name="amora_tc_mma_throughput",
+        extra_logicals=("tensor_pipe_active",),
+    )
 
     values = {
         "registered_source": src_descriptor,
@@ -90,6 +103,10 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
         values["sass"] = sass.to_dict()
     if ncu_record is not None:
         values["ncu"] = ncu_record
+    if stall_record is not None:
+        values["stall_attribution"] = stall_record
+    if comparison_record is not None:
+        values["gcom_counter_comparison"] = comparison_record
     initiation_interval = round(1.0 / mma_per_cycle, 4) if mma_per_cycle > 0 else None
     assumptions = [
         "independent wmma::mma_sync accumulators (FP16 m16n16k16) expose ILP to saturate the tensor pipe",
@@ -128,7 +145,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
                     "nvidia_backend": "independent FP16 16x16x16 MMA throughput in MMA-ops per cycle per warp",
                     "mma_shape": payload["mma_shape"],
                 },
-                metric_resolver=ncu_record or {},
+                metric_resolver=comparison_record or ncu_record or {},
                 sass_validation=sass.to_dict() if sass else {},
                 downgrade_reason=downgrade_reason,
             ),
