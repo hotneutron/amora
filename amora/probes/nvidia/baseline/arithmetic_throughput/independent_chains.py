@@ -9,6 +9,8 @@ from amora.backends.nvidia.runner import CudaUnavailable, run_kernel
 from amora.backends.nvidia.sass import SassExpectation
 from amora.probes.nvidia.baseline._sources import (
     apply_sass_gating,
+    collect_gcom_counter_comparison,
+    collect_stall_attribution,
     downgrade_fit,
     soften_uncertainty,
     source_descriptor,
@@ -76,6 +78,13 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             )
         ]
 
+    stall_record = collect_stall_attribution(
+        capabilities, SOURCE, kernel_name="amora_baseline_fp32_independent_chains"
+    )
+    ncu_record = collect_gcom_counter_comparison(
+        capabilities, SOURCE, kernel_name="amora_baseline_fp32_independent_chains"
+    )
+
     values = {
         "registered_source": src_descriptor,
         "binary_sha256": result.binary_sha256,
@@ -83,6 +92,10 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
     }
     if sass is not None:
         values["sass"] = sass.to_dict()
+    if stall_record is not None:
+        values["stall_attribution"] = stall_record
+    if ncu_record is not None:
+        values["gcom_counter_comparison"] = ncu_record
     assumptions = [
         "4 independent FMA chains per thread to expose ILP",
         "throughput is per-thread cycles-per-op; per-SM is approximate (assumes resident across all SMs)",
@@ -125,6 +138,7 @@ def run(capabilities: NvidiaCapabilities) -> list[ProbeResult]:
             backend_interpretation=BackendInterpretation(
                 concept="fp32_fma_independent_pipeline_throughput",
                 interpretation={"nvidia_backend": "effective FMA cycles-per-op once ILP saturates the FP32 pipe"},
+                metric_resolver=ncu_record or {},
                 sass_validation=sass.to_dict() if sass else {},
                 downgrade_reason=downgrade_reason,
             ),

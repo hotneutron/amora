@@ -1,0 +1,251 @@
+"""Run the GCoM simulator on a trace and parse its emitted stats.
+
+``simulate`` invokes ``accel-sim.out`` with the SKU's gpgpusim + trace configs,
+tees output to a log, and ``parse_stats`` extracts the ``key = value`` stat
+lines (last value per key wins). ``derive_logical_metrics`` translates GCoM stat
+keys into AMORA logical metric names via the (versioned) gcom metric map.
+Requires a built simulator; not exercised by no-GPU tests except for the pure
+``parse_stats`` parser.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import subprocess
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+from amora.backends.gcom_cuda import config as cfg
+
+# GPGPU-Sim prints "key = value" stat lines.
+_STAT_LINE = re.compile(r"^\s*([A-Za-z0-9_:\.\[\]]+)\s*=\s*([-\d.eE+]+)\s*$")
+
+# A run is only meaningful if this core execution stat is present.
+REQUIRED_CORE_STAT = "gpu_sim_cycle"
+
+STALL_REASON_SCHEMA = "ncu-stall-v1"
+STALL_REASON_KEYS = (
+    "selected",
+    "not_selected",
+    "dispatch_stall",
+    "warpgroup_arrive",
+    "long_scoreboard",
+    "short_scoreboard",
+    "barrier",
+    "wait",
+    "mio_throttle",
+    "math_pipe_throttle",
+    "mma",
+    "no_instructions",
+    "imc_miss",
+    "sleeping",
+    "branch_resolving",
+    "membar",
+    "drain",
+    "lg_throttle",
+    "tex_throttle",
+    "misc",
+)
+
+STALL_REASON_DENOMINATOR = "total_num_cycles_issue_stage_evaluated"
+
+
+@dataclass(frozen=True)
+class SimResult:
+    stats: dict[str, float]
+    returncode: int
+    log_path: Path | None = None
+    stdout: str = ""
+    stderr: str = ""
+
+    def core_present(self) -> bool:
+        return REQUIRED_CORE_STAT in self.stats
+
+
+class SimulateError(RuntimeError):
+    """Raised when the simulator cannot be run."""
+
+
+def parse_stats(stdout: str) -> dict[str, float]:
+    """Extract ``key = value`` numeric stats (last value per key wins)."""
+
+    stats: dict[str, float] = {}
+    for line in stdout.splitlines():
+        m = _STAT_LINE.match(line)
+        if not m:
+            continue
+        key, raw = m.group(1), m.group(2)
+        try:
+            stats[key] = float(raw)
+        except ValueError:
+            continue
+    return stats
+
+
+def extract_stall_reason_histogram(stats: dict[str, float]) -> dict[str, Any] | None:
+    """Return the NCU-aligned stall histogram emitted by recent GCoM builds.
+
+    ``None`` means this simulator output has no NCU stall-taxonomy lines. A
+    partial histogram returns ``complete=False`` instead of fabricating missing
+    reasons as zero.
+    """
+
+    present = [
+        reason for reason in STALL_REASON_KEYS
+        if f"ncu_stall_{reason}" in stats
+    ]
+    if not present:
+        return None
+
+    denominator = stats.get(STALL_REASON_DENOMINATOR)
+    reasons: dict[str, dict[str, float]] = {}
+    missing: list[str] = []
+    for reason in STALL_REASON_KEYS:
+        count_key = f"ncu_stall_{reason}"
+        pct_key = f"{count_key}_pct"
+        if count_key not in stats:
+            missing.append(reason)
+            continue
+        entry = {"count": stats[count_key]}
+        if pct_key in stats:
+            entry["pct"] = stats[pct_key]
+        elif denominator not in (None, 0):
+            entry["pct"] = (stats[count_key] / denominator) * 100.0
+        reasons[reason] = entry
+
+    return {
+        "schema": STALL_REASON_SCHEMA,
+        "denominator": denominator,
+        "denominator_key": STALL_REASON_DENOMINATOR,
+        "denominator_missing": denominator is None,
+        "complete": not missing,
+        "missing_reasons": missing,
+        "reasons": reasons,
+    }
+
+
+def _find_trace_pb(trace_dir: Path) -> Path:
+    pb = trace_dir / "dynamic_trace.pb"
+    if pb.exists():
+        return pb
+    candidates = list(trace_dir.rglob("dynamic_trace.pb"))
+    if not candidates:
+        raise SimulateError(f"no dynamic_trace.pb found under {trace_dir}")
+    return candidates[0]
+
+
+def _trace_compat_overrides(trace_dir: Path) -> list[str]:
+    """Return config overrides needed for AMORA microprobe traces.
+
+    Current H100 GCoM configs enable real-base TMA modeling by default, which is
+    correct for FA3 traces with TMA sidecars. AMORA baseline microprobes usually
+    have no TMA descriptors and no ``tma_pc_base_map.json``; the simulator
+    intentionally fatal-asserts in that case unless the feature is disabled.
+    """
+
+    base_map = trace_dir / "extra_info" / "tma_pc_base_map.json"
+    if base_map.exists():
+        return []
+    return [
+        "-tma_real_base_addr_enable", "0",
+        "-tma_operand_addr_tiling_enable", "0",
+    ]
+
+
+def _sim_env(omp_threads: int | None = None) -> dict[str, str]:
+    env = dict(os.environ)
+    cuda = env.get("CUDA_INSTALL_PATH", "/usr/local/cuda")
+    sim_lib_root = cfg.SIM_BIN.parent.parent.parent / "gpgpu-sim" / "lib"
+    lib_paths = [str(p) for p in sim_lib_root.rglob("release") if p.is_dir()]
+    lib_paths.append(f"{cuda}/lib64")
+    lib_paths.append("/lib/x86_64-linux-gnu")  # system protobuf the sim links
+    existing = env.get("LD_LIBRARY_PATH", "")
+    env["LD_LIBRARY_PATH"] = ":".join(filter(None, [*lib_paths, existing]))
+    # OMP tuning per accorde reference. When probes run concurrently, the caller
+    # passes a reduced per-sim thread count AND we drop thread pinning: multiple
+    # pinned sims bind to overlapping cores (OMP_PROC_BIND=close), causing severe
+    # contention that slows every sim. Unpinned, the OS spreads them.
+    if omp_threads:
+        env["OMP_NUM_THREADS"] = str(omp_threads)
+        env.pop("OMP_PROC_BIND", None)
+        env.pop("OMP_PLACES", None)
+    else:
+        env["OMP_NUM_THREADS"] = "8"
+        env.setdefault("OMP_PROC_BIND", "close")
+        env.setdefault("OMP_PLACES", "cores")
+    return env
+
+
+def simulate(
+    profile: cfg.SkuProfile,
+    trace_dir: Path,
+    *,
+    log_path: Path | None = None,
+    timeout: int = 7200,
+    omp_threads: int | None = None,
+) -> SimResult:
+    """Run accel-sim.out on a trace dir with the SKU configs; parse stats."""
+
+    if not cfg.SIM_BIN.exists():
+        raise SimulateError(f"simulator binary not built: {cfg.SIM_BIN}")
+    trace_pb = _find_trace_pb(trace_dir).resolve()
+    args = [
+        str(cfg.SIM_BIN),
+        "-trace", str(trace_pb),
+        "-config", str(profile.gpgpusim_config.resolve()),
+        "-config", str(profile.trace_config.resolve()),
+    ]
+    args.extend(_trace_compat_overrides(trace_pb.parent))
+    try:
+        completed = subprocess.run(
+            args, cwd=str(trace_dir), env=_sim_env(omp_threads),
+            capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        # Latency-bound probes (pointer chase) can exceed the cycle-accurate sim
+        # budget. Degrade to a clean SimulateError so run_all continues and the
+        # probe records missing_stat rather than crashing the whole run.
+        if log_path is not None:
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            partial = (exc.stdout or b"")
+            if isinstance(partial, bytes):
+                partial = partial.decode(errors="ignore")
+            log_path.write_text((partial or "") + f"\n--- TIMEOUT after {timeout}s ---\n")
+        raise SimulateError(f"simulation exceeded {timeout}s timeout") from exc
+    if log_path is not None:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        log_path.write_text(completed.stdout + "\n--- STDERR ---\n" + completed.stderr)
+    stats = parse_stats(completed.stdout)
+    return SimResult(
+        stats=stats,
+        returncode=completed.returncode,
+        log_path=log_path,
+        stdout=completed.stdout,
+        stderr=completed.stderr,
+    )
+
+
+def derive_logical_metrics(stats: dict[str, float]) -> dict[str, dict[str, Any]]:
+    """Translate GCoM stats into AMORA logical metrics via the gcom metric map.
+
+    Returns ``{logical_name: {"value", "fidelity", "gcom_keys", "ncu_metric"}}``;
+    entries whose required GCoM keys are absent are skipped.
+    """
+
+    from amora.probes.gcom_cuda.baseline.gcom_metrics_map import GCOM_TO_LOGICAL
+
+    derived: dict[str, dict[str, Any]] = {}
+    for entry in GCOM_TO_LOGICAL:
+        value = entry.derive(stats)
+        if value is None:
+            continue
+        derived[entry.logical] = {
+            "value": value,
+            "fidelity": entry.fidelity,
+            "gcom_keys": list(entry.gcom_keys),
+            "ncu_metric": entry.ncu_metric,
+            "architecture_scope": entry.architecture_scope,
+        }
+    return derived
