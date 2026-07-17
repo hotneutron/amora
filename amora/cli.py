@@ -130,6 +130,75 @@ def _cmd_materialize_benchmark(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_classify_benchmark(args: argparse.Namespace) -> int:
+    from amora.backends.nvidia.benchmark import classify_case_basic
+    from amora.backends.nvidia.cuda import discover_capabilities
+    from amora.benchmarking.classification import classify_cases, write_classification_manifest
+    from amora.benchmarking.materialize import load_manifest
+
+    manifest = load_manifest(args.manifest)
+    if args.recipe != "ncu_basic_v1":
+        raise ValueError(f"unsupported classification recipe: {args.recipe}")
+    cases = list(manifest.cases)
+    if args.limit is not None:
+        cases = cases[:args.limit]
+    capabilities = discover_capabilities()
+    build_root = (
+        Path("out")
+        / "benchmarks"
+        / manifest.benchmark_id
+        / f"r{manifest.benchmark_revision}"
+        / manifest.case_set_digest
+        / "build-cache"
+    )
+    classification = classify_cases(
+        cases,
+        case_set_digest=manifest.case_set_digest,
+        target=manifest.target,
+        classify_case=lambda case: classify_case_basic(
+            case,
+            capabilities=capabilities,
+            arch=args.arch,
+            build_root=build_root,
+            timeout=args.timeout,
+        ),
+        expected_case_keys=[case.case_key for case in manifest.cases],
+        recipe=args.recipe,
+    )
+    default_out = (
+        Path("out")
+        / "benchmarks"
+        / manifest.benchmark_id
+        / f"r{manifest.benchmark_revision}"
+        / manifest.case_set_digest
+        / "classification"
+        / "nvidia_cuda"
+        / manifest.target.get("family", "generic")
+        / manifest.target.get("hardware_sku", "generic")
+        / classification.classification_digest
+        / "classification.json"
+    )
+    destination = write_classification_manifest(classification, args.output or default_out)
+    counts = {}
+    for result in classification.results:
+        counts[result.status] = counts.get(result.status, 0) + 1
+    ranks = {}
+    for assignment in classification.rank_assignments.values():
+        rank = assignment["size_rank"]
+        ranks[rank] = ranks.get(rank, 0) + 1
+    _print_json(
+        {
+            "classification": str(destination),
+            "case_set_digest": classification.case_set_digest,
+            "classification_digest": classification.classification_digest,
+            "result_counts": counts,
+            "rank_counts": ranks,
+            "rank_boundaries": classification.rank_boundaries,
+        }
+    )
+    return 0
+
+
 # --- gcom_cuda handlers ---
 
 
@@ -219,6 +288,15 @@ def build_parser() -> argparse.ArgumentParser:
     benchmarks_materialize.add_argument("--arch-profile", default="sm_90_h100")
     benchmarks_materialize.add_argument("--output", type=Path, default=None)
     benchmarks_materialize.set_defaults(func=_cmd_materialize_benchmark)
+    benchmarks_classify = benchmarks_sub.add_parser("classify")
+    benchmarks_classify.add_argument("benchmark_id")
+    benchmarks_classify.add_argument("--manifest", type=Path, required=True)
+    benchmarks_classify.add_argument("--recipe", default="ncu_basic_v1")
+    benchmarks_classify.add_argument("--arch", default="sm_90")
+    benchmarks_classify.add_argument("--timeout", type=int, default=600)
+    benchmarks_classify.add_argument("--limit", type=int, default=None)
+    benchmarks_classify.add_argument("--output", type=Path, default=None)
+    benchmarks_classify.set_defaults(func=_cmd_classify_benchmark)
 
     # --- nvidia ---
     _, nvidia_sub, nvidia_run = _add_backend_subparser(

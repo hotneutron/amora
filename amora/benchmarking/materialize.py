@@ -16,6 +16,48 @@ def canonical_json(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"))
 
 
+def load_manifest(path: str | Path) -> CaseSetManifest:
+    """Load a materialized case-set manifest from canonical JSON."""
+
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    cases = tuple(
+        BenchmarkCase(
+            case_key=row["case_key"],
+            benchmark_id=row["benchmark_id"],
+            benchmark_revision=int(row["benchmark_revision"]),
+            definition_kind=row["definition_kind"],
+            kernel_id=row["kernel_id"],
+            kernel_revision=int(row["kernel_revision"]),
+            shape={key: int(value) for key, value in row["shape"].items()},
+            shape_key=row["shape_key"],
+            shape_class=row["shape_class"],
+            axis_tags=tuple(row.get("axis_tags") or ()),
+            regime_tags=tuple(row.get("regime_tags") or ()),
+            tags=tuple(row.get("tags") or ()),
+            execution_contract=row.get("execution_contract") or {},
+            case_generation=row.get("case_generation") or {},
+        )
+        for row in data.get("cases") or ()
+    )
+    manifest = CaseSetManifest(
+        benchmark_id=data["benchmark_id"],
+        benchmark_revision=int(data["benchmark_revision"]),
+        definition_kind=data["definition_kind"],
+        target=data.get("target") or {},
+        generator=data.get("generator") or {},
+        requested_case_count=int(data["case_count_requested"]),
+        materialized_case_count=int(data["case_count_materialized"]),
+        cases=cases,
+        case_set_digest=data["case_set_digest"],
+        schema_version=int(data.get("schema_version", 1)),
+    )
+    if len(cases) != manifest.materialized_case_count:
+        raise ValueError(
+            f"{path}: declared {manifest.materialized_case_count} cases, found {len(cases)}"
+        )
+    return manifest
+
+
 def shape_key(shape: dict[str, int]) -> str:
     """Return a stable, human-readable key with lexicographic dimensions."""
 

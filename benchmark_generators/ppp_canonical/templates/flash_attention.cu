@@ -1,0 +1,97 @@
+// AMORA PPP bounded FlashAttention forward classification workload.
+#include <cuda_fp16.h>
+#include <cuda_runtime.h>
+
+#include <cstdio>
+#include <cstdlib>
+
+static void check(cudaError_t err, const char* what) {
+  if (err != cudaSuccess) {
+    fprintf(stderr, "%s: %s\n", what, cudaGetErrorString(err));
+    exit(1);
+  }
+}
+
+__global__ void amora_ppp_flash_attention_fwd_kernel(
+    const __half* __restrict__ q,
+    const __half* __restrict__ k,
+    const __half* __restrict__ v,
+    __half* __restrict__ out,
+    int batch,
+    int heads,
+    int sequence,
+    int hidden,
+    int sample_kv_blocks) {
+  const int query_tile = 64;
+  const int kv_tile = 64;
+  const int query_samples = 8;
+  const int kv_samples = 8;
+  int query_blocks = (sequence + query_tile - 1) / query_tile;
+  int batch_head = blockIdx.x / query_blocks;
+  int query_block = blockIdx.x % query_blocks;
+  if (batch_head >= batch * heads) return;
+
+  int query_start = query_block * query_tile;
+  int sampled_blocks = min(query_block + 1, sample_kv_blocks);
+  int first_kv_block = query_block + 1 - sampled_blocks;
+  float accum = 0.0f;
+  for (int query_offset = 0; query_offset < query_samples && query_start + query_offset < sequence;
+       ++query_offset) {
+    long query_base = ((long)batch_head * sequence + query_start + query_offset) * hidden;
+    for (int sample = 0; sample < sampled_blocks; ++sample) {
+      int kv_start = (first_kv_block + sample) * kv_tile;
+      for (int kv_offset = 0; kv_offset < kv_samples && kv_start + kv_offset < sequence;
+           ++kv_offset) {
+        long kv_base = ((long)batch_head * sequence + kv_start + kv_offset) * hidden;
+        for (int dim = threadIdx.x; dim < hidden; dim += blockDim.x) {
+          float dot = __half2float(q[query_base + dim]) * __half2float(k[kv_base + dim]);
+          accum += __expf(dot * 1.0e-4f);
+          accum += __half2float(v[kv_base + dim]) * 1.0e-4f;
+        }
+      }
+    }
+  }
+  int output_row = query_start + (threadIdx.x % query_tile);
+  int output_col = threadIdx.x / query_tile;
+  if (output_row < sequence && output_col < hidden) {
+    out[((long)batch_head * sequence + output_row) * hidden + output_col] =
+        __float2half(accum);
+  }
+}
+
+int main(int argc, char** argv) {
+  int batch = argc > 1 ? atoi(argv[1]) : 1;
+  int heads = argc > 2 ? atoi(argv[2]) : 8;
+  int sequence = argc > 3 ? atoi(argv[3]) : 4096;
+  int hidden = argc > 4 ? atoi(argv[4]) : 128;
+  int sample_kv_blocks = argc > 5 ? atoi(argv[5]) : 4;
+  sample_kv_blocks = max(sample_kv_blocks, 1);
+  long elements = (long)batch * heads * sequence * hidden;
+
+  __half* q = nullptr;
+  __half* k = nullptr;
+  __half* v = nullptr;
+  __half* out = nullptr;
+  check(cudaMalloc(&q, (size_t)elements * sizeof(__half)), "cudaMalloc q");
+  check(cudaMalloc(&k, (size_t)elements * sizeof(__half)), "cudaMalloc k");
+  check(cudaMalloc(&v, (size_t)elements * sizeof(__half)), "cudaMalloc v");
+  check(cudaMalloc(&out, (size_t)elements * sizeof(__half)), "cudaMalloc out");
+  check(cudaMemset(q, 1, (size_t)elements * sizeof(__half)), "cudaMemset q");
+  check(cudaMemset(k, 2, (size_t)elements * sizeof(__half)), "cudaMemset k");
+  check(cudaMemset(v, 3, (size_t)elements * sizeof(__half)), "cudaMemset v");
+
+  int blocks = batch * heads * ((sequence + 63) / 64);
+  const int threads = 256;
+  amora_ppp_flash_attention_fwd_kernel<<<blocks, threads>>>(
+      q, k, v, out, batch, heads, sequence, hidden, sample_kv_blocks);
+  check(cudaDeviceSynchronize(), "warmup flash_attention");
+  amora_ppp_flash_attention_fwd_kernel<<<blocks, threads>>>(
+      q, k, v, out, batch, heads, sequence, hidden, sample_kv_blocks);
+  check(cudaDeviceSynchronize(), "measured flash_attention");
+
+  cudaFree(q);
+  cudaFree(k);
+  cudaFree(v);
+  cudaFree(out);
+  return 0;
+}

@@ -67,11 +67,13 @@ amora benchmarks list
 amora benchmarks inspect ppp_canonical
 amora benchmarks materialize ppp_canonical --preset h100_2500
 amora benchmarks materialize ppp_canonical --cases 5600 --seed 20260717
+amora benchmarks classify ppp_canonical --manifest out/benchmarks/.../manifest.json
 ```
 
 Materialization writes an immutable manifest under `out/benchmarks/` by
-default. Hardware classification, detailed NCU collection, and GCoM execution
-are subsequent benchmark phases.
+default. Classification collects basic NCU instruction/cycle/duration metrics
+and writes a digest-keyed immutable rank overlay. Detailed NCU collection and
+GCoM execution are subsequent benchmark phases.
 
 ## Layout
 

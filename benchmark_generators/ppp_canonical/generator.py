@@ -59,7 +59,12 @@ def _git_revision(path: Path) -> tuple[str | None, bool | None]:
 
 def _source_sha256(path: Path) -> str:
     digest = sha256()
-    for source in sorted(path.rglob("*.py")):
+    sources = sorted(
+        source
+        for pattern in ("*.py", "templates/*.cu")
+        for source in path.glob(pattern)
+    )
+    for source in sources:
         digest.update(source.relative_to(path).as_posix().encode("utf-8"))
         digest.update(b"\0")
         digest.update(source.read_bytes())

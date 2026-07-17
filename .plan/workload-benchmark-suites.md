@@ -243,7 +243,8 @@ After all selected hardware cases have one valid `ncu_basic_v1` result:
 2. Split the ordered population into equal-count terciles:
    `small`, `medium`, and `large`.
 3. Persist the rank, ordinal, thresholds, population size, metric name, and
-   classification-run digest into the case-set manifest.
+   classification-run digest into an immutable classification overlay keyed by
+   the case-set digest.
 4. Cases with no valid instruction counter retain
    `size_rank=unclassified` with an explicit reason and are excluded from
    tercile thresholds.
@@ -261,9 +262,9 @@ Detailed comparison then runs in rank order:
    semantic mismatches, and simulator throughput.
 3. `large`: repeat only after the medium-rank review.
 
-Every detailed run selects cases by the persisted manifest rank, not by
-rerunning an ad hoc instruction-count query. This makes results resumable and
-keeps a later simulator-only rerun tied to the original hardware
+Every detailed run selects cases by the persisted classification-overlay rank,
+not by rerunning an ad hoc instruction-count query. This makes results
+resumable and keeps a later simulator-only rerun tied to the original hardware
 classification.
 
 The rank is an execution-order and reporting dimension, not a claim that
@@ -301,7 +302,7 @@ case:
     "generator_source_sha256": "<full sha256>",
     "seed": 20260717
   },
-  "classification": {
+  "classification_ref": {
     "recipe": "ncu_basic_v1",
     "instruction_metric": "smsp__inst_executed.sum",
     "total_instructions": 314665,
@@ -327,7 +328,7 @@ The PPP materializer should preserve:
 - `shape_class`: `corner`, `connecting`, `interpolation`, `ood`, or
   `sweep`;
 - `axis_tags`, `regime_tags`, and `tags`;
-- persisted `size_rank`, ordinal, and classification provenance;
+- persisted `size_rank`, ordinal, and classification-overlay provenance;
 - `measurement_semantics`;
 - kernel, replay-contract, and generator revisions;
 - component records for fused kernels.
@@ -676,7 +677,8 @@ Acceptance:
 - Persist total instruction count, resolved metric names, kernel/launch
   identity, generator Git commit, generator source SHA-256, generated-source
   hash, executable hash, and measurement semantics.
-- Freeze global small/medium/large tercile assignments in the case manifest.
+- Freeze global small/medium/large tercile assignments in an immutable
+  classification overlay.
 - Render classification coverage and instruction-distribution reports.
 
 Acceptance:
@@ -796,3 +798,57 @@ keyed by generator/kernel/shape/compile-contract digests. Persist the
 generator Git commit hash, dirty state, generator-source SHA-256, generated
 source SHA-256, compile command, executable SHA-256, and generation command
 in the materialized manifest and each applicable run record.
+
+## Implementation Notes
+
+### Phase 1: Materialization
+
+Implemented on branch `bench`:
+
+- `amora benchmarks list`, `inspect`, and `materialize`;
+- AMORA-local `benchmark_generators/ppp_canonical/` with all nine canonical
+  kernel identities and deterministic generated shape streams;
+- exact `h100_2500` and `h100_5600` presets;
+- immutable manifests with generator Git/dirty/source-hash provenance,
+  canonical case keys, generator digest, and case-set digest;
+- package data for the generator's CUDA replay templates.
+
+The presets materialize exactly 2,500 and 5,600 unique cases. Allocation is
+balanced while respecting actual per-kernel candidate capacity, so a constrained
+kernel can receive fewer cases and unused allocation is redistributed
+deterministically.
+
+### Phase 2: NCU Basic Classification
+
+Implemented on branch `bench`:
+
+- local AMORA-owned CUDA replay templates and argument contracts for all nine
+  canonical PPP kernel families;
+- generic NVIDIA `ncu_basic_v1` collection of executed instructions, elapsed
+  cycles, and duration;
+- compile-contract-aware cache keys, warmup launch skipping, source/binary
+  SHA-256, and complete NCU command provenance;
+- immutable classification overlays with global tercile ranks;
+- partial classification overlays deliberately omit ranks, preventing a
+  bounded smoke run from redefining the full-population thresholds.
+
+H100 validation on 2026-07-17 (CUDA 12.8, `sm_90`) classified one representative
+case from each canonical kernel family. All nine classified successfully:
+
+| kernel | total instructions |
+|---|---:|
+| `aligned_gemm_fp16` | 784,916 |
+| `embedding` | 18,087,936 |
+| `flash_attention_fwd` | 10,808,832 |
+| `flashmla_dense_decode` | 487,296 |
+| `gelu` | 370,900,992 |
+| `gelu_gemm_fp16` | 1,183,584 |
+| `megamoe_fp8` | 28,508,160 |
+| `rmsnorm` | 72,560,640 |
+| `rmsnorm_gemm_fp16` | 93,909,138 |
+
+The resulting representative rank split was 3 small, 3 medium, and 3 large,
+with instruction-count boundaries `small_max=1,183,584`,
+`medium_max=28,508,160`, and `large_max=370,900,992`. This validates the
+classification contract only; it does not replace the required all-case
+hardware classification for a full materialized case set.

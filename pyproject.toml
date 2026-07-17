@@ -19,6 +19,9 @@ amora = "amora.cli:main"
 [tool.setuptools.packages.find]
 include = ["amora*", "benchmark_generators*"]
 
+[tool.setuptools.package-data]
+"benchmark_generators.ppp_canonical" = ["templates/*.cu"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [

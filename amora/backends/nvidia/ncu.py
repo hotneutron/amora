@@ -14,8 +14,10 @@ class NcuCommand:
     output: str | None = None
     csv: bool = False
     page: str | None = None
+    launch_skip: int | None = None
     launch_count: int | None = None
     kernel_name: str | None = None
+    kernel_name_base: str | None = None
 
     def argv(self) -> list[str]:
         args = [self.executable, "--target-processes", "all"]
@@ -23,8 +25,12 @@ class NcuCommand:
             args.append("--csv")
         if self.page:
             args.extend(["--page", self.page])
+        if self.launch_skip is not None:
+            args.extend(["--launch-skip", str(self.launch_skip)])
         if self.launch_count is not None:
             args.extend(["--launch-count", str(self.launch_count)])
+        if self.kernel_name_base:
+            args.extend(["--kernel-name-base", self.kernel_name_base])
         if self.kernel_name:
             args.extend(["--kernel-name", self.kernel_name])
         if self.metrics:

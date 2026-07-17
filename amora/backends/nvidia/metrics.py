@@ -32,6 +32,13 @@ class MetricResolver:
             "sm__cycles_active.avg",
             "smsp__cycles_active.avg",
         ),
+        "elapsed_cycles": (
+            "sm__cycles_elapsed.avg",
+            "smsp__cycles_elapsed.avg",
+        ),
+        "duration_ns": (
+            "gpu__time_duration.sum",
+        ),
         "inst_executed": (
             "smsp__inst_executed.sum",
             "sm__inst_executed.sum",

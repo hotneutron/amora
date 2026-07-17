@@ -54,6 +54,17 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _compile_contract_hash(
+    source_hash: str,
+    *,
+    arch: str,
+    extra_flags: tuple[str, ...],
+    link_flags: tuple[str, ...],
+) -> str:
+    payload = "\0".join((source_hash, arch, *extra_flags, "--link-flags--", *link_flags))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def _ensure_cuda(capabilities: NvidiaCapabilities) -> tuple[str, str]:
     """Return (nvcc_path, nvidia_smi_path) or raise CudaUnavailable."""
 
@@ -74,16 +85,24 @@ def build_executable(
     arch: str = DEFAULT_ARCH,
     build_root: Path = DEFAULT_BUILD_ROOT,
     extra_flags: tuple[str, ...] = ("-O2",),
+    link_flags: tuple[str, ...] = (),
 ) -> tuple[Path, str]:
     """Compile ``source`` into a host executable and return ``(path, source_sha256)``.
 
-    The compilation is cached: if a binary already exists under
-    ``build_root/<source.stem>/<source_sha256>`` it is reused.
+    The compilation is cached under a hash of source, architecture, compiler
+    flags, and linker flags so benchmark contracts cannot reuse a binary built
+    with incompatible libraries.
     """
 
     nvcc_path, _ = _ensure_cuda(capabilities)
     src_hash = _sha256(source)
-    target_dir = build_root / source.stem / src_hash
+    contract_hash = _compile_contract_hash(
+        src_hash,
+        arch=arch,
+        extra_flags=extra_flags,
+        link_flags=link_flags,
+    )
+    target_dir = build_root / source.stem / contract_hash
     target_dir.mkdir(parents=True, exist_ok=True)
     binary = target_dir / source.stem
     if binary.exists():
@@ -97,6 +116,7 @@ def build_executable(
         str(source),
         "-o",
         str(binary),
+        *link_flags,
     ]
     completed = subprocess.run(args, check=False, capture_output=True, text=True, timeout=120)
     if completed.returncode != 0 or not binary.exists():

@@ -13,14 +13,15 @@ clean capability gate, never fatal.
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import subprocess
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.ncu import NcuCommand
 from amora.backends.nvidia.runner import DEFAULT_ARCH, DEFAULT_BUILD_ROOT, build_executable
-from pathlib import Path
 
 
 class NcuUnavailable(RuntimeError):
@@ -34,6 +35,29 @@ class NcuResult:
     stdout: str = ""
     stderr: str = ""
     returncode: int = 0
+    source_path: Path | None = None
+    source_sha256: str | None = None
+    binary_path: Path | None = None
+    binary_sha256: str | None = None
+    command: tuple[str, ...] = ()
+    arch: str | None = None
+    extra_flags: tuple[str, ...] = ()
+    link_flags: tuple[str, ...] = ()
+
+    def provenance(self) -> dict[str, object]:
+        """Return the execution details needed to reproduce this NCU run."""
+
+        return {
+            "source_path": str(self.source_path) if self.source_path else None,
+            "source_sha256": self.source_sha256,
+            "binary_path": str(self.binary_path) if self.binary_path else None,
+            "binary_sha256": self.binary_sha256,
+            "ncu_command": list(self.command),
+            "arch": self.arch,
+            "extra_flags": list(self.extra_flags),
+            "link_flags": list(self.link_flags),
+            "returncode": self.returncode,
+        }
 
 
 def parse_ncu_csv(text: str) -> tuple[dict[str, float], list[dict[str, str]]]:
@@ -96,10 +120,14 @@ def run_kernel_profiled(
     metrics: tuple[str, ...],
     args: tuple[str, ...] = (),
     kernel_name: str | None = None,
+    kernel_name_base: str | None = None,
+    launch_skip: int | None = None,
     launch_count: int = 1,
     timeout: int = 180,
     arch: str = DEFAULT_ARCH,
     build_root: Path = DEFAULT_BUILD_ROOT,
+    extra_flags: tuple[str, ...] = ("-O2",),
+    link_flags: tuple[str, ...] = (),
 ) -> NcuResult:
     """Build (reusing the timing cache) and run the driver under NCU for counters.
 
@@ -112,8 +140,13 @@ def run_kernel_profiled(
     if any(m is None for m in metrics):
         raise NcuUnavailable("metric list contains an unresolved (None) entry")
     ncu = _ncu_path(capabilities)
-    binary, _ = build_executable(
-        source, capabilities=capabilities, arch=arch, build_root=build_root
+    binary, source_sha = build_executable(
+        source,
+        capabilities=capabilities,
+        arch=arch,
+        build_root=build_root,
+        extra_flags=extra_flags,
+        link_flags=link_flags,
     )
     command = NcuCommand(
         executable=ncu,
@@ -121,12 +154,15 @@ def run_kernel_profiled(
         target=(str(binary), *args),
         csv=True,
         page="raw",
+        launch_skip=launch_skip,
         launch_count=launch_count,
         kernel_name=kernel_name,
+        kernel_name_base=kernel_name_base,
     )
+    command_argv = tuple(command.argv())
     try:
         completed = subprocess.run(
-            command.argv(), check=False, capture_output=True, text=True, timeout=timeout
+            command_argv, check=False, capture_output=True, text=True, timeout=timeout
         )
     except subprocess.SubprocessError as exc:
         raise NcuUnavailable(f"ncu execution failed: {exc}") from exc
@@ -144,4 +180,12 @@ def run_kernel_profiled(
         stdout=completed.stdout,
         stderr=completed.stderr,
         returncode=completed.returncode,
+        source_path=source,
+        source_sha256=source_sha,
+        binary_path=binary,
+        binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
+        command=command_argv,
+        arch=arch,
+        extra_flags=extra_flags,
+        link_flags=link_flags,
     )
