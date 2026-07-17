@@ -56,6 +56,80 @@ def _cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+# --- benchmark handlers ---
+
+
+def _cmd_list_benchmarks(_args: argparse.Namespace) -> int:
+    from amora.benchmarking.registry import list_benchmarks
+
+    _print_json({"benchmarks": list_benchmarks()})
+    return 0
+
+
+def _cmd_inspect_benchmark(args: argparse.Namespace) -> int:
+    from amora.benchmarking.registry import get_benchmark
+
+    _print_json(get_benchmark(args.benchmark_id).describe())
+    return 0
+
+
+def _cmd_materialize_benchmark(args: argparse.Namespace) -> int:
+    from amora.benchmarking.materialize import materialize_benchmark, write_manifest
+    from amora.benchmarking.registry import get_benchmark
+
+    definition = get_benchmark(args.benchmark_id)
+    case_count = args.cases
+    seed = args.seed
+    if args.preset:
+        presets = getattr(definition, "presets", {})
+        try:
+            preset = presets[args.preset]
+        except KeyError as exc:
+            known = ", ".join(sorted(presets)) or "none"
+            raise ValueError(
+                f"unknown preset {args.preset!r} for {args.benchmark_id}; known: {known}"
+            ) from exc
+        if case_count is None:
+            case_count = preset["case_count"]
+        if seed is None:
+            seed = preset["seed"]
+    if case_count is None:
+        raise ValueError("pass --cases or --preset")
+    if seed is None:
+        seed = 0
+    target = {
+        "vendor": args.vendor,
+        "family": args.family,
+        "hardware_sku": args.sku,
+        "arch_profile": args.arch_profile,
+    }
+    manifest = materialize_benchmark(
+        args.benchmark_id,
+        target=target,
+        case_count=case_count,
+        seed=seed,
+    )
+    default_out = (
+        Path("out")
+        / "benchmarks"
+        / manifest.benchmark_id
+        / f"r{manifest.benchmark_revision}"
+        / manifest.case_set_digest
+        / "manifest.json"
+    )
+    destination = write_manifest(manifest, args.output or default_out)
+    _print_json(
+        {
+            "manifest": str(destination),
+            "benchmark_id": manifest.benchmark_id,
+            "benchmark_revision": manifest.benchmark_revision,
+            "case_count_materialized": manifest.materialized_case_count,
+            "case_set_digest": manifest.case_set_digest,
+        }
+    )
+    return 0
+
+
 # --- gcom_cuda handlers ---
 
 
@@ -125,6 +199,26 @@ def _add_backend_subparser(subparsers, name: str, baseline, discover, run_func,
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="amora")
     subparsers = parser.add_subparsers(dest="backend")
+
+    # --- benchmarks ---
+    benchmarks_parser = subparsers.add_parser("benchmarks")
+    benchmarks_sub = benchmarks_parser.add_subparsers(dest="benchmark_command")
+    benchmarks_list = benchmarks_sub.add_parser("list")
+    benchmarks_list.set_defaults(func=_cmd_list_benchmarks)
+    benchmarks_inspect = benchmarks_sub.add_parser("inspect")
+    benchmarks_inspect.add_argument("benchmark_id")
+    benchmarks_inspect.set_defaults(func=_cmd_inspect_benchmark)
+    benchmarks_materialize = benchmarks_sub.add_parser("materialize")
+    benchmarks_materialize.add_argument("benchmark_id")
+    benchmarks_materialize.add_argument("--cases", type=int, default=None)
+    benchmarks_materialize.add_argument("--preset", default=None)
+    benchmarks_materialize.add_argument("--seed", type=int, default=None)
+    benchmarks_materialize.add_argument("--vendor", default="nvidia")
+    benchmarks_materialize.add_argument("--family", default="hopper")
+    benchmarks_materialize.add_argument("--sku", default="h100-80g")
+    benchmarks_materialize.add_argument("--arch-profile", default="sm_90_h100")
+    benchmarks_materialize.add_argument("--output", type=Path, default=None)
+    benchmarks_materialize.set_defaults(func=_cmd_materialize_benchmark)
 
     # --- nvidia ---
     _, nvidia_sub, nvidia_run = _add_backend_subparser(

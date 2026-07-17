@@ -17,7 +17,7 @@ test = ["pytest>=7"]
 amora = "amora.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["amora*"]
+include = ["amora*", "benchmark_generators*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

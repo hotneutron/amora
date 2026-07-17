@@ -56,9 +56,28 @@ pytest -m "not cuda" # skip GPU-gated tests
 The `cuda`, `ncu`, and `nvbit` markers are declared in `pyproject.toml`
 and gate tests that require a real CUDA-capable host or external tools.
 
+## Benchmarks
+
+Benchmark definitions are separate from the 36 diagnostic probes. The initial
+AMORA-owned `ppp_canonical` generator materializes deterministic
+kernel-and-shape case sets without requiring a GPU:
+
+```bash
+amora benchmarks list
+amora benchmarks inspect ppp_canonical
+amora benchmarks materialize ppp_canonical --preset h100_2500
+amora benchmarks materialize ppp_canonical --cases 5600 --seed 20260717
+```
+
+Materialization writes an immutable manifest under `out/benchmarks/` by
+default. Hardware classification, detailed NCU collection, and GCoM execution
+are subsequent benchmark phases.
+
 ## Layout
 
 - `amora/cli.py` — argparse CLI
+- `amora/benchmarking/` — benchmark materialization contracts
+- `benchmark_generators/` — local generated benchmark definitions
 - `amora/backends/nvidia/` — toolchain discovery, build adapters, CUPTI/NCU/NVBit hooks
 - `amora/probes/nvidia/baseline/` — the baseline probe family
 - `amora/reports/json_report.py` — JSON renderer
