@@ -909,3 +909,29 @@ The rank report therefore records one OD2-deferred evidence comparison, one
 missing-stat case, and one semantic mismatch. This is the intended Phase 3
 behavior: preserve all evidence and do not manufacture an aggregate accuracy
 score or silently omit difficult cases.
+
+### Phase 4: Medium And Large Rank Progression
+
+Implemented on branch `bench`:
+
+- `amora benchmarks detail` accepts all persisted ranks, but only `small`
+  can start without a predecessor decision;
+- `medium` requires an immutable accepted `small` review marker, and `large`
+  requires an immutable accepted `medium` review marker;
+- `amora benchmarks review` validates full-rank comparison coverage against
+  the classification overlay, records accepted detail run IDs and comparison
+  digests, and requires known failures and semantic decisions to be explicit
+  when the reviewer has them;
+- each detail invocation creates
+  `out/benchmarks/<id>/r<revision>/<case-set-digest>/runs/<rank>/<classification-digest>/<run-id>/`
+  containing `run.json`, raw hardware/GCoM JSONL, and the comparison. Writers
+  reject an existing artifact or run directory instead of replacing evidence;
+- the run manifest records rank population, selected case keys, predecessor
+  review provenance, comparison digest, backend status counts, options, and
+  timestamps.
+
+The first existing small-rank comparison has not been retroactively marked
+accepted. Run a fresh complete small-rank detail invocation under the
+immutable Phase 4 layout, review its failures and semantic decisions, then use
+that marker to enable medium. This preserves the distinction between
+pre-Phase-4 evidence and the explicit gated progression contract.

@@ -68,12 +68,31 @@ amora benchmarks inspect ppp_canonical
 amora benchmarks materialize ppp_canonical --preset h100_2500
 amora benchmarks materialize ppp_canonical --cases 5600 --seed 20260717
 amora benchmarks classify ppp_canonical --manifest out/benchmarks/.../manifest.json
+amora benchmarks detail ppp_canonical \
+  --manifest out/benchmarks/.../manifest.json \
+  --classification out/benchmarks/.../classification.json \
+  --size-rank small --run-id h100-small-01
+amora benchmarks review ppp_canonical \
+  --manifest out/benchmarks/.../manifest.json \
+  --classification out/benchmarks/.../classification.json \
+  --comparison out/benchmarks/.../runs/small/.../h100-small-01/comparison.json \
+  --semantic-decision "OD2 scalar accuracy remains deferred"
+amora benchmarks detail ppp_canonical \
+  --manifest out/benchmarks/.../manifest.json \
+  --classification out/benchmarks/.../classification.json \
+  --size-rank medium --review-marker out/benchmarks/.../reviews/small/.../review.json \
+  --run-id h100-medium-01
 ```
 
 Materialization writes an immutable manifest under `out/benchmarks/` by
 default. Classification collects basic NCU instruction/cycle/duration metrics
 and writes a digest-keyed immutable rank overlay. Detailed NCU collection and
-GCoM execution are subsequent benchmark phases.
+GCoM execution run in persisted rank order: `small`, then `medium`, then
+`large`. A complete comparison has to be explicitly accepted with
+`amora benchmarks review` before the next rank is allowed. Each detail
+invocation writes an immutable `runs/<rank>/<classification-digest>/<run-id>/`
+directory containing raw hardware/GCoM JSONL, the comparison, and `run.json`;
+existing evidence is never overwritten.
 
 ## Layout
 

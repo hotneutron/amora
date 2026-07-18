@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
+from uuid import uuid4
 
 from amora.backends.nvidia.cuda import discover_capabilities as nvidia_discover
 from amora.probes.nvidia import baseline as nvidia_baseline
@@ -206,17 +209,31 @@ def _cmd_detail_benchmark(args: argparse.Namespace) -> int:
     from amora.backends.nvidia.cuda import discover_capabilities as nvidia_discover
     from amora.benchmarking.detailed import (
         build_detailed_comparison,
+        build_detail_run_manifest,
         load_classification_manifest,
+        load_review_marker,
+        review_gate_for_rank,
         select_ranked_cases,
         write_case_results,
+        write_detail_run_manifest,
         write_detailed_comparison,
     )
     from amora.benchmarking.materialize import load_manifest
 
     manifest = load_manifest(args.manifest)
     classification = load_classification_manifest(args.classification)
-    if args.size_rank != "small":
-        raise ValueError("Phase 3 detailed execution currently permits only --size-rank small")
+    if args.benchmark_id != manifest.benchmark_id:
+        raise ValueError(
+            f"benchmark ID {args.benchmark_id!r} does not match manifest "
+            f"{manifest.benchmark_id!r}"
+        )
+    review_marker = load_review_marker(args.review_marker) if args.review_marker else None
+    review_gate = review_gate_for_rank(
+        manifest,
+        classification,
+        size_rank=args.size_rank,
+        review_marker=review_marker,
+    )
     selected = select_ranked_cases(
         manifest,
         classification,
@@ -228,16 +245,28 @@ def _cmd_detail_benchmark(args: argparse.Namespace) -> int:
         assignment.get("size_rank") == args.size_rank
         for assignment in classification.rank_assignments.values()
     )
-    base = (
+    run_id = args.run_id or (
+        datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid4().hex[:12]
+    )
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", run_id):
+        raise ValueError("run ID must contain only letters, digits, '.', '_', or '-'")
+    case_root = (
         Path("out")
         / "benchmarks"
         / manifest.benchmark_id
         / f"r{manifest.benchmark_revision}"
         / manifest.case_set_digest
-        / "detail"
+    )
+    run_dir = (
+        case_root
+        / "runs"
         / args.size_rank
         / classification.classification_digest
+        / run_id
     )
+    if run_dir.exists():
+        raise FileExistsError(f"detail run directory already exists: {run_dir}")
+    started_at = datetime.now(timezone.utc).isoformat()
     nvidia_caps = nvidia_discover()
     gcom_caps = gcom_discover(args.sku)
     hardware_results = [
@@ -245,7 +274,7 @@ def _cmd_detail_benchmark(args: argparse.Namespace) -> int:
             case,
             capabilities=nvidia_caps,
             arch=args.arch,
-            build_root=base / "build-cache",
+            build_root=case_root / "build-cache",
             timeout=args.ncu_timeout,
             size_rank=args.size_rank,
         )
@@ -256,7 +285,7 @@ def _cmd_detail_benchmark(args: argparse.Namespace) -> int:
             case,
             capabilities=gcom_caps,
             sku=args.sku,
-            out_dir=base / "gcom" / case.case_key,
+            out_dir=run_dir / "gcom" / case.case_key,
             trace_timeout=args.trace_timeout,
             sim_timeout=args.sim_timeout,
             omp_threads=args.omp_threads,
@@ -264,8 +293,8 @@ def _cmd_detail_benchmark(args: argparse.Namespace) -> int:
         )
         for case in selected
     ]
-    hardware_path = write_case_results(hardware_results, base / "hardware.jsonl")
-    simulation_path = write_case_results(simulation_results, base / "gcom.jsonl")
+    hardware_path = write_case_results(hardware_results, run_dir / "hardware.jsonl")
+    simulation_path = write_case_results(simulation_results, run_dir / "gcom.jsonl")
     comparison = build_detailed_comparison(
         manifest=manifest,
         classification=classification,
@@ -274,8 +303,35 @@ def _cmd_detail_benchmark(args: argparse.Namespace) -> int:
         simulation_results=simulation_results,
         rank_case_count=rank_case_count,
         selected_cases=selected,
+        run_id=run_id,
+        review_gate=review_gate,
     )
-    default_out = (
+    raw_written = write_detailed_comparison(comparison, run_dir)
+    completed_at = datetime.now(timezone.utc).isoformat()
+    run_manifest = build_detail_run_manifest(
+        manifest=manifest,
+        classification=classification,
+        comparison=comparison,
+        hardware_results=hardware_results,
+        simulation_results=simulation_results,
+        hardware_path=hardware_path,
+        simulation_path=simulation_path,
+        comparison_path=raw_written["json"],
+        review_gate=review_gate,
+        started_at=started_at,
+        completed_at=completed_at,
+        run_options={
+            "arch": args.arch,
+            "gcom_sku": args.sku,
+            "limit": args.limit,
+            "ncu_timeout": args.ncu_timeout,
+            "trace_timeout": args.trace_timeout,
+            "sim_timeout": args.sim_timeout,
+            "omp_threads": args.omp_threads,
+        },
+    )
+    run_manifest_path = write_detail_run_manifest(run_manifest, run_dir / "run.json")
+    default_report_out = (
         Path("reports")
         / "benchmarks"
         / manifest.benchmark_id
@@ -286,15 +342,70 @@ def _cmd_detail_benchmark(args: argparse.Namespace) -> int:
         / args.size_rank
         / comparison["comparison_digest"]
     )
-    written = write_detailed_comparison(comparison, args.output or default_out)
+    written = write_detailed_comparison(comparison, args.output or default_report_out)
     _print_json(
         {
+            "run_id": run_id,
+            "run_manifest": str(run_manifest_path),
             "hardware_results": str(hardware_path),
             "gcom_results": str(simulation_path),
+            "raw_comparison_json": str(raw_written["json"]),
+            "raw_comparison_markdown": str(raw_written["markdown"]),
             "comparison_json": str(written["json"]),
             "comparison_markdown": str(written["markdown"]),
             "comparison_digest": comparison["comparison_digest"],
             "coverage": comparison["coverage"],
+        }
+    )
+    return 0
+
+
+def _cmd_review_benchmark(args: argparse.Namespace) -> int:
+    from amora.benchmarking.detailed import (
+        build_review_marker,
+        load_classification_manifest,
+        load_detailed_comparison,
+        write_review_marker,
+    )
+    from amora.benchmarking.materialize import load_manifest
+
+    manifest = load_manifest(args.manifest)
+    classification = load_classification_manifest(args.classification)
+    if args.benchmark_id != manifest.benchmark_id:
+        raise ValueError(
+            f"benchmark ID {args.benchmark_id!r} does not match manifest "
+            f"{manifest.benchmark_id!r}"
+        )
+    reviewed_at = args.reviewed_at or datetime.now(timezone.utc).isoformat()
+    marker = build_review_marker(
+        manifest=manifest,
+        classification=classification,
+        comparisons=[load_detailed_comparison(path) for path in args.comparison],
+        known_failures=args.known_failure,
+        semantic_decisions=args.semantic_decision,
+        reviewer=args.reviewer,
+        reviewed_at=reviewed_at,
+    )
+    default_out = (
+        Path("out")
+        / "benchmarks"
+        / manifest.benchmark_id
+        / f"r{manifest.benchmark_revision}"
+        / manifest.case_set_digest
+        / "reviews"
+        / marker.reviewed_rank
+        / classification.classification_digest
+        / marker.review_marker_digest
+        / "review.json"
+    )
+    destination = write_review_marker(marker, args.output or default_out)
+    _print_json(
+        {
+            "review_marker": str(destination),
+            "review_marker_digest": marker.review_marker_digest,
+            "reviewed_rank": marker.reviewed_rank,
+            "accepted_run_ids": list(marker.accepted_run_ids),
+            "accepted_comparison_digests": list(marker.accepted_comparison_digests),
         }
     )
     return 0
@@ -403,6 +514,8 @@ def build_parser() -> argparse.ArgumentParser:
     benchmarks_detail.add_argument("--manifest", type=Path, required=True)
     benchmarks_detail.add_argument("--classification", type=Path, required=True)
     benchmarks_detail.add_argument("--size-rank", choices=("small", "medium", "large"), required=True)
+    benchmarks_detail.add_argument("--review-marker", type=Path, default=None)
+    benchmarks_detail.add_argument("--run-id", default=None)
     benchmarks_detail.add_argument("--limit", type=int, default=None)
     benchmarks_detail.add_argument("--sku", default="gcom_h100")
     benchmarks_detail.add_argument("--arch", default="sm_90")
@@ -412,6 +525,17 @@ def build_parser() -> argparse.ArgumentParser:
     benchmarks_detail.add_argument("--omp-threads", type=int, default=None)
     benchmarks_detail.add_argument("--output", type=Path, default=None)
     benchmarks_detail.set_defaults(func=_cmd_detail_benchmark)
+    benchmarks_review = benchmarks_sub.add_parser("review")
+    benchmarks_review.add_argument("benchmark_id")
+    benchmarks_review.add_argument("--manifest", type=Path, required=True)
+    benchmarks_review.add_argument("--classification", type=Path, required=True)
+    benchmarks_review.add_argument("--comparison", type=Path, action="append", required=True)
+    benchmarks_review.add_argument("--known-failure", action="append", default=[])
+    benchmarks_review.add_argument("--semantic-decision", action="append", default=[])
+    benchmarks_review.add_argument("--reviewer", default=None)
+    benchmarks_review.add_argument("--reviewed-at", default=None)
+    benchmarks_review.add_argument("--output", type=Path, default=None)
+    benchmarks_review.set_defaults(func=_cmd_review_benchmark)
 
     # --- nvidia ---
     _, nvidia_sub, nvidia_run = _add_backend_subparser(
