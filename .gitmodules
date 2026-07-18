@@ -1,0 +1,3 @@
+[submodule "benchmarks/MLPerf"]
+	path = benchmarks/MLPerf
+	url = https://github.com/mlcommons/inference.git

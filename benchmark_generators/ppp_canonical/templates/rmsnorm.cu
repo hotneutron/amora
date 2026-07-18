@@ -58,8 +58,10 @@ int main(int argc, char** argv) {
   check(cudaMemset(x, 1, (size_t)rows * hidden * sizeof(__half)), "cudaMemset x");
   check(cudaMemset(gamma, 1, (size_t)hidden * sizeof(__half)), "cudaMemset gamma");
 
+#ifndef AMORA_GCOM_TRACE
   amora_ppp_rmsnorm_kernel<<<rows, threads>>>(x, gamma, y, rows, hidden);
   check(cudaDeviceSynchronize(), "warmup rmsnorm");
+#endif
   amora_ppp_rmsnorm_kernel<<<rows, threads>>>(x, gamma, y, rows, hidden);
   check(cudaDeviceSynchronize(), "measured rmsnorm");
 

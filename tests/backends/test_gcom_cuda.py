@@ -116,6 +116,38 @@ def test_trace_compat_overrides_disable_tma_real_base_without_sidecar(tmp_path):
     assert _trace_compat_overrides(trace_dir) == []
 
 
+def test_trace_env_selects_one_measured_kernel(tmp_path):
+    from amora.backends.gcom_cuda.trace import _trace_env
+
+    trace_dir = tmp_path / "traces"
+    tracer = tmp_path / "tracer_tool.so"
+    env = _trace_env(
+        trace_dir,
+        tracer,
+        kernel_limit=None,
+        kernel_start=2,
+        kernel_end=2,
+        active_from_start=True,
+    )
+
+    assert env["TRACES_FOLDER"] == str(trace_dir)
+    assert env["DYNAMIC_KERNEL_LIMIT_START"] == "2"
+    assert env["DYNAMIC_KERNEL_LIMIT_END"] == "2"
+    assert env["ACTIVE_FROM_START"] == "1"
+
+    profiler_env = _trace_env(
+        trace_dir,
+        tracer,
+        kernel_limit=None,
+        kernel_start=None,
+        kernel_end=None,
+        active_from_start=False,
+    )
+    assert profiler_env["ACTIVE_FROM_START"] == "0"
+    assert "DYNAMIC_KERNEL_LIMIT_START" not in profiler_env
+    assert profiler_env["DYNAMIC_KERNEL_LIMIT_END"] == "0"
+
+
 def test_unavailable_probes_short_circuit_without_execution():
     # Analysis-only / unsupported probes resolve to their policy state without
     # ever attempting a trace+simulate (safe regardless of tooling presence).

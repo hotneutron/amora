@@ -99,8 +99,10 @@ amora/
 
 benchmarks/
   MLPerf/
-    suite.yaml                  # static suite declaration
-    cases.jsonl                 # legacy/curated immutable inventory
+    .git                        # MLCommons Inference submodule
+  MLPerf.amora/
+    suite.yaml                  # AMORA static-suite declaration
+    cases.jsonl                 # selected/normalized immutable inventory
     README.md
   <benchmark-suite>/
     ...
@@ -122,8 +124,16 @@ benchmark_generators/
 ```
 
 `benchmarks/<benchmark-suite>/` is direct on purpose: it is the catalog for
-static/legacy suite definitions, including `benchmarks/MLPerf/`. Do not put
-those suites beneath an extra `suites/` or `legacy/` wrapper.
+static/legacy benchmark sources, including the `benchmarks/MLPerf/` MLCommons
+Inference submodule. Do not put those sources beneath an extra `suites/` or
+`legacy/` wrapper.
+
+Do not add AMORA's mutable selection metadata inside an upstream submodule.
+For an upstream benchmark source, keep the AMORA wrapper beside the submodule
+as `benchmarks/<benchmark-suite>.amora/`. The wrapper pins the selected
+submodule commit, declares supported scenarios/models, materializes canonical
+case rows, and records AMORA-specific replay contracts without modifying
+upstream files.
 
 `benchmark_generators/<benchmark-id>/` is separate on purpose: a generator is
 source code and a parameterization contract, not one benchmark inventory. Its
@@ -852,3 +862,50 @@ with instruction-count boundaries `small_max=1,183,584`,
 `medium_max=28,508,160`, and `large_max=370,900,992`. This validates the
 classification contract only; it does not replace the required all-case
 hardware classification for a full materialized case set.
+
+### Phase 3: Small-Rank Detailed Evidence
+
+Implemented on branch `bench`:
+
+- `amora benchmarks detail` requires a complete classification overlay and
+  accepts only `--size-rank small` during Phase 3;
+- detailed hardware NCU evidence collects basic metrics plus every supported
+  NCU stall reason;
+- GCoM trace builds compile out warmup launches with
+  `AMORA_GCOM_TRACE`, then trace exactly one measured launch. This avoids the
+  NVBit dynamic launch-range and profiler-region controls, which were unstable
+  in the current tracer build;
+- hardware and GCoM detail records are persisted separately, followed by an
+  immutable evidence-only comparison JSON/Markdown report;
+- scalar error remains `deferred_od2`; counters and stall reasons are reported
+  as evidence rather than a prematurely selected accuracy score.
+
+H100 validation on 2026-07-17 used the persisted small-rank
+`flashmla_dense_decode` case `B1_H2_S768`. The trace contained one measured
+kernel launch. Detailed NCU and GCoM evidence both completed:
+
+| metric | hardware NCU | GCoM |
+|---|---:|---:|
+| executed instructions | 487,296 | 14,248,448 |
+| elapsed/simulated cycles | 44,462.65 | 34,132 |
+
+Seventeen stall reasons were available on both sides; `warpgroup_arrive`,
+`mma`, and `no_instructions` remain unavailable in the installed NCU metric
+set. This one-case proof verifies the Phase 3 contract and output structure;
+the full small rank still requires the next intentional run after review.
+
+A complete representative small-rank run then processed all three persisted
+small cases. All three detailed NCU collections completed. GCoM produced two
+simulations:
+
+- `flashmla_dense_decode`: detailed evidence complete and semantically matched;
+- `aligned_gemm_fp16`: traced, but the simulator emitted no `gpu_sim_cycle`,
+  recorded as `missing_stat`;
+- `gelu_gemm_fp16`: simulated its GELU prepass, but remains
+  `semantic_mismatch_component_aggregation` until GCoM has an explicit
+  multi-component aggregation contract matching the hardware fused workload.
+
+The rank report therefore records one OD2-deferred evidence comparison, one
+missing-stat case, and one semantic mismatch. This is the intended Phase 3
+behavior: preserve all evidence and do not manufacture an aggregate accuracy
+score or silently omit difficult cases.

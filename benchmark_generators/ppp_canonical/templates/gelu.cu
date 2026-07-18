@@ -35,8 +35,10 @@ int main(int argc, char** argv) {
   check(cudaMalloc(&y, (size_t)n * sizeof(__half)), "cudaMalloc y");
   check(cudaMemset(x, 1, (size_t)n * sizeof(__half)), "cudaMemset x");
 
+#ifndef AMORA_GCOM_TRACE
   amora_ppp_gelu_kernel<<<blocks, threads>>>(x, y, n);
   check(cudaDeviceSynchronize(), "warmup gelu");
+#endif
   amora_ppp_gelu_kernel<<<blocks, threads>>>(x, y, n);
   check(cudaDeviceSynchronize(), "measured gelu");
 

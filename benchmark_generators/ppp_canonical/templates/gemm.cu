@@ -35,9 +35,11 @@ int main(int argc, char** argv) {
   check_cublas(cublasSetMathMode(handle, CUBLAS_TENSOR_OP_MATH), "cublasSetMathMode");
   __half alpha = __float2half(1.0f);
   __half beta = __float2half(0.0f);
+#ifndef AMORA_GCOM_TRACE
   check_cublas(cublasHgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k,
                            &alpha, a, m, b, k, &beta, c, m), "warmup hgemm");
   check(cudaDeviceSynchronize(), "warmup sync");
+#endif
   check_cublas(cublasHgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k,
                            &alpha, a, m, b, k, &beta, c, m), "measured hgemm");
   check(cudaDeviceSynchronize(), "measured sync");

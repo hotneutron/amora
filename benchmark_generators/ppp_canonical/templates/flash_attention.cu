@@ -82,9 +82,11 @@ int main(int argc, char** argv) {
 
   int blocks = batch * heads * ((sequence + 63) / 64);
   const int threads = 256;
+#ifndef AMORA_GCOM_TRACE
   amora_ppp_flash_attention_fwd_kernel<<<blocks, threads>>>(
       q, k, v, out, batch, heads, sequence, hidden, sample_kv_blocks);
   check(cudaDeviceSynchronize(), "warmup flash_attention");
+#endif
   amora_ppp_flash_attention_fwd_kernel<<<blocks, threads>>>(
       q, k, v, out, batch, heads, sequence, hidden, sample_kv_blocks);
   check(cudaDeviceSynchronize(), "measured flash_attention");

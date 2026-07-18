@@ -58,9 +58,11 @@ int main(int argc, char** argv) {
   check(cudaMemset(weights, 5, (size_t)experts * hidden), "cudaMemset weights");
 
   const int threads = 256;
+#ifndef AMORA_GCOM_TRACE
   amora_ppp_megamoe_kernel<<<routes, threads>>>(
       x, weights, out, tokens, hidden, experts, top_k, sample_hidden);
   check(cudaDeviceSynchronize(), "warmup megamoe");
+#endif
   amora_ppp_megamoe_kernel<<<routes, threads>>>(
       x, weights, out, tokens, hidden, experts, top_k, sample_hidden);
   check(cudaDeviceSynchronize(), "measured megamoe");

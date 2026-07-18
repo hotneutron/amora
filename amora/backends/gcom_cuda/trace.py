@@ -30,8 +30,43 @@ def _tracer_tool_so() -> Path:
     return candidates[0]
 
 
-def compile_probe(src: Path, out_dir: Path, *, defines: tuple[str, ...] = (),
-                  timeout: int = 300) -> Path:
+def _trace_env(
+    trace_dir: Path,
+    tracer_so: Path,
+    *,
+    kernel_limit: int | None,
+    kernel_start: int | None,
+    kernel_end: int | None,
+    active_from_start: bool,
+) -> dict[str, str]:
+    """Build the NVBit environment for an optional measured-launch selection."""
+
+    env = dict(os.environ)
+    env.pop("DYNAMIC_KERNEL_LIMIT_START", None)
+    env.pop("DYNAMIC_KERNEL_LIMIT_END", None)
+    env["USER_DEFINED_FOLDERS"] = "1"
+    env["TRACES_FOLDER"] = str(trace_dir)
+    env["CUDA_INJECTION64_PATH"] = str(tracer_so)
+    env["LD_PRELOAD"] = str(tracer_so)
+    env["ACTIVE_FROM_START"] = "1" if active_from_start else "0"
+    if kernel_start is not None:
+        env["DYNAMIC_KERNEL_LIMIT_START"] = str(kernel_start)
+    if kernel_end is not None:
+        env["DYNAMIC_KERNEL_LIMIT_END"] = str(kernel_end)
+    else:
+        env["DYNAMIC_KERNEL_LIMIT_END"] = str(kernel_limit if kernel_limit is not None else 0)
+    return env
+
+
+def compile_probe(
+    src: Path,
+    out_dir: Path,
+    *,
+    defines: tuple[str, ...] = (),
+    extra_flags: tuple[str, ...] = ("-O2",),
+    link_flags: tuple[str, ...] = (),
+    timeout: int = 300,
+) -> Path:
     """Compile a probe ``.cu`` to a static executable; return the binary path.
 
     ``defines`` (e.g. ``("AMORA_WORKING_SET_KIB=64",)``) enables sweep variants.
@@ -40,10 +75,10 @@ def compile_probe(src: Path, out_dir: Path, *, defines: tuple[str, ...] = (),
     out_dir.mkdir(parents=True, exist_ok=True)
     label = "_".join(d.replace("=", "") for d in defines) or "default"
     binary = out_dir / f"{src.stem}__{label}"
-    args = ["nvcc", "-arch", cfg.NVCC_ARCH, "-std=c++14", "-O2"]
+    args = ["nvcc", "-arch", cfg.NVCC_ARCH, "-std=c++14", *extra_flags]
     for d in defines:
         args.append(f"-D{d}")
-    args += [str(src), "-o", str(binary)]
+    args += [str(src), "-o", str(binary), *link_flags]
     try:
         completed = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as exc:
@@ -64,6 +99,11 @@ def trace_probe(
     defines: tuple[str, ...] = (),
     argv: tuple[str, ...] = (),
     kernel_limit: int | None = None,
+    kernel_start: int | None = None,
+    kernel_end: int | None = None,
+    active_from_start: bool = True,
+    extra_flags: tuple[str, ...] = ("-O2",),
+    link_flags: tuple[str, ...] = (),
     timeout: int = 1800,
 ) -> Path:
     """Compile + trace one probe variant; return the trace directory.
@@ -73,19 +113,27 @@ def trace_probe(
     than crash. The returned directory contains ``dynamic_trace.pb``.
     """
 
-    binary = compile_probe(src, out_dir, defines=defines)
+    binary = compile_probe(
+        src,
+        out_dir,
+        defines=defines,
+        extra_flags=extra_flags,
+        link_flags=link_flags,
+    )
     trace_dir = out_dir / "traces"
     trace_dir.mkdir(parents=True, exist_ok=True)
 
     tracer_so = _tracer_tool_so()
-    env = dict(os.environ)
     # Mirror util/tracer_nvbit/run_hw_trace.py: USER_DEFINED_FOLDERS makes the
-    # tracer honor TRACES_FOLDER; DYNAMIC_KERNEL_LIMIT_END=0 traces all kernels.
-    env["USER_DEFINED_FOLDERS"] = "1"
-    env["TRACES_FOLDER"] = str(trace_dir)
-    env["CUDA_INJECTION64_PATH"] = str(tracer_so)
-    env["LD_PRELOAD"] = str(tracer_so)
-    env["DYNAMIC_KERNEL_LIMIT_END"] = str(kernel_limit if kernel_limit is not None else 0)
+    # tracer honor TRACES_FOLDER; dynamic start/end select one measured launch.
+    env = _trace_env(
+        trace_dir,
+        tracer_so,
+        kernel_limit=kernel_limit,
+        kernel_start=kernel_start,
+        kernel_end=kernel_end,
+        active_from_start=active_from_start,
+    )
 
     try:
         run = subprocess.run(

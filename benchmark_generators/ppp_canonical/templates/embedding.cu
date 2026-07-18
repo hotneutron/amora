@@ -73,10 +73,12 @@ int main(int argc, char** argv) {
                    cudaMemcpyHostToDevice), "cudaMemcpy indices");
 
   const int threads = 256;
+#ifndef AMORA_GCOM_TRACE
   amora_ppp_embedding_lookup<<<rows, threads>>>(table, indices, out, rows, hidden);
   check(cudaDeviceSynchronize(), "warmup embedding");
   amora_ppp_flush_l2<<<4096, threads>>>(flush, flush_bytes);
   check(cudaDeviceSynchronize(), "flush l2");
+#endif
   amora_ppp_embedding_lookup<<<rows, threads>>>(table, indices, out, rows, hidden);
   check(cudaDeviceSynchronize(), "measured embedding");
 

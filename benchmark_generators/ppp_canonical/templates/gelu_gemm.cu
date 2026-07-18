@@ -55,13 +55,14 @@ int main(int argc, char** argv) {
   long elements = (long)m * k;
   int blocks = (int)((elements + 255) / 256);
 
+#ifndef AMORA_GCOM_TRACE
   amora_ppp_gelu_prepass<<<blocks, 256>>>(input, activated, elements);
   check(cudaDeviceSynchronize(), "warmup prepass");
   check_cublas(cublasHgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k,
                            &alpha, activated, m, weights, k, &beta, output, m),
                "warmup hgemm");
   check(cudaDeviceSynchronize(), "warmup hgemm sync");
-
+#endif
   amora_ppp_gelu_prepass<<<blocks, 256>>>(input, activated, elements);
   check(cudaDeviceSynchronize(), "measured prepass");
   check_cublas(cublasHgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k,

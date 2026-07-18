@@ -69,13 +69,14 @@ int main(int argc, char** argv) {
   __half alpha = __float2half(1.0f);
   __half beta = __float2half(0.0f);
 
+#ifndef AMORA_GCOM_TRACE
   amora_ppp_rmsnorm_prepass<<<m, 256>>>(input, normalized, m, k);
   check(cudaDeviceSynchronize(), "warmup prepass");
   check_cublas(cublasHgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k,
                            &alpha, normalized, m, weights, k, &beta, output, m),
                "warmup hgemm");
   check(cudaDeviceSynchronize(), "warmup hgemm sync");
-
+#endif
   amora_ppp_rmsnorm_prepass<<<m, 256>>>(input, normalized, m, k);
   check(cudaDeviceSynchronize(), "measured prepass");
   check_cublas(cublasHgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k,

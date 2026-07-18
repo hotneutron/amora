@@ -67,3 +67,24 @@ class CaseSetManifest:
             "case_set_digest": self.case_set_digest,
             "cases": [case.to_dict() for case in self.cases],
         }
+
+
+@dataclass(frozen=True)
+class DetailedCaseResult:
+    """One backend's detailed evidence for a classified benchmark case."""
+
+    case_key: str
+    kernel_id: str
+    size_rank: str
+    backend: str
+    status: str
+    measurement: Mapping[str, Any] = field(default_factory=dict)
+    logical_metrics: Mapping[str, Any] = field(default_factory=dict)
+    resolved_metrics: Mapping[str, str] = field(default_factory=dict)
+    raw_metrics: Mapping[str, float] = field(default_factory=dict)
+    stall_histogram: Mapping[str, Any] | None = None
+    provenance: Mapping[str, Any] = field(default_factory=dict)
+    reason: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return _clean(asdict(self))

@@ -20,6 +20,7 @@ class ReplayContract:
     launch_skip: int
     launch_count: int = 1
     link_flags: tuple[str, ...] = ()
+    trace_defines: tuple[str, ...] = ("AMORA_GCOM_TRACE",)
 
 
 def contract_for_case(case: BenchmarkCase) -> ReplayContract:

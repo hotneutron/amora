@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from amora import cli
 
 
@@ -94,3 +96,51 @@ def test_cli_partial_benchmark_classification_does_not_assign_ranks(tmp_path, ca
     assert response["rank_counts"] == {}
     assert classification["case_coverage_complete"] is False
     assert classification["rank_assignments"] == {}
+
+
+def test_cli_detail_rejects_incomplete_classification(tmp_path, capsys):
+    manifest_path = tmp_path / "manifest.json"
+    classification_path = tmp_path / "classification.json"
+    assert cli.main(
+        [
+            "benchmarks",
+            "materialize",
+            "ppp_canonical",
+            "--cases",
+            "9",
+            "--seed",
+            "7",
+            "--output",
+            str(manifest_path),
+        ]
+    ) == 0
+    capsys.readouterr()
+    assert cli.main(
+        [
+            "benchmarks",
+            "classify",
+            "ppp_canonical",
+            "--manifest",
+            str(manifest_path),
+            "--limit",
+            "2",
+            "--output",
+            str(classification_path),
+        ]
+    ) == 0
+    capsys.readouterr()
+
+    with pytest.raises(ValueError, match="complete classification overlay"):
+        cli.main(
+            [
+                "benchmarks",
+                "detail",
+                "ppp_canonical",
+                "--manifest",
+                str(manifest_path),
+                "--classification",
+                str(classification_path),
+                "--size-rank",
+                "small",
+            ]
+        )

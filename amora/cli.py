@@ -199,6 +199,107 @@ def _cmd_classify_benchmark(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_detail_benchmark(args: argparse.Namespace) -> int:
+    from amora.backends.gcom_cuda.benchmark import simulate_case_detail
+    from amora.backends.gcom_cuda.gcom import discover_capabilities as gcom_discover
+    from amora.backends.nvidia.benchmark_detail import collect_case_detail
+    from amora.backends.nvidia.cuda import discover_capabilities as nvidia_discover
+    from amora.benchmarking.detailed import (
+        build_detailed_comparison,
+        load_classification_manifest,
+        select_ranked_cases,
+        write_case_results,
+        write_detailed_comparison,
+    )
+    from amora.benchmarking.materialize import load_manifest
+
+    manifest = load_manifest(args.manifest)
+    classification = load_classification_manifest(args.classification)
+    if args.size_rank != "small":
+        raise ValueError("Phase 3 detailed execution currently permits only --size-rank small")
+    selected = select_ranked_cases(
+        manifest,
+        classification,
+        size_rank=args.size_rank,
+    )
+    if args.limit is not None:
+        selected = selected[:args.limit]
+    rank_case_count = sum(
+        assignment.get("size_rank") == args.size_rank
+        for assignment in classification.rank_assignments.values()
+    )
+    base = (
+        Path("out")
+        / "benchmarks"
+        / manifest.benchmark_id
+        / f"r{manifest.benchmark_revision}"
+        / manifest.case_set_digest
+        / "detail"
+        / args.size_rank
+        / classification.classification_digest
+    )
+    nvidia_caps = nvidia_discover()
+    gcom_caps = gcom_discover(args.sku)
+    hardware_results = [
+        collect_case_detail(
+            case,
+            capabilities=nvidia_caps,
+            arch=args.arch,
+            build_root=base / "build-cache",
+            timeout=args.ncu_timeout,
+            size_rank=args.size_rank,
+        )
+        for case in selected
+    ]
+    simulation_results = [
+        simulate_case_detail(
+            case,
+            capabilities=gcom_caps,
+            sku=args.sku,
+            out_dir=base / "gcom" / case.case_key,
+            trace_timeout=args.trace_timeout,
+            sim_timeout=args.sim_timeout,
+            omp_threads=args.omp_threads,
+            size_rank=args.size_rank,
+        )
+        for case in selected
+    ]
+    hardware_path = write_case_results(hardware_results, base / "hardware.jsonl")
+    simulation_path = write_case_results(simulation_results, base / "gcom.jsonl")
+    comparison = build_detailed_comparison(
+        manifest=manifest,
+        classification=classification,
+        size_rank=args.size_rank,
+        hardware_results=hardware_results,
+        simulation_results=simulation_results,
+        rank_case_count=rank_case_count,
+        selected_cases=selected,
+    )
+    default_out = (
+        Path("reports")
+        / "benchmarks"
+        / manifest.benchmark_id
+        / f"r{manifest.benchmark_revision}"
+        / manifest.case_set_digest
+        / "comparisons"
+        / f"nvidia_cuda-{manifest.target.get('hardware_sku', 'generic')}__gcom_cuda-{args.sku}"
+        / args.size_rank
+        / comparison["comparison_digest"]
+    )
+    written = write_detailed_comparison(comparison, args.output or default_out)
+    _print_json(
+        {
+            "hardware_results": str(hardware_path),
+            "gcom_results": str(simulation_path),
+            "comparison_json": str(written["json"]),
+            "comparison_markdown": str(written["markdown"]),
+            "comparison_digest": comparison["comparison_digest"],
+            "coverage": comparison["coverage"],
+        }
+    )
+    return 0
+
+
 # --- gcom_cuda handlers ---
 
 
@@ -297,6 +398,20 @@ def build_parser() -> argparse.ArgumentParser:
     benchmarks_classify.add_argument("--limit", type=int, default=None)
     benchmarks_classify.add_argument("--output", type=Path, default=None)
     benchmarks_classify.set_defaults(func=_cmd_classify_benchmark)
+    benchmarks_detail = benchmarks_sub.add_parser("detail")
+    benchmarks_detail.add_argument("benchmark_id")
+    benchmarks_detail.add_argument("--manifest", type=Path, required=True)
+    benchmarks_detail.add_argument("--classification", type=Path, required=True)
+    benchmarks_detail.add_argument("--size-rank", choices=("small", "medium", "large"), required=True)
+    benchmarks_detail.add_argument("--limit", type=int, default=None)
+    benchmarks_detail.add_argument("--sku", default="gcom_h100")
+    benchmarks_detail.add_argument("--arch", default="sm_90")
+    benchmarks_detail.add_argument("--ncu-timeout", type=int, default=600)
+    benchmarks_detail.add_argument("--trace-timeout", type=int, default=1800)
+    benchmarks_detail.add_argument("--sim-timeout", type=int, default=1200)
+    benchmarks_detail.add_argument("--omp-threads", type=int, default=None)
+    benchmarks_detail.add_argument("--output", type=Path, default=None)
+    benchmarks_detail.set_defaults(func=_cmd_detail_benchmark)
 
     # --- nvidia ---
     _, nvidia_sub, nvidia_run = _add_backend_subparser(

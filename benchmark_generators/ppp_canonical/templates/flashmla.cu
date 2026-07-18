@@ -75,9 +75,11 @@ int main(int argc, char** argv) {
 
   int blocks = batch * heads * ((sequence + 63) / 64);
   const int threads = 256;
+#ifndef AMORA_GCOM_TRACE
   amora_ppp_flashmla_dense_decode_kernel<<<blocks, threads>>>(
       q, kv, out, batch, sequence, heads, sample_kv_blocks);
   check(cudaDeviceSynchronize(), "warmup flashmla");
+#endif
   amora_ppp_flashmla_dense_decode_kernel<<<blocks, threads>>>(
       q, kv, out, batch, sequence, heads, sample_kv_blocks);
   check(cudaDeviceSynchronize(), "measured flashmla");
