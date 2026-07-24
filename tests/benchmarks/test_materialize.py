@@ -39,7 +39,7 @@ def test_registry_exposes_local_ppp_generator():
                 "rmsnorm",
                 "rmsnorm_gemm_fp16",
             ],
-            "presets": ["h100_2500", "h100_5600"],
+            "presets": ["h100_2500", "h100_5600", "v100_2500"],
         }
     ]
     assert get_benchmark("ppp_canonical").benchmark_id == "ppp_canonical"
@@ -119,6 +119,39 @@ def test_h100_5600_materializes_exactly_despite_uneven_capacities():
     assert len({case.case_key for case in manifest.cases}) == 5600
     assert counts["flashmla_dense_decode"] == 370
     assert sum(counts.values()) == 5600
+
+
+def test_v100_2500_preset_excludes_fp8_kernel():
+    preset = get_benchmark("ppp_canonical").presets["v100_2500"]
+    manifest = materialize_benchmark(
+        "ppp_canonical",
+        target={
+            "vendor": "nvidia",
+            "family": "volta",
+            "hardware_sku": "v100-32g",
+            "arch_profile": "sm_70_v100",
+        },
+        case_count=preset["case_count"],
+        seed=preset["seed"],
+        exclude_kernels=tuple(preset["exclude_kernels"]),
+    )
+
+    counts = {}
+    for case in manifest.cases:
+        counts[case.kernel_id] = counts.get(case.kernel_id, 0) + 1
+    assert manifest.materialized_case_count == 2500
+    assert "megamoe_fp8" not in counts
+    assert set(counts) == {
+        "aligned_gemm_fp16",
+        "embedding",
+        "flash_attention_fwd",
+        "flashmla_dense_decode",
+        "gelu",
+        "gelu_gemm_fp16",
+        "rmsnorm",
+        "rmsnorm_gemm_fp16",
+    }
+    assert manifest.generator["exclude_kernels"] == ["megamoe_fp8"]
 
 
 def test_materialize_rejects_invalid_case_count():

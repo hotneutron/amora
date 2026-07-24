@@ -1,6 +1,6 @@
 # nvidia / volta / v100-32g — Probe Results
 
-- Generated: 2026-06-25T18:24Z
+- Generated: 2026-07-22T05:23Z
 - Device: Tesla V100-SXM2-32GB  ·  Backend: `nvidia_cuda`  ·  Probes: 36
 - `fit_status`: `behavioral_only`=8, `bounded`=7, `conditionally_identified`=3, `direct`=5, `underconstrained`=3, `uniquely_identified`=7, `unsupported`=3
 - Back to [family index](README.md)
@@ -1047,7 +1047,7 @@
 | simulator_param | `max_resident_ctas_per_sm` = 13 ctas |
 | concept | `cuda_resident_blocks_per_sm` |
 
-- binary_hash: `f54ec41a6d76daa5874e82e1c1165c02971cb78bf6364e9230c0f1862e0b3a33`
+- binary_hash: `33d7b0dde9faab632bd5522c056c5326f889c33355aa13e4e5192595f2812995`
 - launch.extras: `{"busy_cycles": 200000}`
 - interpretation: peak resident CTAs per SM under the configured launch shape
 - mapping_contract: observed peak block residency under busy-spin → simulator max_resident_ctas_per_sm
@@ -1061,7 +1061,7 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `elapsed_ms` | 0.2765 | ms |
+| `elapsed_ms` | 0.2386 | ms |
 | `mean_resident_blocks_per_sm` | 12.8 | — |
 | `multi_processor_count` | 80 | — |
 | `peak_resident_blocks_per_sm` | 13 | — |
@@ -1071,11 +1071,11 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | f54ec41a6d76daa5874e82e1c1165c02971cb78bf6364e9230c0f1862e0b3a33 |
+| `binary_sha256` | 33d7b0dde9faab632bd5522c056c5326f889c33355aa13e4e5192595f2812995 |
 | `blocks_launched` | 1024 |
 | `busy_cycles` | 200000 |
 | `device_name` | Tesla V100-SXM2-32GB |
-| `elapsed_ms` | 0.2765 |
+| `elapsed_ms` | 0.2386 |
 | `mean_resident_blocks_per_sm` | 12.8 |
 | `multi_processor_count` | 80 |
 | `peak_resident_blocks_per_sm` | 13 |
@@ -1132,7 +1132,7 @@
 | simulator_param | `fp32_fma_pipeline_depth` = 4.376 cycles_per_op |
 | concept | `fp32_fma_dependent_pipeline_latency` |
 
-- binary_hash: `756eac08d4a520f2882d2b5cf2734b160456dcb3975d04cdd2e63c6d671904b2`
+- binary_hash: `ba40225903664924d0140311f6e53b049a80b62049b47ba8f0e75ce951fd4049`
 - interpretation: cycles between issue and writeback for a dependent FMA
 - mapping_contract: dependent FMA cycles-per-op → simulator FP32 FMA latency depth
 
@@ -1153,7 +1153,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 756eac08d4a520f2882d2b5cf2734b160456dcb3975d04cdd2e63c6d671904b2 |
+| `binary_sha256` | ba40225903664924d0140311f6e53b049a80b62049b47ba8f0e75ce951fd4049 |
 | `chain_length` | 4096 |
 | `cycles_max` | 17924 |
 | `cycles_median` | 17924 |
@@ -1219,7 +1219,7 @@
 | simulator_param | `fp32_fma_throughput` = 2.1097 cycles_per_op |
 | concept | `fp32_fma_independent_pipeline_throughput` |
 
-- binary_hash: `e7a164cbe82da75dce9e6494dea27367609a624ac23bf24b0a49c1d29dacbf0c`
+- binary_hash: `adf1a220ee169d21e3556bcab412e3230520c0ad00df923be0ad91ec6162bfa8`
 - interpretation: effective FMA cycles-per-op once ILP saturates the FP32 pipe
 - mapping_contract: independent FMA cycles-per-op → simulator FP32 FMA throughput
 
@@ -1241,7 +1241,7 @@
 | key | value |
 | --- | --- |
 | `approx_fma_per_cycle_per_sm` | 12.1342 |
-| `binary_sha256` | e7a164cbe82da75dce9e6494dea27367609a624ac23bf24b0a49c1d29dacbf0c |
+| `binary_sha256` | adf1a220ee169d21e3556bcab412e3230520c0ad00df923be0ad91ec6162bfa8 |
 | `blocks` | 16 |
 | `chain_length` | 4096 |
 | `cycles_max` | 34566 |
@@ -1249,7 +1249,7 @@
 | `cycles_min` | 34566 |
 | `cycles_per_fma_per_thread` | 2.1097 |
 | `device_name` | Tesla V100-SXM2-32GB |
-| `elapsed_ms` | 0.0358 |
+| `elapsed_ms` | 0.0328 |
 | `independent_chains` | 4 |
 | `multi_processor_count` | 80 |
 | `threads` | 128 |
@@ -1310,7 +1310,7 @@
 | simulator_param | `shared_memory_load_latency_cycles` = 26.9988 cycles |
 | concept | `shared_memory_load_to_use_latency` |
 
-- binary_hash: `2863c0360952265661278e7379759fba28c7f4f83e42d8e4dd6b4164f00eec38`
+- binary_hash: `972238eab6021b9b4cdfef8a8f5778206a52da359133badf4452df283072b950`
 - interpretation: LDS dependent-load latency in cycles
 - mapping_contract: dependent shared-memory chase cycles-per-load → simulator shared-mem latency
 
@@ -1331,7 +1331,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 2863c0360952265661278e7379759fba28c7f4f83e42d8e4dd6b4164f00eec38 |
+| `binary_sha256` | 972238eab6021b9b4cdfef8a8f5778206a52da359133badf4452df283072b950 |
 | `chase_len` | 4096 |
 | `cycles_max` | 110587 |
 | `cycles_median` | 110587 |
@@ -1399,7 +1399,7 @@
 | simulator_param | `shared_memory_banks` = 32 banks |
 | concept | `shared_memory_bank_count` |
 
-- binary_hash: `1798a1a33811d27465eba1dc23835b2d6b8ad3e29acd13c52d07a34041e1a007`
+- binary_hash: `5f54e1d2cbc40cbc2152a9ba738f7635124c6c3645f8193966e9ea0a74fa3bdd`
 - interpretation: shared-memory bank count inferred from cycles-per-access vs stride curve
 - mapping_contract: bank-stride sweep peak conflict factor → simulator shared-memory bank count
 
@@ -1421,7 +1421,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 1798a1a33811d27465eba1dc23835b2d6b8ad3e29acd13c52d07a34041e1a007 |
+| `binary_sha256` | 5f54e1d2cbc40cbc2152a9ba738f7635124c6c3645f8193966e9ea0a74fa3bdd |
 | `device_name` | Tesla V100-SXM2-32GB |
 | `inner_loops` | 4096 |
 
@@ -1531,7 +1531,7 @@
 
 ```json
 {
-  "binary_sha256": "1798a1a33811d27465eba1dc23835b2d6b8ad3e29acd13c52d07a34041e1a007",
+  "binary_sha256": "5f54e1d2cbc40cbc2152a9ba738f7635124c6c3645f8193966e9ea0a74fa3bdd",
   "full_conflict_cycles_per_access": 65.345,
   "inferred_bank_count": 32,
   "no_conflict_cycles_per_access": 6.9387
@@ -1556,7 +1556,7 @@
 
 ```json
 {
-  "binary_sha256": "2863c0360952265661278e7379759fba28c7f4f83e42d8e4dd6b4164f00eec38",
+  "binary_sha256": "972238eab6021b9b4cdfef8a8f5778206a52da359133badf4452df283072b950",
   "cycles_per_load": 26.9988
 }
 ```
@@ -1574,11 +1574,11 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `direct` |
-| measurement | `l1_hit_load_latency` = 59.0576 cycles |
-| simulator_param | `l1_latency` = 59.0576 cycles |
+| measurement | `l1_hit_load_latency` = 59.0574 cycles |
+| simulator_param | `l1_latency` = 59.0574 cycles |
 | concept | `l1_path_hit_latency` |
 
-- binary_hash: `afe138fb357811ead2ca6ead5a7398526ce2de373bca8eefedcb08844ebc7158`
+- binary_hash: `3c8c4f628b884733d8b1a2ae288ee539829c85efcade61dcedc2cef6420426e9`
 - interpretation: dependent-load latency for an L1-resident working set in cycles
 - mapping_contract: dependent L1-hit chase cycles-per-load → simulator L1 hit latency
 
@@ -1592,18 +1592,18 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `dram_cycles_per_load` | 303.71 | cycles |
-| `hit_to_dram_ratio` | 5.14261 | — |
-| `l1_hit_cycles_per_load` | 59.0576 | cycles |
+| `dram_cycles_per_load` | 303.937 | cycles |
+| `hit_to_dram_ratio` | 5.14647 | — |
+| `l1_hit_cycles_per_load` | 59.0574 | cycles |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | afe138fb357811ead2ca6ead5a7398526ce2de373bca8eefedcb08844ebc7158 |
+| `binary_sha256` | 3c8c4f628b884733d8b1a2ae288ee539829c85efcade61dcedc2cef6420426e9 |
 | `device_name` | Tesla V100-SXM2-32GB |
-| `dram_cycles_per_load` | 303.71 |
-| `l1_hit_cycles_per_load` | 59.0576 |
+| `dram_cycles_per_load` | 303.937 |
+| `l1_hit_cycles_per_load` | 59.0574 |
 | `large_kb` | 8192 |
 | `repeats` | 64 |
 | `small_kb` | 16 |
@@ -1665,7 +1665,7 @@
 | simulator_param | `l1d_cache_capacity` = _object_ (effective_l1_kb_high, effective_l1_kb_low) |
 | concept | `l1_effective_capacity_knee` |
 
-- binary_hash: `4781c2c66428ca89eaf5ab1d94f8d1a1b66676be161014281add35ddae296fc2`
+- binary_hash: `0449c2a2f6337138b7110fc52abfdaf5367f1dba2584bd0104df736ef03eeed8`
 - interpretation: effective L1 capacity bounded by the first latency knee in the working-set sweep
 - mapping_contract: working-set latency knee → simulator L1 capacity range
 
@@ -1696,7 +1696,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 4781c2c66428ca89eaf5ab1d94f8d1a1b66676be161014281add35ddae296fc2 |
+| `binary_sha256` | 0449c2a2f6337138b7110fc52abfdaf5367f1dba2584bd0104df736ef03eeed8 |
 | `device_name` | Tesla V100-SXM2-32GB |
 | `repeats` | 32 |
 | `steps` | 4096 |
@@ -1705,19 +1705,19 @@
 
 | cycles_per_load | working_set_kb |
 | --- | --- |
-| 41.8462 | 4 |
-| 47.731 | 8 |
-| 59.2114 | 16 |
-| 70.9294 | 24 |
-| 82.0933 | 32 |
-| 102.881 | 48 |
-| 119.697 | 64 |
-| 159.304 | 128 |
-| 197.846 | 256 |
-| 211.328 | 512 |
-| 216.796 | 1024 |
-| 220.634 | 4096 |
-| 400.077 | 16384 |
+| 41.8481 | 4 |
+| 47.7341 | 8 |
+| 59.2166 | 16 |
+| 70.9373 | 24 |
+| 82.1182 | 32 |
+| 102.923 | 48 |
+| 119.724 | 64 |
+| 159.441 | 128 |
+| 197.726 | 256 |
+| 211.471 | 512 |
+| 216.942 | 1024 |
+| 220.732 | 4096 |
+| 400.467 | 16384 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -1775,7 +1775,7 @@
 | simulator_param | `l1d_cache_assoc` = — |
 | concept | `l1_effective_associativity` |
 
-- binary_hash: `706de6fb497f78177705425ec6dd1f65d61755c8bd23e2f22d0e70b74c8ce752`
+- binary_hash: `42351f9945abba935835e367150b668d6e866f67241604602938172a18048bd5`
 - interpretation: effective L1 associativity bounded by the conflict-set latency knee
 - mapping_contract: conflict-set latency knee → simulator L1 associativity (bounded)
 
@@ -1796,7 +1796,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 706de6fb497f78177705425ec6dd1f65d61755c8bd23e2f22d0e70b74c8ce752 |
+| `binary_sha256` | 42351f9945abba935835e367150b668d6e866f67241604602938172a18048bd5 |
 | `device_name` | Tesla V100-SXM2-32GB |
 | `steps` | 4096 |
 | `stride_bytes` | 4096 |
@@ -1805,30 +1805,30 @@
 
 | cycles_per_load | ways |
 | --- | --- |
-| 36.0588 | 1 |
+| 36.0591 | 1 |
 | 36.1055 | 2 |
-| 36.1531 | 3 |
+| 36.1533 | 3 |
 | 36.2017 | 4 |
-| 36.2495 | 5 |
+| 36.2498 | 5 |
 | 36.2976 | 6 |
-| 36.3459 | 7 |
+| 36.3462 | 7 |
 | 36.3931 | 8 |
 | 36.437 | 9 |
 | 36.4802 | 10 |
 | 36.5217 | 11 |
-| 36.5635 | 12 |
+| 36.5637 | 12 |
 | 36.6072 | 13 |
 | 36.6506 | 14 |
 | 36.6934 | 15 |
-| 36.7346 | 16 |
-| 36.7822 | 17 |
+| 36.7349 | 16 |
+| 36.7827 | 17 |
 | 36.8306 | 18 |
-| 36.8774 | 19 |
-| 36.9255 | 20 |
-| 36.9722 | 21 |
-| 37.0198 | 22 |
-| 37.0681 | 23 |
-| 37.1157 | 24 |
+| 36.8777 | 19 |
+| 36.9263 | 20 |
+| 36.9729 | 21 |
+| 37.02 | 22 |
+| 37.0688 | 23 |
+| 37.1165 | 24 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -1902,7 +1902,7 @@
     "effective_l1_kb_high": 16384,
     "effective_l1_kb_low": 4096
   },
-  "l1_hit_latency_cycles": 59.2068
+  "l1_hit_latency_cycles": 59.217
 }
 ```
 
@@ -1911,7 +1911,7 @@
 | key | value | unit |
 | --- | --- | --- |
 | `l1_effective_capacity_kb` | `{"effective_l1_kb_high": 16384, "effective_l1_kb_low": 4096}` | — |
-| `l1_hit_latency_cycles` | 59.2068 | — |
+| `l1_hit_latency_cycles` | 59.217 | — |
 
 ### Raw values
 
@@ -1919,7 +1919,7 @@
 
 ```json
 {
-  "binary_sha256": "706de6fb497f78177705425ec6dd1f65d61755c8bd23e2f22d0e70b74c8ce752"
+  "binary_sha256": "42351f9945abba935835e367150b668d6e866f67241604602938172a18048bd5"
 }
 ```
 
@@ -1933,7 +1933,7 @@
     "effective_l1_kb_high": 16384,
     "effective_l1_kb_low": 4096
   },
-  "l1_hit_latency_cycles": 59.2068
+  "l1_hit_latency_cycles": 59.217
 }
 ```
 
@@ -1943,8 +1943,8 @@
 
 ```json
 {
-  "binary_sha256": "afe138fb357811ead2ca6ead5a7398526ce2de373bca8eefedcb08844ebc7158",
-  "l1_hit_cycles_per_load": 59.2068
+  "binary_sha256": "3c8c4f628b884733d8b1a2ae288ee539829c85efcade61dcedc2cef6420426e9",
+  "l1_hit_cycles_per_load": 59.217
 }
 ```
 
@@ -1954,7 +1954,7 @@
 
 ```json
 {
-  "binary_sha256": "4781c2c66428ca89eaf5ab1d94f8d1a1b66676be161014281add35ddae296fc2",
+  "binary_sha256": "0449c2a2f6337138b7110fc52abfdaf5367f1dba2584bd0104df736ef03eeed8",
   "effective_capacity": {
     "effective_l1_kb_high": 16384,
     "effective_l1_kb_low": 4096
@@ -1979,7 +1979,7 @@
 | simulator_param | `gpgpu_num_sched_per_core` = 12 warps |
 | concept | `scheduler_issue_scaling` |
 
-- binary_hash: `3580617bfe87d56475c717293bae1f4ee8418b6807008eb751c018d0e5fffe1f`
+- binary_hash: `aefe7e63a47e81e91d2ed7b0eb1dce28e3bb2f273c4a4cb4ce289e468ac3a74b`
 - interpretation: ready-warp count at which issue throughput saturates on one SM
 - mapping_contract: issue-scaling saturation knee → simulator scheduler issue capacity (conditional)
 
@@ -2001,7 +2001,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 3580617bfe87d56475c717293bae1f4ee8418b6807008eb751c018d0e5fffe1f |
+| `binary_sha256` | aefe7e63a47e81e91d2ed7b0eb1dce28e3bb2f273c4a4cb4ce289e468ac3a74b |
 | `chain_length` | 2048 |
 | `device_name` | Tesla V100-SXM2-32GB |
 
@@ -2100,7 +2100,7 @@
 | simulator_param | `gpgpu_dual_issue_diff_exec_units` = single_issue_like |
 | concept | `mixed_pipeline_issue_overlap` |
 
-- binary_hash: `03986bb270fb3759ed59b240b8f8d562f9b2995506fb2990c38bda9b08820bde`
+- binary_hash: `af1bee341d6dcaf256c1d822cf590a4dd0b471b447df355abf36871303c39862`
 - interpretation: FP32/INT pipe overlap classified from mixed vs single-pipe throughput
 - mapping_contract: mixed/single-pipe overlap ratio → simulator dual-issue behavioral class
 
@@ -2123,7 +2123,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 03986bb270fb3759ed59b240b8f8d562f9b2995506fb2990c38bda9b08820bde |
+| `binary_sha256` | af1bee341d6dcaf256c1d822cf590a4dd0b471b447df355abf36871303c39862 |
 | `chain_length` | 2048 |
 | `device_name` | Tesla V100-SXM2-32GB |
 | `fp32_ops_per_cycle` | 63.4271 |
@@ -2233,7 +2233,7 @@
 
 ```json
 {
-  "binary_sha256": "03986bb270fb3759ed59b240b8f8d562f9b2995506fb2990c38bda9b08820bde",
+  "binary_sha256": "af1bee341d6dcaf256c1d822cf590a4dd0b471b447df355abf36871303c39862",
   "overlap_class": "single_issue_like",
   "overlap_ratio": 0.2392876721840376
 }
@@ -2245,7 +2245,7 @@
 
 ```json
 {
-  "binary_sha256": "3580617bfe87d56475c717293bae1f4ee8418b6807008eb751c018d0e5fffe1f",
+  "binary_sha256": "aefe7e63a47e81e91d2ed7b0eb1dce28e3bb2f273c4a4cb4ce289e468ac3a74b",
   "saturation_warps": 12
 }
 ```
@@ -2267,7 +2267,7 @@
 | simulator_param | `gpgpu_num_reg_banks` = 12 accumulators |
 | concept | `register_bank_operand_delivery` |
 
-- binary_hash: `70fcf3ab7bfbecaf68226c5730630a087b7330e4814ea5d8f00d3b4d33ac02b9`
+- binary_hash: `58fb10a3e58ba747b62467daa21c21c0f8f892003910746e9cb981a1f08deb0a`
 - interpretation: operand-delivery throughput plateau across register-pressure widths
 - mapping_contract: operand-width plateau → simulator register-bank pressure (candidate, multi-fit)
 
@@ -2289,7 +2289,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 70fcf3ab7bfbecaf68226c5730630a087b7330e4814ea5d8f00d3b4d33ac02b9 |
+| `binary_sha256` | 58fb10a3e58ba747b62467daa21c21c0f8f892003910746e9cb981a1f08deb0a |
 | `chain_length` | 2048 |
 | `device_name` | Tesla V100-SXM2-32GB |
 
@@ -2364,7 +2364,7 @@
 | simulator_param | `max_latency_regular_register_file_latency` = 1.4382 cycles |
 | concept | `register_operand_delivery_latency` |
 
-- binary_hash: `9e7fd80b8af088516c5bde8ff3ba635b4d8f6c5b29377fe5b67b7fd5ed550924`
+- binary_hash: `b543894477aaf06bf347c2d994a275931e3388076f435bd4946957e90822c26a`
 - interpretation: extra per-op cost of tight RAW dependence attributable to operand delivery
 - mapping_contract: RAW-distance differential cycles → simulator operand-delivery latency (conditional)
 
@@ -2386,7 +2386,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 9e7fd80b8af088516c5bde8ff3ba635b4d8f6c5b29377fe5b67b7fd5ed550924 |
+| `binary_sha256` | b543894477aaf06bf347c2d994a275931e3388076f435bd4946957e90822c26a |
 | `chain_length` | 4096 |
 | `device_name` | Tesla V100-SXM2-32GB |
 | `differential_cycles_per_op` | 1.4382 |
@@ -2488,7 +2488,7 @@
 
 ```json
 {
-  "binary_sha256": "70fcf3ab7bfbecaf68226c5730630a087b7330e4814ea5d8f00d3b4d33ac02b9",
+  "binary_sha256": "58fb10a3e58ba747b62467daa21c21c0f8f892003910746e9cb981a1f08deb0a",
   "ilp_plateau_width": 12
 }
 ```
@@ -2499,7 +2499,7 @@
 
 ```json
 {
-  "binary_sha256": "9e7fd80b8af088516c5bde8ff3ba635b4d8f6c5b29377fe5b67b7fd5ed550924",
+  "binary_sha256": "b543894477aaf06bf347c2d994a275931e3388076f435bd4946957e90822c26a",
   "differential_cycles_per_op": 1.4382
 }
 ```
@@ -2521,7 +2521,7 @@
 | simulator_param | `barrier_latency` = 57.001 cycles |
 | concept | `cta_barrier_latency` |
 
-- binary_hash: `9306e428f814f5c45ea49b9f22bad12547656dda99e488cf350bf15f1e46c9f1`
+- binary_hash: `c7ad5f9f66bfef70d8a465baa5581dacba04862c5b1553ea51e71dddaff10b17`
 - interpretation: cycles per __syncthreads() barrier for the measured CTA shape
 - mapping_contract: cycles-per-barrier for a named CTA shape → simulator barrier latency (conditional)
 
@@ -2543,7 +2543,7 @@
 | key | value |
 | --- | --- |
 | `barriers` | 4096 |
-| `binary_sha256` | 9306e428f814f5c45ea49b9f22bad12547656dda99e488cf350bf15f1e46c9f1 |
+| `binary_sha256` | c7ad5f9f66bfef70d8a465baa5581dacba04862c5b1553ea51e71dddaff10b17 |
 | `device_name` | Tesla V100-SXM2-32GB |
 
 #### `sweep` (5 rows)
@@ -2612,7 +2612,7 @@
 | simulator_param | `dram_bandwidth` = _object_ (copy_gbps, peak_gbps, read_gbps, write_gbps) |
 | concept | `dram_streaming_bandwidth` |
 
-- binary_hash: `6792112c659f8909f72c28e0acbdd9012b7fcef57758903bcd0646ce1770b5ce`
+- binary_hash: `1fb090ab6cbf6b64bcf9c8f90fe4bb1da791f3336947787b9a8780939b314686`
 - interpretation: sustained DRAM/HBM bandwidth per traffic class from streaming kernels
 - mapping_contract: achieved sustained bandwidth per traffic class → simulator DRAM bandwidth (bounded)
 
@@ -2626,10 +2626,10 @@
 
 ```json
 {
-  "copy_gbps": 752.21,
-  "peak_gbps": 863.74,
-  "read_gbps": 863.74,
-  "write_gbps": 776.72
+  "copy_gbps": 749.52,
+  "peak_gbps": 859.49,
+  "read_gbps": 859.49,
+  "write_gbps": 764.27
 }
 ```
 
@@ -2637,22 +2637,22 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `copy_gbps` | 752.21 | GB/s |
-| `peak_gbps` | 863.74 | GB/s |
-| `read_gbps` | 863.74 | GB/s |
-| `write_gbps` | 776.72 | GB/s |
+| `copy_gbps` | 749.52 | GB/s |
+| `peak_gbps` | 859.49 | GB/s |
+| `read_gbps` | 859.49 | GB/s |
+| `write_gbps` | 764.27 | GB/s |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 6792112c659f8909f72c28e0acbdd9012b7fcef57758903bcd0646ce1770b5ce |
-| `copy_gbps` | 752.21 |
+| `binary_sha256` | 1fb090ab6cbf6b64bcf9c8f90fe4bb1da791f3336947787b9a8780939b314686 |
+| `copy_gbps` | 749.52 |
 | `device_name` | Tesla V100-SXM2-32GB |
 | `iters` | 5 |
-| `read_gbps` | 863.74 |
+| `read_gbps` | 859.49 |
 | `working_set_mb` | 512 |
-| `write_gbps` | 776.72 |
+| `write_gbps` | 764.27 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -2705,11 +2705,11 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `bounded` |
-| measurement | `l2_hit_load_latency` = 248.352 cycles |
-| simulator_param | `l2_latency` = 248.352 cycles |
+| measurement | `l2_hit_load_latency` = 246.257 cycles |
+| simulator_param | `l2_latency` = 246.257 cycles |
 | concept | `l2_hit_latency` |
 
-- binary_hash: `1b289ac854928d6ab32435cd2e037275f2108d7d3c2100acbc539ff6ca3877dd`
+- binary_hash: `d18663be7312772d5b49d5a5430ce240b7750a4b62393474684315fae266896c`
 - interpretation: dependent-load latency for an L2-resident working set in cycles
 - mapping_contract: dependent L2-resident chase cycles-per-load -> simulator L2 hit latency (bounded)
 
@@ -2723,19 +2723,19 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `dram_cycles_per_load` | 463.979 | cycles |
-| `hit_to_dram_ratio` | 1.86824 | — |
-| `l2_hit_cycles_per_load` | 248.352 | cycles |
+| `dram_cycles_per_load` | 445.168 | cycles |
+| `hit_to_dram_ratio` | 1.80774 | — |
+| `l2_hit_cycles_per_load` | 246.257 | cycles |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 1b289ac854928d6ab32435cd2e037275f2108d7d3c2100acbc539ff6ca3877dd |
+| `binary_sha256` | d18663be7312772d5b49d5a5430ce240b7750a4b62393474684315fae266896c |
 | `device_name` | Tesla V100-SXM2-32GB |
-| `dram_cycles_per_load` | 463.979 |
+| `dram_cycles_per_load` | 445.168 |
 | `dram_kb` | 131072 |
-| `l2_hit_cycles_per_load` | 248.352 |
+| `l2_hit_cycles_per_load` | 246.257 |
 | `l2_kb` | 4096 |
 | `repeats` | 64 |
 | `steps` | 4096 |
@@ -2796,7 +2796,7 @@
 | simulator_param | `ldst_queue_capacity` = 4 loads |
 | concept | `memory_level_parallelism` |
 
-- binary_hash: `0ab75a5a6b1d067c5ff6e46f7ba3aa41de3e6ab1f0ab4a184d76ffcc93626870`
+- binary_hash: `f6b93893d33108843bc5ce60a0dfcbe9ad75369cb06c61a51991f13be607edc2`
 - interpretation: in-flight independent loads at which memory throughput saturates
 - mapping_contract: outstanding-load saturation knee -> simulator load/store queue capacity (bounded)
 
@@ -2817,7 +2817,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 0ab75a5a6b1d067c5ff6e46f7ba3aa41de3e6ab1f0ab4a184d76ffcc93626870 |
+| `binary_sha256` | f6b93893d33108843bc5ce60a0dfcbe9ad75369cb06c61a51991f13be607edc2 |
 | `buffer_mb` | 256 |
 | `device_name` | Tesla V100-SXM2-32GB |
 
@@ -2825,12 +2825,12 @@
 
 | bytes_per_cycle | in_flight |
 | --- | --- |
-| 331.44 | 1 |
-| 518.978 | 2 |
-| 578.578 | 4 |
-| 479.626 | 8 |
-| 475.535 | 16 |
-| 425.756 | 32 |
+| 331.555 | 1 |
+| 518.37 | 2 |
+| 579.158 | 4 |
+| 480.292 | 8 |
+| 475.583 | 16 |
+| 424.759 | 32 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -2895,7 +2895,7 @@
 | simulator_param | `memory_coalescing_rule` = — |
 | concept | `memory_coalescing` |
 
-- binary_hash: `386a65a0b4fefbd5bfe249f350ffa759e90d72fe8661d9f6da73edf0ed9d3d82`
+- binary_hash: `a8d789965a2d79f68bfd6720fba5e33fe441edfd449ba7d1f600a9c5b4a8ad98`
 - interpretation: global-load sectors per request from controlled lane address patterns
 - mapping_contract: NCU sectors/request under lane patterns -> simulator memory coalescing rule
 
@@ -2909,7 +2909,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 386a65a0b4fefbd5bfe249f350ffa759e90d72fe8661d9f6da73edf0ed9d3d82 |
+| `binary_sha256` | a8d789965a2d79f68bfd6720fba5e33fe441edfd449ba7d1f600a9c5b4a8ad98 |
 | `device_name` | Tesla V100-SXM2-32GB |
 
 #### `patterns` (4 rows)
@@ -3028,7 +3028,7 @@
 
 ```json
 {
-  "binary_sha256": "386a65a0b4fefbd5bfe249f350ffa759e90d72fe8661d9f6da73edf0ed9d3d82"
+  "binary_sha256": "a8d789965a2d79f68bfd6720fba5e33fe441edfd449ba7d1f600a9c5b4a8ad98"
 }
 ```
 
@@ -3038,7 +3038,7 @@
 
 ```json
 {
-  "binary_sha256": "0ab75a5a6b1d067c5ff6e46f7ba3aa41de3e6ab1f0ab4a184d76ffcc93626870",
+  "binary_sha256": "f6b93893d33108843bc5ce60a0dfcbe9ad75369cb06c61a51991f13be607edc2",
   "effective_outstanding_requests": 4
 }
 ```
@@ -3060,7 +3060,7 @@
 | simulator_param | `memory_partition_class` = balanced |
 | concept | `memory_partition_behavior` |
 
-- binary_hash: `aed2802405a85c2edc1ad7c786951faf094384325beabafc681e36eb6b0afb2d`
+- binary_hash: `311a6b94d1174dcb80014c2959490d64cc7addc168d0db3e9d97e5378457a78f`
 - interpretation: DRAM partition-camping sensitivity from base-offset bandwidth sweep
 - mapping_contract: base-offset bandwidth variation -> simulator memory-partition camping class
 
@@ -3074,16 +3074,16 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `bandwidth_ratio` | 1.00785 | — |
-| `max_gbps` | 873.39 | GB/s |
-| `min_gbps` | 866.59 | GB/s |
+| `bandwidth_ratio` | 1.01016 | — |
+| `max_gbps` | 871.08 | GB/s |
+| `min_gbps` | 862.32 | GB/s |
 | `partition_camping_class` | balanced | — |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | aed2802405a85c2edc1ad7c786951faf094384325beabafc681e36eb6b0afb2d |
+| `binary_sha256` | 311a6b94d1174dcb80014c2959490d64cc7addc168d0db3e9d97e5378457a78f |
 | `device_name` | Tesla V100-SXM2-32GB |
 | `working_set_mb` | 512 |
 
@@ -3091,12 +3091,12 @@
 
 | gbps | offset_kb |
 | --- | --- |
-| 866.59 | 0 |
-| 873.39 | 256 |
-| 871.51 | 512 |
+| 862.32 | 0 |
+| 870.49 | 256 |
+| 870.06 | 512 |
 | 871.08 | 768 |
-| 872.11 | 1024 |
-| 866.92 | 1536 |
+| 869.21 | 1024 |
+| 865.48 | 1536 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -3154,11 +3154,11 @@
 | launch | `kernel`  — |
 | evidence_tier | `timing_direct` |
 | fit_status | `bounded` |
-| measurement | `row_locality_sensitivity` = 1.56871 ratio |
-| simulator_param | `dram_row_policy_class` = 1.56871 ratio |
+| measurement | `row_locality_sensitivity` = 1.5328 ratio |
+| simulator_param | `dram_row_policy_class` = 1.5328 ratio |
 | concept | `dram_row_locality` |
 
-- binary_hash: `df742c6a533f017226d963b06fca18e2a6e99de508e0aecd380b5b86164aa46e`
+- binary_hash: `3dcaee29a1bef74819d5c73b207f879108935f515ee3d1ef4825cf777674c472`
 - interpretation: DRAM row-locality sensitivity from a stride bandwidth sweep
 - mapping_contract: stride bandwidth spread -> simulator DRAM row-buffer policy class (bounded)
 
@@ -3172,15 +3172,15 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `best_gbps` | 710.53 | GB/s |
-| `row_locality_sensitivity` | 1.56871 | — |
-| `worst_gbps` | 452.94 | GB/s |
+| `best_gbps` | 713.44 | GB/s |
+| `row_locality_sensitivity` | 1.5328 | — |
+| `worst_gbps` | 465.45 | GB/s |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | df742c6a533f017226d963b06fca18e2a6e99de508e0aecd380b5b86164aa46e |
+| `binary_sha256` | 3dcaee29a1bef74819d5c73b207f879108935f515ee3d1ef4825cf777674c472 |
 | `device_name` | Tesla V100-SXM2-32GB |
 | `working_set_mb` | 512 |
 
@@ -3188,10 +3188,10 @@
 
 | gbps | stride |
 | --- | --- |
-| 557.95 | 1 |
-| 514.52 | 8 |
-| 710.53 | 64 |
-| 452.94 | 512 |
+| 556.17 | 1 |
+| 515.03 | 8 |
+| 713.44 | 64 |
+| 465.45 | 512 |
 
 <details><summary><code>sass</code> (JSON)</summary>
 
@@ -3274,8 +3274,8 @@
 ```json
 {
   "partition_class": "balanced",
-  "peak_gbps": 862.32,
-  "row_locality_sensitivity": 1.5360820205931531
+  "peak_gbps": 858.08,
+  "row_locality_sensitivity": 1.484794352495534
 }
 ```
 
@@ -3284,8 +3284,8 @@
 | key | value | unit |
 | --- | --- | --- |
 | `partition_class` | balanced | — |
-| `peak_gbps` | 862.32 | — |
-| `row_locality_sensitivity` | 1.53608 | — |
+| `peak_gbps` | 858.08 | — |
+| `row_locality_sensitivity` | 1.48479 | — |
 
 ### Raw values
 
@@ -3294,8 +3294,8 @@
 ```json
 {
   "partition_class": "balanced",
-  "peak_gbps": 862.32,
-  "row_locality_sensitivity": 1.5360820205931531
+  "peak_gbps": 858.08,
+  "row_locality_sensitivity": 1.484794352495534
 }
 ```
 
@@ -3305,7 +3305,7 @@
 
 ```json
 {
-  "binary_sha256": "aed2802405a85c2edc1ad7c786951faf094384325beabafc681e36eb6b0afb2d",
+  "binary_sha256": "311a6b94d1174dcb80014c2959490d64cc7addc168d0db3e9d97e5378457a78f",
   "partition_class": "balanced"
 }
 ```
@@ -3316,8 +3316,8 @@
 
 ```json
 {
-  "binary_sha256": "df742c6a533f017226d963b06fca18e2a6e99de508e0aecd380b5b86164aa46e",
-  "row_locality_sensitivity": 1.5360820205931531
+  "binary_sha256": "3dcaee29a1bef74819d5c73b207f879108935f515ee3d1ef4825cf777674c472",
+  "row_locality_sensitivity": 1.484794352495534
 }
 ```
 
@@ -3327,8 +3327,8 @@
 
 ```json
 {
-  "binary_sha256": "6792112c659f8909f72c28e0acbdd9012b7fcef57758903bcd0646ce1770b5ce",
-  "peak_gbps": 862.32
+  "binary_sha256": "1fb090ab6cbf6b64bcf9c8f90fe4bb1da791f3336947787b9a8780939b314686",
+  "peak_gbps": 858.08
 }
 ```
 
@@ -3345,11 +3345,11 @@
 | launch | `kernel`  grid=[1, 1, 1] block=[32, 1, 1] |
 | evidence_tier | `timing_direct` |
 | fit_status | `uniquely_identified` |
-| measurement | `tensor_mma_latency` = 64.3516 cycles_per_op |
-| simulator_param | `tensor_core_mma_latency` = 64.3516 cycles_per_op |
+| measurement | `tensor_mma_latency` = 64.3555 cycles_per_op |
+| simulator_param | `tensor_core_mma_latency` = 64.3555 cycles_per_op |
 | concept | `tensor_core_mma_latency` |
 
-- binary_hash: `f85829e347155fc28c499b3b1e0ee02e0710e31202550ab913698cadaaa2b213`
+- binary_hash: `2dd40dd5f316a8c4172e66acb3f7f726bad2e85d8e7db2a6c4f4d133d22f1fbf`
 - interpretation: dependent FP16 16x16x16 MMA latency in cycles
 - mapping_contract: dependent MMA cycles-per-op -> simulator tensor-core pipeline latency
 
@@ -3362,17 +3362,17 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `cycles_median` | 32948 | — |
-| `cycles_per_mma` | 64.3516 | cycles_per_op |
+| `cycles_median` | 32950 | — |
+| `cycles_per_mma` | 64.3555 | cycles_per_op |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | f85829e347155fc28c499b3b1e0ee02e0710e31202550ab913698cadaaa2b213 |
+| `binary_sha256` | 2dd40dd5f316a8c4172e66acb3f7f726bad2e85d8e7db2a6c4f4d133d22f1fbf |
 | `chain` | 512 |
-| `cycles_median` | 32948 |
-| `cycles_per_mma` | 64.3516 |
+| `cycles_median` | 32950 |
+| `cycles_per_mma` | 64.3555 |
 | `device_name` | Tesla V100-SXM2-32GB |
 | `mma_shape` | m16n16k16_fp16 |
 | `repeats` | 32 |
@@ -3436,7 +3436,7 @@
 | simulator_param | `tensor_core_initiation_interval` = 111.111 cycles_per_op |
 | concept | `tensor_core_mma_throughput` |
 
-- binary_hash: `a41be7690af81c16c08bea36122482ef6dcb597ec96d02ee78d16fe3e684b8b4`
+- binary_hash: `c6f11ce5ff8e549aebfcf9b678b42f76c33a183adc824a60e6f884624f80d799`
 - interpretation: independent FP16 16x16x16 MMA throughput in MMA-ops per cycle per warp
 - mapping_contract: independent MMA throughput -> simulator tensor-core initiation interval
 
@@ -3449,15 +3449,15 @@
 
 | key | value | unit |
 | --- | --- | --- |
-| `cycles_median` | 114135 | — |
+| `cycles_median` | 114242 | — |
 | `mma_per_cycle_per_warp` | 0.009 | mma/cycle |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | a41be7690af81c16c08bea36122482ef6dcb597ec96d02ee78d16fe3e684b8b4 |
-| `cycles_median` | 114135 |
+| `binary_sha256` | c6f11ce5ff8e549aebfcf9b678b42f76c33a183adc824a60e6f884624f80d799 |
+| `cycles_median` | 114242 |
 | `device_name` | Tesla V100-SXM2-32GB |
 | `iters` | 256 |
 | `lanes` | 4 |
@@ -3525,7 +3525,7 @@
 | simulator_param | `fence_latency` = 163.074 cycles |
 | concept | `memory_fence_latency` |
 
-- binary_hash: `1e1268e6c640db866adf8e5c669f93afa75089fb652b142a448cb0ad312bfd96`
+- binary_hash: `ba238c4f4934ae1e29a1fb5d8b2a4617556d3f2b6f0630038ef642c11655ab87`
 - interpretation: net cycles per __threadfence() after subtracting empty-loop overhead
 - mapping_contract: net per-fence cycles -> simulator memory fence latency (conditional)
 
@@ -3547,7 +3547,7 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 1e1268e6c640db866adf8e5c669f93afa75089fb652b142a448cb0ad312bfd96 |
+| `binary_sha256` | ba238c4f4934ae1e29a1fb5d8b2a4617556d3f2b6f0630038ef642c11655ab87 |
 | `cycles_per_empty` | 0.0095 |
 | `cycles_per_fence` | 163.083 |
 | `device_name` | Tesla V100-SXM2-32GB |
@@ -3733,7 +3733,7 @@
 | simulator_param | `interconnect_injection_bandwidth` = 869.47 GB/s |
 | concept | `interconnect_injection` |
 
-- binary_hash: `f75ec1d1e29d6a5f0f21999e8313cc48e9870ae0b2fb853a8dd5e834db187a82`
+- binary_hash: `dec8f0d22364d43d63baf8cc1046075a55288869b35db8aabf3689762ce4a387`
 - interpretation: peak aggregate injection bandwidth vs offered load (blocks per SM)
 - mapping_contract: peak aggregate injection bandwidth vs offered load -> simulator interconnect injection bandwidth (bounded)
 
@@ -3754,16 +3754,16 @@
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | f75ec1d1e29d6a5f0f21999e8313cc48e9870ae0b2fb853a8dd5e834db187a82 |
+| `binary_sha256` | dec8f0d22364d43d63baf8cc1046075a55288869b35db8aabf3689762ce4a387 |
 | `device_name` | Tesla V100-SXM2-32GB |
 
 #### `sweep` (4 rows)
 
 | blocks_per_sm | gbps |
 | --- | --- |
-| 1 | 597.82 |
-| 2 | 788.4 |
-| 4 | 865.16 |
+| 1 | 597.14 |
+| 2 | 783.69 |
+| 4 | 862.32 |
 | 8 | 869.47 |
 
 <details><summary><code>sass</code> (JSON)</summary>
@@ -3826,7 +3826,7 @@
 | simulator_param | `address_mapping_class` = periodic_camping |
 | concept | `address_partition_mapping` |
 
-- binary_hash: `06e479cf0d7a3bea1ff1a78ab318c3af6ce34a780ddb6796b75a68617869ecb8`
+- binary_hash: `5d7ae78cf27dccfb7189000eb9e6ac22b4d287654529fe41ea8a623d69692ad8`
 - interpretation: partition/slice periodicity from base-stride bandwidth variation
 - mapping_contract: base-stride bandwidth variation -> simulator address-partition mapping class (candidate/behavioral)
 
@@ -3841,29 +3841,29 @@
 | key | value | unit |
 | --- | --- | --- |
 | `address_mapping_class` | periodic_camping | — |
-| `bandwidth_ratio` | 1.38641 | — |
-| `max_gbps` | 2119.19 | GB/s |
-| `min_gbps` | 1528.54 | GB/s |
+| `bandwidth_ratio` | 1.4008 | — |
+| `max_gbps` | 2097.15 | GB/s |
+| `min_gbps` | 1497.11 | GB/s |
 
 ### Raw values
 
 | key | value |
 | --- | --- |
-| `binary_sha256` | 06e479cf0d7a3bea1ff1a78ab318c3af6ce34a780ddb6796b75a68617869ecb8 |
+| `binary_sha256` | 5d7ae78cf27dccfb7189000eb9e6ac22b4d287654529fe41ea8a623d69692ad8 |
 | `device_name` | Tesla V100-SXM2-32GB |
 
 #### `sweep` (10 rows)
 
 | gbps | stride_kb |
 | --- | --- |
-| 2119.19 | 1 |
-| 1785.72 | 2 |
-| 1556.67 | 4 |
-| 1538.4 | 8 |
+| 2097.15 | 1 |
+| 1779.66 | 2 |
+| 1558.53 | 4 |
+| 1497.11 | 8 |
 | 1553.91 | 16 |
-| 1542.93 | 32 |
+| 1542.02 | 32 |
 | 1533.01 | 64 |
-| 1529.43 | 128 |
+| 1528.54 | 128 |
 | 1528.54 | 256 |
 | 1528.54 | 512 |
 
@@ -3948,7 +3948,7 @@
 ```json
 {
   "address_mapping_class": "periodic_camping",
-  "injection_saturation_gbps": 873.81
+  "injection_saturation_gbps": 875.27
 }
 ```
 
@@ -3957,7 +3957,7 @@
 | key | value | unit |
 | --- | --- | --- |
 | `address_mapping_class` | periodic_camping | — |
-| `injection_saturation_gbps` | 873.81 | — |
+| `injection_saturation_gbps` | 875.27 | — |
 
 ### Raw values
 
@@ -3966,7 +3966,7 @@
 ```json
 {
   "address_mapping_class": "periodic_camping",
-  "binary_sha256": "06e479cf0d7a3bea1ff1a78ab318c3af6ce34a780ddb6796b75a68617869ecb8"
+  "binary_sha256": "5d7ae78cf27dccfb7189000eb9e6ac22b4d287654529fe41ea8a623d69692ad8"
 }
 ```
 
@@ -3977,7 +3977,7 @@
 ```json
 {
   "address_mapping_class": "periodic_camping",
-  "injection_saturation_gbps": 873.81
+  "injection_saturation_gbps": 875.27
 }
 ```
 
@@ -3987,8 +3987,8 @@
 
 ```json
 {
-  "binary_sha256": "f75ec1d1e29d6a5f0f21999e8313cc48e9870ae0b2fb853a8dd5e834db187a82",
-  "injection_saturation_gbps": 873.81
+  "binary_sha256": "dec8f0d22364d43d63baf8cc1046075a55288869b35db8aabf3689762ce4a387",
+  "injection_saturation_gbps": 875.27
 }
 ```
 

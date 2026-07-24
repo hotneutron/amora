@@ -134,8 +134,14 @@ class PPPCanonicalDefinition:
         target: dict[str, str],
         case_count: int,
         seed: int,
+        include_kernels: tuple[str, ...] | None = None,
+        exclude_kernels: tuple[str, ...] = (),
     ) -> tuple[list[BenchmarkCase], dict[str, Any]]:
-        candidate_sets = [candidate_items(spec) for spec in CANONICAL_KERNELS]
+        selected_kernels = _select_kernels(
+            include_kernels=include_kernels,
+            exclude_kernels=exclude_kernels,
+        )
+        candidate_sets = [candidate_items(spec) for spec in selected_kernels]
         allocations = _allocation(case_count, [len(candidates) for candidates in candidate_sets])
         git_commit, git_dirty = _git_revision(GENERATOR_ROOT)
         source_sha = _source_sha256(GENERATOR_ROOT)
@@ -150,13 +156,16 @@ class PPPCanonicalDefinition:
             "case_count_requested": case_count,
             "curated_classes": [],
             "generated_class": "sweep",
+            "kernel_ids": [spec.kernel_id for spec in selected_kernels],
+            "include_kernels": list(include_kernels or ()),
+            "exclude_kernels": list(exclude_kernels),
         }
         generator["generator_digest"] = sha256(
             canonical_json(generator).encode("utf-8")
         ).hexdigest()
 
         cases: list[BenchmarkCase] = []
-        for spec, candidates, allocated in zip(CANONICAL_KERNELS, candidate_sets, allocations):
+        for spec, candidates, allocated in zip(selected_kernels, candidate_sets, allocations):
             if allocated > len(candidates):
                 raise ValueError(
                     f"{spec.kernel_id}: requested {allocated} shapes, "
@@ -227,3 +236,24 @@ class PPPCanonicalDefinition:
 
 
 PPP_CANONICAL = PPPCanonicalDefinition()
+
+
+def _select_kernels(
+    *,
+    include_kernels: tuple[str, ...] | None,
+    exclude_kernels: tuple[str, ...],
+) -> tuple[KernelSpec, ...]:
+    known = {spec.kernel_id for spec in CANONICAL_KERNELS}
+    include = set(include_kernels or known)
+    exclude = set(exclude_kernels)
+    unknown = (include | exclude) - known
+    if unknown:
+        raise ValueError(f"unknown PPP canonical kernels: {sorted(unknown)}")
+    selected = tuple(
+        spec
+        for spec in CANONICAL_KERNELS
+        if spec.kernel_id in include and spec.kernel_id not in exclude
+    )
+    if not selected:
+        raise ValueError("kernel selection is empty")
+    return selected

@@ -12,10 +12,20 @@ different question: how well do hardware measurements, GCoM simulation, and
 future models agree across a representative shape space?
 
 The first generated benchmark definition is an AMORA-owned PPP
-canonical-kernel generator for H100.
+canonical-kernel generator for NVIDIA GPUs, initially materialized for H100 and
+V100.
 Copy and adapt the canonical kernel definitions, deterministic shape programs,
 case tags, replay contracts, and workload-generation logic into AMORA. The
 generator becomes the source of truth for `kernel + tensor_shape` cases.
+
+Treat H100/Hopper and V100/Volta as separate materialization targets. They may
+share the same PPP generator revision and requested case budget, but they must
+produce distinct case-set manifests because their `target` metadata,
+compile architecture, hardware evidence, and simulator availability differ.
+H100 remains the first GCoM comparison target. V100 is added as a hardware
+classification and detailed-NCU target using `sm_70`; GCoM comparison for V100
+requires a future Volta simulator profile and must be reported as unavailable
+until that profile exists.
 
 Do not treat a historical 2,500-case corpus as a named benchmark definition.
 The case count is a materialization parameter. A run may request 2,500, 5,600,
@@ -205,6 +215,23 @@ kernels:
 case_count_materialized: <actual generated count>
 case_set_digest: <sha256 over canonical manifest rows and generation config>
 ```
+
+For V100, the same generator manifest shape is used with target metadata such
+as:
+
+```yaml
+target:
+  vendor: nvidia
+  family: volta
+  hardware_sku: v100-32g
+  arch_profile: sm_70_v100
+```
+
+The V100 manifest is not interchangeable with the H100 manifest even when the
+same generator revision, seed, kernel set, and requested case count are used.
+The target metadata participates in the case-set identity so downstream
+classification overlays and detailed runs cannot accidentally mix Hopper and
+Volta evidence.
 
 The generator contract controls the materialization. The materialized manifest
 records the exact selected kernels, per-kernel revisions, generation
@@ -415,17 +442,30 @@ amora benchmarks materialize ppp_canonical \
   --target nvidia:h100-80g \
   --cases 5600 --seed 20260717 \
   --manifest out/benchmarks/ppp_canonical/r1/<case-set-digest>/manifest.json
+amora benchmarks materialize ppp_canonical \
+  --vendor nvidia --family volta --sku v100-32g --arch-profile sm_70_v100 \
+  --cases 5600 --seed 20260717 \
+  --manifest out/benchmarks/ppp_canonical/r1/<v100-case-set-digest>/manifest.json
 amora benchmarks materialize MLPerf \
   --manifest out/benchmarks/MLPerf/r1/<case-set-digest>/manifest.json
 amora benchmarks classify ppp_canonical \
   --backend nvidia_cuda --recipe ncu-basic-v1 \
   --manifest <case-set-manifest.json> \
   --out out/benchmarks/ppp_canonical/r1/<case-set-digest>/classification/nvidia_cuda/hopper/h100-80g/<run_id>
+amora benchmarks classify ppp_canonical \
+  --backend nvidia_cuda --recipe ncu-basic-v1 --arch sm_70 \
+  --manifest <v100-case-set-manifest.json> \
+  --out out/benchmarks/ppp_canonical/r1/<v100-case-set-digest>/classification/nvidia_cuda/volta/v100-32g/<run_id>
 amora benchmarks run ppp_canonical \
   --backend nvidia_cuda --mode detailed-ncu \
   --manifest <case-set-manifest.json> \
   --size-rank small \
   --out out/benchmarks/ppp_canonical/r1/<case-set-digest>/runs/nvidia_cuda/hopper/h100-80g/<run_id>
+amora benchmarks run ppp_canonical \
+  --backend nvidia_cuda --mode detailed-ncu --arch sm_70 \
+  --manifest <v100-case-set-manifest.json> \
+  --size-rank small \
+  --out out/benchmarks/ppp_canonical/r1/<v100-case-set-digest>/runs/nvidia_cuda/volta/v100-32g/<run_id>
 amora benchmarks run ppp_canonical \
   --backend gcom_cuda --manifest <case-set-manifest.json> \
   --size-rank small \
@@ -437,6 +477,10 @@ amora benchmarks compare \
   --sim <gcom-run.jsonl> \
   --out-dir reports/benchmarks/ppp_canonical/r1/<case-set-digest>/comparisons/nvidia_cuda-h100-80g__gcom_cuda-gcom_h100
 ```
+
+V100 runs use the hardware classification and detailed-NCU paths above. Do not
+create a `gcom_cuda` comparison path for V100 until a `gcom_v100`/Volta SKU
+profile, config, tracer contract, and semantic compatibility decision exist.
 
 Execution requirements:
 
@@ -664,8 +708,8 @@ special-case branch to the generic execution or report renderer.
   contracts into `benchmark_generators/ppp_canonical/`.
 - Add benchmark schema, registry, deterministic materializer, and case-set
   manifest writer.
-- Materialize parameterized H100 case sets and preserve kernel/shape-class
-  tags.
+- Materialize parameterized H100 and V100 case sets and preserve
+  kernel/shape-class tags.
 - Add `amora benchmarks list`, `inspect`, and `materialize`.
 
 Acceptance:
@@ -677,6 +721,8 @@ Acceptance:
 - `--cases N` materializes exactly `N` cases or fails with a capacity/allocation
   diagnostic;
 - a materialized case set has unique case keys and an explicit actual count;
+- H100 and V100 materializations with the same PPP parameters have distinct
+  target metadata and distinct manifest identities;
 - no generated sources, binaries, traces, or rows are written beneath
   `amora/`.
 
@@ -697,6 +743,9 @@ Acceptance:
 - every materialized case is classified or explicitly unclassified;
 - all valid classified cases have a deterministic small/medium/large rank;
 - the report records the NCU metric/recipe and rank boundaries;
+- H100 classification uses the Hopper compile/profile target (`sm_90_h100` /
+  `sm_90`), while V100 classification uses the Volta target (`sm_70_v100` /
+  `sm_70`);
 - detailed GCoM comparison cannot start without the frozen classification
   artifact.
 
@@ -705,6 +754,8 @@ Acceptance:
 - Define one benchmark replay/trace contract per supported PPP kernel.
 - Run detailed NCU profiling, trace generation, and GCoM simulation only for
   persisted `size_rank=small` cases.
+- For V100, run the detailed NCU side under `sm_70` and record GCoM as
+  unavailable until a Volta simulator SKU/profile exists.
 - Collect detailed counters and stall-reason histograms on both sides where
   the measurement contract supports them.
 - Record trace/config/binary version contracts per case.
@@ -828,6 +879,11 @@ balanced while respecting actual per-kernel candidate capacity, so a constrained
 kernel can receive fewer cases and unused allocation is redistributed
 deterministically.
 
+V100 uses the same `ppp_canonical` generator and presets, but with target
+metadata `family=volta`, `hardware_sku=v100-32g`, and
+`arch_profile=sm_70_v100`. Its materialized case-set digest is expected to
+differ from H100 because the target metadata is part of the manifest identity.
+
 ### Phase 2: NCU Basic Classification
 
 Implemented on branch `bench`:
@@ -862,6 +918,11 @@ with instruction-count boundaries `small_max=1,183,584`,
 `medium_max=28,508,160`, and `large_max=370,900,992`. This validates the
 classification contract only; it does not replace the required all-case
 hardware classification for a full materialized case set.
+
+V100 classification is planned as a parallel hardware replay track using
+`--arch sm_70` and the `volta/v100-32g` classification output path. It should
+produce its own rank overlay and boundaries; do not reuse the H100 overlay for
+V100 even when the case rows have matching kernel IDs and shapes.
 
 ### Phase 3: Small-Rank Detailed Evidence
 
@@ -910,6 +971,11 @@ missing-stat case, and one semantic mismatch. This is the intended Phase 3
 behavior: preserve all evidence and do not manufacture an aggregate accuracy
 score or silently omit difficult cases.
 
+For V100, Phase 3 should first publish hardware detailed-NCU evidence for the
+persisted small rank. The GCoM side remains `unavailable` unless a Volta
+simulator SKU/config is introduced; this is expected evidence, not a blocker
+for V100 hardware classification or NCU-only detailed reporting.
+
 ### Phase 4: Medium And Large Rank Progression
 
 Implemented on branch `bench`:
@@ -935,3 +1001,8 @@ accepted. Run a fresh complete small-rank detail invocation under the
 immutable Phase 4 layout, review its failures and semantic decisions, then use
 that marker to enable medium. This preserves the distinction between
 pre-Phase-4 evidence and the explicit gated progression contract.
+
+Run the gated progression independently per target. An accepted H100 small-rank
+review marker must not unlock V100 medium, and an accepted V100 small-rank
+review marker must not unlock H100 medium. The case-set digest and
+classification digest keep those progressions separate.

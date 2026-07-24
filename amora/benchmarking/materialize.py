@@ -117,6 +117,8 @@ def materialize_benchmark(
     target: dict[str, str],
     case_count: int,
     seed: int,
+    include_kernels: tuple[str, ...] | None = None,
+    exclude_kernels: tuple[str, ...] = (),
 ) -> CaseSetManifest:
     """Materialize exactly ``case_count`` ordered cases from a definition."""
 
@@ -127,6 +129,8 @@ def materialize_benchmark(
         target=target,
         case_count=case_count,
         seed=seed,
+        include_kernels=include_kernels,
+        exclude_kernels=exclude_kernels,
     )
     ordered = sorted(cases, key=lambda case: case.case_key)
     keys = [case.case_key for case in ordered]

@@ -15,8 +15,9 @@
           }
         ],
         "gpu_available": true,
-        "ncu_counters_available": false,
-        "ncu_metric_count": 0,
+        "ncu_counters_available": true,
+        "ncu_metric_count": 1636,
+        "ncu_metrics_error": null,
         "tools": {
           "cuobjdump": {
             "available": true,
@@ -81,7 +82,7 @@
       },
       "device_count": 1,
       "driver_version": "535.261.03",
-      "generated_at": "2026-06-25T18:24Z",
+      "generated_at": "2026-07-22T05:23Z",
       "outcomes": [
         {
           "fit": "direct",
@@ -141,7 +142,7 @@
         },
         {
           "fit": "direct",
-          "measurement": "59.0576 cycles",
+          "measurement": "59.0574 cycles",
           "mode": "kernel",
           "probe_id": "l1_cache.pointer_chase",
           "tier": "timing_direct"
@@ -225,7 +226,7 @@
         },
         {
           "fit": "bounded",
-          "measurement": "248.352 cycles",
+          "measurement": "246.257 cycles",
           "mode": "kernel",
           "probe_id": "l2_cache.pointer_chase",
           "tier": "timing_direct"
@@ -260,7 +261,7 @@
         },
         {
           "fit": "bounded",
-          "measurement": "1.56871 ratio",
+          "measurement": "1.5328 ratio",
           "mode": "kernel",
           "probe_id": "global_memory.row_policy_sweep",
           "tier": "timing_direct"
@@ -274,7 +275,7 @@
         },
         {
           "fit": "uniquely_identified",
-          "measurement": "64.3516 cycles_per_op",
+          "measurement": "64.3555 cycles_per_op",
           "mode": "kernel",
           "probe_id": "tensor_core.mma_latency",
           "tier": "timing_direct"
@@ -406,7 +407,7 @@
         {
           "probe_id": "l1_cache.pointer_chase",
           "unit": "cycles",
-          "value": 59.0576
+          "value": 59.0574
         },
         {
           "probe_id": "l1_cache.conflict_sets",
@@ -441,7 +442,7 @@
         {
           "probe_id": "l2_cache.pointer_chase",
           "unit": "cycles",
-          "value": 248.3516
+          "value": 246.2571
         },
         {
           "probe_id": "memory_pipeline.outstanding_requests",
@@ -461,12 +462,12 @@
         {
           "probe_id": "global_memory.row_policy_sweep",
           "unit": "ratio",
-          "value": 1.5687066719653817
+          "value": 1.5327962187130735
         },
         {
           "probe_id": "tensor_core.mma_latency",
           "unit": "cycles_per_op",
-          "value": 64.3516
+          "value": 64.3555
         },
         {
           "probe_id": "tensor_core.mma_throughput",
@@ -506,8 +507,8 @@
       ],
       "schema_version": 1,
       "sku": "v100-32g",
-      "source_json": "/tmp/amora-v100.json",
-      "source_sha256": "9ac22a87b04ef7daa20dcf5bbde4e53abeae7e365dcb63f02799b2c382546659"
+      "source_json": "/tmp/amora-v100-36probe.json",
+      "source_sha256": "dfb6e4a55340e24bbeb72a50f21e935dc75aa7a46e52eac034f4c3fc715e3056"
     }
   },
   "vendor": "nvidia"

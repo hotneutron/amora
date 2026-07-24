@@ -83,6 +83,8 @@ def _cmd_materialize_benchmark(args: argparse.Namespace) -> int:
     definition = get_benchmark(args.benchmark_id)
     case_count = args.cases
     seed = args.seed
+    include_kernels = None
+    exclude_kernels: tuple[str, ...] = ()
     if args.preset:
         presets = getattr(definition, "presets", {})
         try:
@@ -96,6 +98,10 @@ def _cmd_materialize_benchmark(args: argparse.Namespace) -> int:
             case_count = preset["case_count"]
         if seed is None:
             seed = preset["seed"]
+        include_value = preset.get("include_kernels")
+        if include_value:
+            include_kernels = tuple(include_value)
+        exclude_kernels = tuple(preset.get("exclude_kernels") or ())
     if case_count is None:
         raise ValueError("pass --cases or --preset")
     if seed is None:
@@ -111,6 +117,8 @@ def _cmd_materialize_benchmark(args: argparse.Namespace) -> int:
         target=target,
         case_count=case_count,
         seed=seed,
+        include_kernels=include_kernels,
+        exclude_kernels=exclude_kernels,
     )
     default_out = (
         Path("out")

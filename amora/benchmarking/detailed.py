@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
@@ -18,6 +18,13 @@ from amora.benchmarking.schema import BenchmarkCase, CaseSetManifest, DetailedCa
 
 
 SIZE_RANKS = ("small", "medium", "large")
+SHAPE_SCALE_ORDER = {
+    "small-shape": 0,
+    "medium-shape": 1,
+    "large-shape": 2,
+    "extreme-shape": 3,
+    "unknown-scale": 4,
+}
 
 STALL_REASONS = (
     "selected",
@@ -64,6 +71,86 @@ def _write_new_text(path: str | Path, content: str) -> Path:
             f"refusing to overwrite immutable benchmark artifact: {destination}"
         ) from exc
     return destination
+
+
+def _fmt_markdown(value: Any) -> str:
+    if value is None:
+        return "-"
+    if isinstance(value, float):
+        return f"{value:.4g}"
+    if isinstance(value, (dict, list)):
+        return "`" + json.dumps(value, sort_keys=True, separators=(",", ":")) + "`"
+    return str(value)
+
+
+def _shape_label(shape: dict[str, Any]) -> str:
+    if not shape:
+        return "-"
+    return ", ".join(f"{name}={shape[name]}" for name in sorted(shape))
+
+
+def _shape_volume(shape: dict[str, Any]) -> int | None:
+    volume = 1
+    found = False
+    for value in shape.values():
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            return None
+        volume *= value
+        found = True
+    return volume if found else None
+
+
+def _shape_scale(shape: dict[str, Any]) -> str:
+    volume = _shape_volume(shape)
+    if volume is None:
+        return "unknown-scale"
+    if volume < 1_000_000:
+        return "small-shape"
+    if volume < 100_000_000:
+        return "medium-shape"
+    if volume < 10_000_000_000:
+        return "large-shape"
+    return "extreme-shape"
+
+
+def _case_groups(case_rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for row in case_rows:
+        shape = row.get("shape") if isinstance(row.get("shape"), dict) else {}
+        key = (str(row.get("kernel_id") or "unknown_kernel"), _shape_scale(shape))
+        groups[key].append(row)
+
+    rendered = []
+    for (kernel_id, shape_scale), rows in groups.items():
+        ordered = sorted(
+            rows,
+            key=lambda row: (
+                _shape_volume(row.get("shape") if isinstance(row.get("shape"), dict) else {})
+                or -1,
+                str(row.get("case_key") or ""),
+            ),
+        )
+        rendered.append(
+            {
+                "kernel_id": kernel_id,
+                "shape_scale": shape_scale,
+                "cases": ordered,
+            }
+        )
+    rendered.sort(
+        key=lambda group: (
+            group["kernel_id"],
+            SHAPE_SCALE_ORDER.get(group["shape_scale"], len(SHAPE_SCALE_ORDER)),
+        )
+    )
+    return rendered
+
+
+def _counts_markdown(values: Iterable[Any]) -> str:
+    counts = Counter(str(value) for value in values)
+    if not counts:
+        return "-"
+    return ", ".join(f"`{name}`={count}" for name, count in sorted(counts.items()))
 
 
 def _previous_rank(size_rank: str) -> str | None:
@@ -255,6 +342,10 @@ def select_ranked_cases(
         raise ValueError("classification case-set digest does not match the manifest")
     if not classification.case_coverage_complete:
         raise ValueError("detailed comparison requires a complete classification overlay")
+    if not classification.rank_assignments:
+        raise ValueError(
+            "detailed comparison requires at least one classified case with a size rank"
+        )
     by_key = {case.case_key: case for case in manifest.cases}
     selected = [
         by_key[case_key]
@@ -456,6 +547,8 @@ def build_review_marker(
     """Accept complete matching evidence artifacts for one finished rank."""
 
     evidence = list(comparisons)
+    known_failure_notes = tuple(known_failures)
+    semantic_decision_notes = tuple(semantic_decisions)
     if not evidence:
         raise ValueError("a review marker requires at least one comparison artifact")
     reviewed_rank = evidence[0].get("size_rank")
@@ -466,6 +559,8 @@ def build_review_marker(
     )
     run_ids: set[str] = set()
     comparison_digests: set[str] = set()
+    incomplete_evidence: list[str] = []
+    semantic_mismatches: list[str] = []
     for comparison in evidence:
         validate_detailed_comparison(comparison)
         if comparison.get("case_set_digest") != manifest.case_set_digest:
@@ -483,6 +578,17 @@ def build_review_marker(
             raise ValueError(
                 "review requires a complete detailed comparison for the persisted rank"
             )
+        for row in comparison.get("cases") or ():
+            case_key = row.get("case_key", "unknown")
+            hw_status = row.get("hardware_status")
+            sim_status = row.get("gcom_status")
+            comparison_status = row.get("comparison_status")
+            if hw_status != "measured" or sim_status != "simulated":
+                incomplete_evidence.append(str(case_key))
+            if comparison_status == "incomplete_evidence":
+                incomplete_evidence.append(str(case_key))
+            if isinstance(comparison_status, str) and comparison_status.startswith("semantic_mismatch"):
+                semantic_mismatches.append(str(case_key))
         run_id = comparison.get("run_id")
         if not isinstance(run_id, str) or not run_id:
             raise ValueError("comparison does not identify its immutable detail run")
@@ -493,6 +599,18 @@ def build_review_marker(
             raise ValueError(f"review contains duplicate comparison digest: {digest}")
         run_ids.add(run_id)
         comparison_digests.add(digest)
+    if incomplete_evidence and not known_failure_notes:
+        sample = ", ".join(sorted(set(incomplete_evidence))[:3])
+        raise ValueError(
+            "review requires known-failure notes for incomplete detailed evidence"
+            f" ({sample})"
+        )
+    if semantic_mismatches and not semantic_decision_notes:
+        sample = ", ".join(sorted(set(semantic_mismatches))[:3])
+        raise ValueError(
+            "review requires semantic-decision notes for semantic mismatches"
+            f" ({sample})"
+        )
     template = DetailReviewMarker(
         case_set_digest=manifest.case_set_digest,
         classification_digest=classification.classification_digest,
@@ -500,8 +618,8 @@ def build_review_marker(
         accepted_run_ids=tuple(sorted(run_ids)),
         accepted_comparison_digests=tuple(sorted(comparison_digests)),
         rank_case_count=expected_rank_count,
-        known_failures=tuple(known_failures),
-        semantic_decisions=tuple(semantic_decisions),
+        known_failures=known_failure_notes,
+        semantic_decisions=semantic_decision_notes,
         reviewer=reviewer,
         reviewed_at=reviewed_at,
         review_marker_digest="",
@@ -577,6 +695,7 @@ def render_detailed_markdown(comparison: dict[str, Any]) -> str:
     """Render a compact rank-scoped detailed evidence summary."""
 
     coverage = comparison["coverage"]
+    case_groups = _case_groups(comparison["cases"])
     lines = [
         f"# PPP {comparison['size_rank']} Rank Detailed Evidence",
         "",
@@ -612,27 +731,103 @@ def render_detailed_markdown(comparison: dict[str, Any]) -> str:
         )
     lines.extend(
         [
-        "## Case Coverage",
-        "",
-        "| case | kernel | hardware | gcom | comparison |",
-        "|---|---|---|---|---|",
+            "## Data Point Groups",
+            "",
+            "Data points are grouped by `kernel_id` and a shape-scale bucket computed "
+            "from the product of numeric shape dimensions. Stall-reason rows remain "
+            "per data point and are not merged into categories.",
+            "",
+            "| data point group | cases | hardware | gcom | comparison |",
+            "|---|---:|---|---|---|",
         ]
     )
-    for row in comparison["cases"]:
+    for group in case_groups:
+        rows = group["cases"]
         lines.append(
-            f"| {row['case_key']} | {row['kernel_id']} | {row['hardware_status']} | "
-            f"{row['gcom_status']} | {row['comparison_status']} |"
+            f"| `{group['kernel_id']}` / `{group['shape_scale']}` | {len(rows)} | "
+            f"{_counts_markdown(row['hardware_status'] for row in rows)} | "
+            f"{_counts_markdown(row['gcom_status'] for row in rows)} | "
+            f"{_counts_markdown(row['comparison_status'] for row in rows)} |"
         )
     lines.extend(
         [
             "",
-            "## Detailed Counters",
+            "## Case Coverage",
+            "",
+        ]
+    )
+    for group in case_groups:
+        lines.extend(
+            [
+                f"### `{group['kernel_id']}` / `{group['shape_scale']}`",
+                "",
+                "| case | shape | shape class | hardware | gcom | comparison |",
+                "|---|---|---|---|---|---|",
+            ]
+        )
+        for row in group["cases"]:
+            lines.append(
+                f"| `{row['case_key']}` | {_shape_label(row['shape'])} | "
+                f"{row['shape_class']} | {row['hardware_status']} | "
+                f"{row['gcom_status']} | {row['comparison_status']} |"
+            )
+        lines.append("")
+    lines.extend(
+        [
+            "## Per-Case Stall Reasons",
             "",
             "Counter and stall values are preserved as evidence only. OD2 has not yet selected "
             "a canonical scalar accuracy metric for this benchmark suite.",
             "",
         ]
     )
+    for group in case_groups:
+        lines.extend(
+            [
+                f"### `{group['kernel_id']}` / `{group['shape_scale']}`",
+                "",
+            ]
+        )
+        for row in group["cases"]:
+            lines.extend(
+                [
+                    f"#### `{row['case_key']}`",
+                    "",
+                    f"- shape: {_shape_label(row['shape'])}",
+                    f"- status: hardware `{row['hardware_status']}`, GCoM "
+                    f"`{row['gcom_status']}`, comparison `{row['comparison_status']}`",
+                    "",
+                ]
+            )
+            counter_rows = row.get("counter_comparison") or []
+            if counter_rows:
+                lines.extend(
+                    [
+                        "| logical counter | hardware ncu | gcom | status |",
+                        "|---|---:|---:|---|",
+                    ]
+                )
+                for counter in counter_rows:
+                    lines.append(
+                        f"| {counter['logical']} | {_fmt_markdown(counter['hardware_ncu'])} | "
+                        f"{_fmt_markdown(counter['gcom'])} | {counter['comparison_status']} |"
+                    )
+                lines.append("")
+            lines.extend(
+                [
+                    "| reason | hardware ncu pct | hardware metric | gcom pct | gcom count | status |",
+                    "|---|---:|---|---:|---:|---|",
+                ]
+            )
+            for stall in row.get("stall_reason_comparison") or ():
+                lines.append(
+                    f"| {stall['reason']} | {_fmt_markdown(stall['hardware_ncu'])} | "
+                    f"{_fmt_markdown(stall['hardware_metric'])} | "
+                    f"{_fmt_markdown(stall['gcom_pct'])} | "
+                    f"{_fmt_markdown(stall['gcom_count'])} | "
+                    f"{stall['comparison_status']} |"
+                )
+            lines.append("")
     return "\n".join(lines)
 
 

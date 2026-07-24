@@ -62,6 +62,38 @@ def test_cli_lists_and_materializes_benchmarks(tmp_path, capsys):
     assert manifest["case_count_materialized"] == 9
 
 
+def test_cli_materializes_v100_2500_without_fp8(tmp_path, capsys):
+    output = tmp_path / "manifest.json"
+    code = cli.main(
+        [
+            "benchmarks",
+            "materialize",
+            "ppp_canonical",
+            "--preset",
+            "v100_2500",
+            "--vendor",
+            "nvidia",
+            "--family",
+            "volta",
+            "--sku",
+            "v100-32g",
+            "--arch-profile",
+            "sm_70_v100",
+            "--output",
+            str(output),
+        ]
+    )
+
+    response = json.loads(capsys.readouterr().out)
+    manifest = json.loads(output.read_text())
+    kernel_ids = {case["kernel_id"] for case in manifest["cases"]}
+    assert code == 0
+    assert response["case_count_materialized"] == 2500
+    assert manifest["case_count_materialized"] == 2500
+    assert "megamoe_fp8" not in kernel_ids
+    assert manifest["generator"]["exclude_kernels"] == ["megamoe_fp8"]
+
+
 def test_cli_partial_benchmark_classification_does_not_assign_ranks(tmp_path, capsys):
     manifest_path = tmp_path / "manifest.json"
     classification_path = tmp_path / "classification.json"
@@ -233,6 +265,10 @@ def test_cli_review_writes_small_marker_and_detail_rejects_ungated_medium(
             str(small_comparison),
             "--reviewer",
             "test",
+            "--known-failure",
+            "synthetic CLI fixture has no detail evidence",
+            "--semantic-decision",
+            "OD2 scalar accuracy remains deferred",
             "--reviewed-at",
             "2026-07-18T00:00:00+00:00",
             "--output",

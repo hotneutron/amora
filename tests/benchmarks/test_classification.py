@@ -184,6 +184,7 @@ def test_basic_classifier_returns_unclassified_when_instruction_metric_is_missin
         cuda_available=True,
         gpu_available=True,
         ncu_metrics=frozenset({"sm__cycles_elapsed.avg"}),
+        ncu_metrics_error="ERR_NVGPUCTRPERM - no permission",
     )
 
     result = nvidia_benchmark.classify_case_basic(
@@ -194,7 +195,7 @@ def test_basic_classifier_returns_unclassified_when_instruction_metric_is_missin
 
     assert result.status == "unclassified"
     assert result.total_instructions is None
-    assert result.reason == "NCU instruction metric is unavailable"
+    assert result.reason == "NCU instruction metric is unavailable: ERR_NVGPUCTRPERM - no permission"
 
 
 @pytest.mark.cuda
@@ -203,6 +204,8 @@ def test_h100_gelu_basic_classification_smoke(tmp_path):
     capabilities = discover_capabilities()
     if not capabilities.cuda_available or not capabilities.ncu_metrics:
         pytest.skip("CUDA or NCU basic metrics are unavailable")
+    if not any("H100" in device.name for device in capabilities.devices):
+        pytest.skip("H100 classification smoke requires an H100 host")
     manifest = materialize_benchmark(
         "ppp_canonical",
         target=TARGET,
@@ -218,6 +221,8 @@ def test_h100_gelu_basic_classification_smoke(tmp_path):
         timeout=600,
     )
 
+    if result.status == "failed" and result.reason and "ncu rc=" in result.reason:
+        pytest.skip(result.reason)
     assert result.status == "classified"
     assert result.total_instructions and result.total_instructions > 0
     assert result.metrics["elapsed_cycles"] > 0

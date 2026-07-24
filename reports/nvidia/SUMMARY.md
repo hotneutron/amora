@@ -57,19 +57,19 @@ Per family, one table per probe group. Rows are SKUs; columns are the scalar pro
 
 | sku | register_file.register_bank_sweep (accumulators) | register_file.register_latency (cycles) | synchronization.barrier_latency (cycles) | synchronization.fence_latency (cycles) | tensor_core.mma_latency (cycles_per_op) | tensor_core.mma_throughput (mma/cycle) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `v100-32g` | 12 | 1.4382 | 57.001 | 163.074 | 64.3516 | 0.009 |
+| `v100-32g` | 12 | 1.4382 | 57.001 | 163.074 | 64.3555 | 0.009 |
 
 #### On-chip Memory
 
 | sku | l1_cache.conflict_sets (ways) | l1_cache.pointer_chase (cycles) | l2_cache.pointer_chase (cycles) | shared_memory.bank_stride (banks) | shared_memory.pointer_chase (cycles) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `v100-32g` | — | 59.0576 | 248.352 | 32 | 26.9988 |
+| `v100-32g` | — | 59.0574 | 246.257 | 32 | 26.9988 |
 
 #### Global Memory & DRAM
 
 | sku | global_memory.partition_sweep | global_memory.row_policy_sweep (ratio) | memory_pipeline.lane_patterns (sectors/request) | memory_pipeline.outstanding_requests (loads) |
 | --- | ---: | ---: | ---: | ---: |
-| `v100-32g` | balanced | 1.56871 | — | 4 |
+| `v100-32g` | balanced | 1.5328 | — | 4 |
 
 #### Transfer & Interconnect
 

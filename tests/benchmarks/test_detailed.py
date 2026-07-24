@@ -7,6 +7,7 @@ from amora.benchmarking.detailed import (
     build_detailed_comparison,
     build_detail_run_manifest,
     build_review_marker,
+    render_detailed_markdown,
     review_gate_for_rank,
     select_ranked_cases,
     write_case_results,
@@ -56,6 +57,28 @@ def test_select_ranked_cases_requires_complete_overlay():
     classification = _classification(manifest, complete=False)
 
     with pytest.raises(ValueError, match="complete classification overlay"):
+        select_ranked_cases(manifest, classification, size_rank="small")
+
+
+def test_select_ranked_cases_requires_at_least_one_ranked_case():
+    manifest = _manifest()
+    results = [
+        ClassificationResult(
+            case_key=case.case_key,
+            status="unclassified",
+            total_instructions=None,
+            reason="NCU instruction metric is unavailable",
+        )
+        for case in manifest.cases
+    ]
+    classification = build_classification_manifest(
+        case_set_digest=manifest.case_set_digest,
+        target=manifest.target,
+        results=results,
+        expected_case_keys=[case.case_key for case in manifest.cases],
+    )
+
+    with pytest.raises(ValueError, match="at least one classified case"):
         select_ranked_cases(manifest, classification, size_rank="small")
 
 
@@ -111,6 +134,58 @@ def test_detailed_comparison_keeps_od2_scalar_error_deferred():
     assert first["counter_comparison"][0]["comparison_status"] == "evidence_only_od2_deferred"
     wait = next(row for row in first["stall_reason_comparison"] if row["reason"] == "wait")
     assert wait["comparison_status"] == "evidence_available"
+
+
+def test_detailed_markdown_groups_data_points_not_stall_reasons():
+    manifest = _manifest()
+    classification = _classification(manifest)
+    selected = select_ranked_cases(manifest, classification, size_rank="small")
+    hardware = [
+        DetailedCaseResult(
+            case_key=case.case_key,
+            kernel_id=case.kernel_id,
+            size_rank="small",
+            backend="nvidia_cuda",
+            status="measured",
+            logical_metrics={"inst_executed": 1000.0},
+            resolved_metrics={"stall_wait": "smsp__pcsamp_warps_issue_stalled_wait"},
+            stall_histogram={"reasons": {"wait": 12.0}},
+        )
+        for case in selected
+    ]
+    simulation = [
+        DetailedCaseResult(
+            case_key=case.case_key,
+            kernel_id=case.kernel_id,
+            size_rank="small",
+            backend="gcom_cuda",
+            status="simulated",
+            logical_metrics={"inst_executed": {"value": 900.0}},
+            stall_histogram={"reasons": {"wait": {"count": 8.0, "pct": 8.0}}},
+        )
+        for case in selected
+    ]
+    comparison = build_detailed_comparison(
+        manifest=manifest,
+        classification=classification,
+        size_rank="small",
+        hardware_results=hardware,
+        simulation_results=simulation,
+        rank_case_count=len(selected),
+    )
+
+    markdown = render_detailed_markdown(comparison)
+
+    assert "## Data Point Groups" in markdown
+    assert "Stall-reason rows remain per data point" in markdown
+    for case in selected:
+        group = (
+            f"`{case.kernel_id}` / `"
+        )
+        assert group in markdown
+        assert f"#### `{case.case_key}`" in markdown
+    assert "| wait | 12 | smsp__pcsamp_warps_issue_stalled_wait | 8 | 8 | evidence_available |" in markdown
+    assert "## Stall Reason Groups" not in markdown
 
 
 def test_detailed_comparison_marks_bounded_rank_selection_incomplete():
@@ -182,6 +257,8 @@ def test_review_marker_gates_medium_and_large_rank_progression():
         manifest=manifest,
         classification=classification,
         comparisons=[medium],
+        known_failures=["missing GCoM stats are retained as evidence"],
+        semantic_decisions=["OD2 scalar accuracy remains deferred"],
         reviewer="test",
         reviewed_at="2026-07-18T00:01:00+00:00",
     )
@@ -193,6 +270,67 @@ def test_review_marker_gates_medium_and_large_rank_progression():
     )
     assert large_gate["previous_rank"] == "medium"
     assert large_gate["review_marker"]["accepted_run_ids"] == ["medium-run"]
+
+
+def test_review_requires_notes_for_incomplete_detail_evidence():
+    manifest = _manifest()
+    classification = _classification(manifest)
+    comparison = _complete_comparison(manifest, classification, "small")
+
+    with pytest.raises(ValueError, match="known-failure notes"):
+        build_review_marker(
+            manifest=manifest,
+            classification=classification,
+            comparisons=[comparison],
+            reviewed_at="2026-07-18T00:00:00+00:00",
+        )
+
+
+def test_review_requires_semantic_decision_for_mismatched_detail_evidence():
+    manifest = _manifest()
+    classification = _classification(manifest)
+    selected = select_ranked_cases(manifest, classification, size_rank="small")
+    hardware = [
+        DetailedCaseResult(
+            case_key=case.case_key,
+            kernel_id=case.kernel_id,
+            size_rank="small",
+            backend="nvidia_cuda",
+            status="measured",
+        )
+        for case in selected
+    ]
+    simulation = [
+        DetailedCaseResult(
+            case_key=case.case_key,
+            kernel_id=case.kernel_id,
+            size_rank="small",
+            backend="gcom_cuda",
+            status="simulated",
+        )
+        for case in selected
+    ]
+    comparison = build_detailed_comparison(
+        manifest=manifest,
+        classification=classification,
+        size_rank="small",
+        hardware_results=hardware,
+        simulation_results=simulation,
+        run_id="small-run",
+    )
+    if not any(
+        row["comparison_status"].startswith("semantic_mismatch")
+        for row in comparison["cases"]
+    ):
+        pytest.skip("small-rank fixture has no semantic mismatch case")
+
+    with pytest.raises(ValueError, match="semantic-decision notes"):
+        build_review_marker(
+            manifest=manifest,
+            classification=classification,
+            comparisons=[comparison],
+            reviewed_at="2026-07-18T00:00:00+00:00",
+        )
 
 
 def test_review_rejects_bounded_detail_comparison():

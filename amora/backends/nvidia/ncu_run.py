@@ -168,8 +168,10 @@ def run_kernel_profiled(
         raise NcuUnavailable(f"ncu execution failed: {exc}") from exc
     if completed.returncode != 0:
         stderr = (completed.stderr or "").strip()
+        stdout = (completed.stdout or "").strip()
+        diagnostic = stderr or stdout
         raise NcuUnavailable(
-            f"ncu rc={completed.returncode}: {stderr[:300] or 'no stderr'}"
+            f"ncu rc={completed.returncode}: {diagnostic[:300] or 'no output'}"
         )
     parsed, rows = parse_ncu_csv(completed.stdout)
     if not parsed:

@@ -45,11 +45,14 @@ def classify_case_basic(
         if resolution.available and resolution.selected_name:
             resolved[logical] = resolution.selected_name
     if INSTRUCTION_LOGICAL not in resolved:
+        reason = "NCU instruction metric is unavailable"
+        if capabilities.ncu_metrics_error:
+            reason = f"{reason}: {capabilities.ncu_metrics_error}"
         return ClassificationResult(
             case_key=case.case_key,
             status="unclassified",
             total_instructions=None,
-            reason="NCU instruction metric is unavailable",
+            reason=reason,
             resolved_metrics=resolved,
             provenance=_ncu_provenance(capabilities),
         )

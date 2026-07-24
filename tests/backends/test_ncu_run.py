@@ -1,7 +1,13 @@
 """Unit tests for NCU CSV parsing and command building (no GPU required)."""
 
+import subprocess
+
+import pytest
+
+from amora.backends.nvidia.cuda import NvidiaCapabilities, ToolStatus
 from amora.backends.nvidia.ncu import NcuCommand
-from amora.backends.nvidia.ncu_run import parse_ncu_csv
+from amora.backends.nvidia import ncu_run
+from amora.backends.nvidia.ncu_run import NcuUnavailable, parse_ncu_csv, run_kernel_profiled
 
 
 # Representative `ncu --csv --page raw` output: wide format (one column per
@@ -51,3 +57,33 @@ def test_ncu_command_argv_csv_raw():
     assert "--metrics" in argv and "a.sum,b.sum" in argv
     # target comes last
     assert argv[-2:] == ["./driver", "--x"]
+
+
+def test_run_kernel_profiled_reports_ncu_stdout_when_stderr_is_empty(monkeypatch, tmp_path):
+    binary = tmp_path / "driver"
+    binary.write_text("binary")
+    source = tmp_path / "driver.cu"
+    source.write_text("source")
+
+    monkeypatch.setattr(ncu_run, "build_executable", lambda *args, **kwargs: (binary, "source-sha"))
+
+    def fake_run(args, **kwargs):
+        return subprocess.CompletedProcess(
+            args,
+            returncode=255,
+            stdout="==ERROR== ERR_NVGPUCTRPERM - no permission\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr(ncu_run.subprocess, "run", fake_run)
+
+    caps = NvidiaCapabilities(
+        tools={"ncu": ToolStatus("ncu", "/usr/bin/ncu", True)},
+    )
+    with pytest.raises(NcuUnavailable, match="ERR_NVGPUCTRPERM"):
+        run_kernel_profiled(
+            source,
+            capabilities=caps,
+            metrics=("sm__inst_executed.sum",),
+            build_root=tmp_path,
+        )
