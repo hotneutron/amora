@@ -3,6 +3,10 @@ import subprocess
 from amora.backends.nvidia import cuda
 from amora.backends.nvidia.cuda import NvidiaCapabilities, NvidiaDevice, ToolStatus
 from amora.backends.nvidia.metrics import MetricResolver
+from amora.backends.nvidia.stall_metrics import (
+    resolve_stall_metric_family,
+    select_stall_launch_row,
+)
 
 
 def test_capabilities_to_dict_contains_tools_and_devices():
@@ -39,6 +43,60 @@ def test_metric_resolver_reports_missing_metric():
 
     assert resolution.available is False
     assert resolution.reason == "no candidate metric supported"
+
+
+def test_stall_metric_selection_prefers_one_family_and_aliases_no_instruction():
+    supported = frozenset(
+        {
+            "smsp__warp_issue_stalled_wait_per_warp_active",
+            "smsp__warp_issue_stalled_no_instruction_per_warp_active",
+            "smsp__average_warps_issue_stalled_selected_per_issue_active",
+        }
+    )
+
+    selection = resolve_stall_metric_family(supported)
+
+    assert selection.family == "warp_issue_stalled_per_warp_active"
+    assert selection.unit == "pct"
+    assert selection.reason_to_metric == {
+        "wait": "smsp__warp_issue_stalled_wait_per_warp_active.pct",
+        "no_instructions": "smsp__warp_issue_stalled_no_instruction_per_warp_active.pct",
+    }
+    assert "selected" in selection.missing_reasons
+
+
+def test_stall_metric_selection_maps_hopper_gmma_to_warpgroup_arrive():
+    selection = resolve_stall_metric_family(
+        frozenset(
+            {
+                "smsp__warp_issue_stalled_wait_per_warp_active",
+                "smsp__warp_issue_stalled_gmma_per_warp_active",
+            }
+        )
+    )
+
+    assert selection.reason_to_metric["warpgroup_arrive"] == (
+        "smsp__warp_issue_stalled_gmma_per_warp_active.pct"
+    )
+    assert "warpgroup_arrive" not in selection.missing_reasons
+
+
+def test_select_stall_launch_row_uses_whole_median_vector():
+    reason_to_metric = {
+        "wait": "stall_wait",
+        "selected": "stall_selected",
+    }
+    rows = [
+        {"stall_wait": "1", "stall_selected": "1"},
+        {"stall_wait": "100", "stall_selected": "0"},
+        {"stall_wait": "4", "stall_selected": "2"},
+    ]
+
+    index, stalls, total = select_stall_launch_row(rows, reason_to_metric)
+
+    assert index == 2
+    assert stalls == {"wait": 4.0, "selected": 2.0}
+    assert total == 6.0
 
 
 def test_discover_ncu_metrics_falls_back_to_list_metrics_and_preserves_query_error(monkeypatch):

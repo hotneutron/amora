@@ -42,6 +42,8 @@ def test_parse_sass_opcodes_histogram_and_order():
     # Ordered list preserves register operands.
     ffmas = [regs for fam, regs in ordered if fam == "FFMA"]
     assert ffmas[1][0] == 6  # dst of 2nd FFMA is R6
+    assert [inst.offset for inst in ordered if inst.family == "FFMA"] == [0x20, 0x30, 0x40, 0x50]
+    assert ordered[2].text.startswith("/*0020*/")
 
 
 def test_extract_kernel_section_scopes_to_symbol():
@@ -49,6 +51,25 @@ def test_extract_kernel_section_scopes_to_symbol():
     hist, _ = parse_sass_opcodes(section)
     assert hist.get("FFMA") == 4
     assert "LDG" not in hist  # the other kernel is excluded
+
+
+def test_parse_sass_accepts_uniform_and_true_predicates():
+    sass = """
+        /*09e0*/ @UP2 UTMALDG.2D [UR12], [UR22] ;
+        /*0a00*/ @!UP3 BRA 0x10f0 ;
+        /*4700*/ @!PT LDS RZ, [RZ] ;
+        /*4710*/ @UPT EXIT ;
+    """
+
+    histogram, instructions = parse_sass_opcodes(sass)
+
+    assert histogram == {"UTMALDG": 1, "BRA": 1, "LDS": 1, "EXIT": 1}
+    assert [instruction.offset for instruction in instructions] == [
+        0x9E0,
+        0xA00,
+        0x4700,
+        0x4710,
+    ]
 
 
 def test_validate_pass_for_clean_dependent_chain():

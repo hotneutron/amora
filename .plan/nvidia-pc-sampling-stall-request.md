@@ -1,11 +1,81 @@
-# Request: per-PC warp-issue stall attribution
+# Plan: per-PC warp-issue stall attribution
 
 To: AMORA NVIDIA backend maintainer
-Status: Open — request, no code changed by the requester
+Status: Implemented in this working tree
 Depends on: `.plan/nvidia-stall-reason-coverage-request.md` (r2) — the unit mismatch
 described there applies to whatever family this request collects, and should be settled
 first
 Blocks: per-phase schedule extraction in the accorde project
+
+## Actionable Plan
+
+1. Extend NCU command modeling so AMORA can collect and re-read source reports.
+   - Update `amora/backends/nvidia/ncu.py`.
+   - Add support for `--section`, `--set`, `--sampling-interval`,
+     `--print-source`, `--force-overwrite`, and `--import`.
+   - Keep live profiling targets last; imported reports omit live-profiling
+     target-process options.
+
+2. Add an NCU source-page extraction path.
+   - Update `amora/backends/nvidia/ncu_run.py`.
+   - Add `run_kernel_pc_sampling`, which builds the CUDA driver, profiles with
+     `--section SourceCounters`, exports a `.ncu-rep`, then imports it with
+     `--page source --print-source sass --csv`.
+   - Add `parse_ncu_source_pc_sampling_csv`, which parses source-page rows into
+     `PcStallSample` records using PC/address columns and
+     `issue_stalled_<reason>` columns.
+   - Preserve raw sample counts, sampling interval, report path, binary hash,
+     source hash, and the exact NCU profile/import commands.
+
+3. Preserve SASS offsets as the join key.
+   - Update `amora/backends/nvidia/sass.py`.
+   - Add `SassInstruction` and `parse_sass_instructions`.
+   - Keep `parse_sass_opcodes` compatible with existing tuple-unpacking callers
+     while retaining `offset`, `opcode`, `family`, `registers`, and instruction
+     text for new consumers.
+
+4. Add a best-effort probe helper for per-PC attribution.
+   - Update `amora/probes/nvidia/baseline/_sources.py`.
+   - Add `collect_pc_stall_attribution`.
+   - Join sampled PCs to parsed SASS instructions by offset.
+   - Emit records shaped as `{pc_offset, function, opcode, instruction, samples,
+     stalls}` plus cubin hash and provenance.
+   - Return `None` cleanly when NCU source counters, CUDA, or SASS tooling are
+     unavailable.
+
+5. Validate with GPU-independent unit tests.
+   - Test NCU command arguments for live source collection and imported source
+     reports.
+   - Test source-page CSV parsing with PC offsets, `no_instruction` aliasing,
+     and thousands-separated counts.
+   - Test SASS parser offset retention.
+
+## Execution Notes
+
+Implemented files:
+
+- `amora/backends/nvidia/ncu.py`
+- `amora/backends/nvidia/ncu_run.py`
+- `amora/backends/nvidia/sass.py`
+- `amora/probes/nvidia/baseline/_sources.py`
+- `tests/backends/test_ncu_run.py`
+- `tests/backends/test_sass.py`
+
+Local tool confirmation:
+
+- `ncu --list-sections | rg -i 'source|pc|sampling|stall'` shows
+  `SourceCounters`.
+- `ncu --help | rg -n 'page|section|import|export|sampling|source|set'`
+  confirms `--section`, `--sampling-interval`, `--export`, `--import`,
+  `--page source`, and `--print-source`.
+
+Verification:
+
+- `PYTHONPATH=. pytest -q tests/backends/test_nvidia_cuda.py tests/backends/test_ncu_run.py tests/backends/test_sass.py tests/benchmarks/test_detailed.py tests/benchmarks/test_classification.py tests/benchmarks/test_materialize.py`
+  passed with `45 passed, 2 skipped`.
+- Full `PYTHONPATH=. pytest -q` passed with `94 passed, 3 skipped`.
+
+## Original Request Context
 
 ## Revision History
 

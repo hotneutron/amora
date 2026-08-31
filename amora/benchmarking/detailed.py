@@ -397,6 +397,7 @@ def _stall_rows(
     simulation: DetailedCaseResult | None,
 ) -> list[dict[str, Any]]:
     hw_reasons = ((hardware.stall_histogram or {}).get("reasons") or {}) if hardware else {}
+    hw_unit = ((hardware.stall_histogram or {}).get("unit")) if hardware else None
     sim_reasons = ((simulation.stall_histogram or {}).get("reasons") or {}) if simulation else {}
     rows = []
     for reason in STALL_REASONS:
@@ -407,6 +408,7 @@ def _stall_rows(
             {
                 "reason": reason,
                 "hardware_ncu": hw_value,
+                "hardware_unit": hw_unit or "unknown",
                 "hardware_metric": hardware.resolved_metrics.get(f"stall_{reason}") if hardware else None,
                 "gcom_pct": sim_pct,
                 "gcom_count": sim_entry.get("count") if isinstance(sim_entry, dict) else None,
@@ -815,13 +817,14 @@ def render_detailed_markdown(comparison: dict[str, Any]) -> str:
                 lines.append("")
             lines.extend(
                 [
-                    "| reason | hardware ncu pct | hardware metric | gcom pct | gcom count | status |",
-                    "|---|---:|---|---:|---:|---|",
+                    "| reason | hardware ncu | unit | hardware metric | gcom pct | gcom count | status |",
+                    "|---|---:|---|---|---:|---:|---|",
                 ]
             )
             for stall in row.get("stall_reason_comparison") or ():
                 lines.append(
                     f"| {stall['reason']} | {_fmt_markdown(stall['hardware_ncu'])} | "
+                    f"{_fmt_markdown(stall.get('hardware_unit'))} | "
                     f"{_fmt_markdown(stall['hardware_metric'])} | "
                     f"{_fmt_markdown(stall['gcom_pct'])} | "
                     f"{_fmt_markdown(stall['gcom_count'])} | "

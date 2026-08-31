@@ -184,7 +184,7 @@ def test_detailed_markdown_groups_data_points_not_stall_reasons():
         )
         assert group in markdown
         assert f"#### `{case.case_key}`" in markdown
-    assert "| wait | 12 | smsp__pcsamp_warps_issue_stalled_wait | 8 | 8 | evidence_available |" in markdown
+    assert "| wait | 12 | unknown | smsp__pcsamp_warps_issue_stalled_wait | 8 | 8 | evidence_available |" in markdown
     assert "## Stall Reason Groups" not in markdown
 
 

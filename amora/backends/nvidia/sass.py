@@ -22,16 +22,36 @@ from typing import Mapping
 
 # A SASS line looks roughly like:
 #   /*0010*/   FFMA R0, R0, R4, R0 ;
-# or with predication:
+# or with regular/uniform predication:
 #   /*0020*/ @!P0 BRA `(.L_x_1) ;
+#   /*0030*/ @UP2 UTMALDG.2D [UR12], [UR22] ;
 _SASS_LINE = re.compile(
-    r"/\*[0-9a-fA-F]+\*/\s*(?:@!?P\d+\s+)?(?P<op>[A-Z][A-Z0-9_.]*)\b(?P<args>[^;]*);?"
+    r"/\*(?P<offset>[0-9a-fA-F]+)\*/\s*"
+    r"(?:@!?(?:(?:P|UP)\d+|PT|UPT)\s+)?"
+    r"(?P<op>[A-Z][A-Z0-9_.]*)\b(?P<args>[^;]*);?"
 )
 # Opcode "family" is the mnemonic before the first '.', uppercased
 # (e.g. LDG.E.SYS -> LDG, FFMA -> FFMA).
 _OPCODE_FAMILY = re.compile(r"^([A-Z][A-Z0-9]*)")
 # Register operands like R0, R12, R255 (not RZ which is the zero register).
 _REG = re.compile(r"\bR(\d+)\b")
+
+
+@dataclass(frozen=True)
+class SassInstruction:
+    """One parsed SASS instruction with its function-relative PC offset."""
+
+    offset: int
+    opcode: str
+    family: str
+    registers: list[int]
+    text: str
+
+    def __iter__(self):
+        # Preserve tuple-unpacking compatibility with the former
+        # ``(family, registers)`` representation.
+        yield self.family
+        yield self.registers
 
 
 @dataclass(frozen=True)
@@ -105,34 +125,50 @@ def extract_kernel_section(sass_text: str, kernel_symbol: str) -> str:
     return "\n".join(lines[start:end])
 
 
-def parse_sass_opcodes(sass_text: str) -> tuple[dict[str, int], list[tuple[str, list[int]]]]:
-    """Return (opcode_family_histogram, ordered [(family, [dst, src...]) ...]).
+def parse_sass_instructions(sass_text: str) -> list[SassInstruction]:
+    """Return parsed SASS instructions with offsets and register operands."""
 
-    The second element preserves instruction order with the register numbers in
-    operand order, enabling a best-effort dependency check.
-    """
-
-    histogram: dict[str, int] = {}
-    ordered: list[tuple[str, list[int]]] = []
+    instructions: list[SassInstruction] = []
     for match in _SASS_LINE.finditer(sass_text):
         op = match.group("op")
         family = _opcode_family(op)
         # Skip obvious non-instruction tokens.
         if family in {"Function", "PROGRAM", "SCHI"}:
             continue
-        histogram[family] = histogram.get(family, 0) + 1
         regs = [int(r) for r in _REG.findall(match.group("args") or "")]
-        ordered.append((family, regs))
+        instructions.append(
+            SassInstruction(
+                offset=int(match.group("offset"), 16),
+                opcode=op,
+                family=family,
+                registers=regs,
+                text=match.group(0).strip(),
+            )
+        )
+    return instructions
+
+
+def parse_sass_opcodes(sass_text: str) -> tuple[dict[str, int], list[SassInstruction]]:
+    """Return (opcode_family_histogram, ordered instructions).
+
+    The second element preserves instruction order with the register numbers in
+    operand order and now also retains the SASS offset for PC-sampling joins.
+    """
+
+    histogram: dict[str, int] = {}
+    ordered = parse_sass_instructions(sass_text)
+    for inst in ordered:
+        histogram[inst.family] = histogram.get(inst.family, 0) + 1
     return histogram, ordered
 
 
-def _dependency_confirmed(ordered: list[tuple[str, list[int]]], opcode: str) -> bool | None:
+def _dependency_confirmed(ordered: list[SassInstruction], opcode: str) -> bool | None:
     """Best-effort: do consecutive ``opcode`` instructions chain dst -> src?
 
     Returns True/False, or None when there are too few target ops to judge.
     """
 
-    targets = [regs for fam, regs in ordered if fam == opcode and regs]
+    targets = [inst.registers for inst in ordered if inst.family == opcode and inst.registers]
     if len(targets) < 2:
         return None
     chained = 0
@@ -195,9 +231,9 @@ def validate_sass(
     if expectation.count_registers_opcode:
         fam = _opcode_family(expectation.count_registers_opcode)
         regs: set[int] = set()
-        for f, operands in ordered:
-            if f == fam:
-                regs.update(operands)
+        for inst in ordered:
+            if inst.family == fam:
+                regs.update(inst.registers)
         register_count = len(regs)
 
     return SassValidation(
