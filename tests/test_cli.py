@@ -33,6 +33,71 @@ def test_cli_run_all_writes_report(tmp_path):
     assert data["results"]
 
 
+def test_cli_nvidia_measure_executes_recipe(monkeypatch, tmp_path, capsys):
+    recipe_path = tmp_path / "recipe.json"
+    recipe_path.write_text(
+        json.dumps(
+            {
+                "recipe_id": "recipe-v1",
+                "mechanism": "wgmma_fixed_completion",
+                "kernel_name": "kernel",
+                "aggregate_metrics": ["metric.sum"],
+                "points": [],
+                "interaction_groups": [],
+            }
+        )
+    )
+    captured = {}
+
+    monkeypatch.setattr(
+        "amora.backends.nvidia.mechanism_measurement.load_mechanism_recipe",
+        lambda path: {"recipe": str(path)},
+    )
+
+    def execute(recipe, **kwargs):
+        captured.update({"recipe": recipe, **kwargs})
+        run_dir = tmp_path / "runs" / "recipe-v1" / "run-1"
+        run_dir.mkdir(parents=True)
+        (run_dir / "manifest.json").write_text(
+            json.dumps({"run_digest": "run-digest", "recipe_digest": "recipe-digest"})
+        )
+        return run_dir
+
+    monkeypatch.setattr(
+        "amora.backends.nvidia.mechanism_measurement.execute_mechanism_recipe",
+        execute,
+    )
+    monkeypatch.setattr(
+        "amora.backends.nvidia.mechanism_measurement.load_mechanism_manifest",
+        lambda path: {
+            "run_digest": "run-digest",
+            "recipe_digest": "recipe-digest",
+        },
+    )
+    monkeypatch.setattr(cli, "nvidia_discover", lambda: object())
+
+    code = cli.main(
+        [
+            "nvidia",
+            "measure",
+            "--recipe",
+            str(recipe_path),
+            "--run-id",
+            "run-1",
+            "--out-root",
+            str(tmp_path / "runs"),
+            "--env",
+            "CUDA_VISIBLE_DEVICES=0",
+        ]
+    )
+
+    response = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert response["run_digest"] == "run-digest"
+    assert captured["run_id"] == "run-1"
+    assert captured["environment_overrides"] == {"CUDA_VISIBLE_DEVICES": "0"}
+
+
 def test_cli_lists_and_materializes_benchmarks(tmp_path, capsys):
     code = cli.main(["benchmarks", "list"])
 

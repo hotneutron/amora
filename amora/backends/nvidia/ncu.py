@@ -10,6 +10,8 @@ NCU_SAMPLING_INTERVAL_OPTIONS = (
     "--warp-sampling-interval",
     "--sampling-interval",
 )
+NCU_CACHE_CONTROL_VALUES = frozenset({"all", "none"})
+NCU_CLOCK_CONTROL_VALUES = frozenset({"base", "boost", "none"})
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,8 @@ class NcuCommand:
     set_name: str | None = None
     sampling_interval: str | None = None
     sampling_interval_option: str = "--sampling-interval"
+    cache_control: str | None = None
+    clock_control: str | None = None
     print_source: str | None = None
     force_overwrite: bool = False
     import_report: str | None = None
@@ -53,6 +57,18 @@ class NcuCommand:
                     f"{self.sampling_interval_option}"
                 )
             args.extend([self.sampling_interval_option, self.sampling_interval])
+        if self.cache_control is not None:
+            if self.cache_control not in NCU_CACHE_CONTROL_VALUES:
+                raise ValueError(
+                    f"unsupported NCU cache control: {self.cache_control!r}"
+                )
+            args.extend(["--cache-control", self.cache_control])
+        if self.clock_control is not None:
+            if self.clock_control not in NCU_CLOCK_CONTROL_VALUES:
+                raise ValueError(
+                    f"unsupported NCU clock control: {self.clock_control!r}"
+                )
+            args.extend(["--clock-control", self.clock_control])
         if self.print_source:
             args.extend(["--print-source", self.print_source])
         if self.launch_skip is not None:

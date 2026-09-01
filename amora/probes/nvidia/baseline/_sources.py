@@ -266,9 +266,16 @@ def collect_pc_stall_attribution(
                 "pc_offset": sample.pc_offset,
                 "raw_address": sample.raw_address,
                 "address_base": sample.address_base,
+                "sass_joined": inst is not None or sample.sass_joined,
                 "function": sample.function or kernel_name,
-                "opcode": inst.family if inst else sample.opcode,
-                "instruction": inst.text if inst else sample.opcode,
+                "opcode": (
+                    inst.family if inst else sample.sass_opcode or sample.opcode
+                ),
+                "instruction": (
+                    inst.text
+                    if inst
+                    else sample.sass_instruction or sample.opcode
+                ),
                 "samples": sample.samples,
                 "stalls": dict(sample.stalls),
             }

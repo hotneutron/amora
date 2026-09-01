@@ -15,10 +15,12 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import os
 import tempfile
 import subprocess
 from dataclasses import dataclass, field, replace
 from pathlib import Path
+from typing import Any, Mapping
 
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.ncu import NcuCommand, detect_sampling_interval_option
@@ -48,6 +50,11 @@ class NcuResult:
     binary_sha256: str | None = None
     command: tuple[str, ...] = ()
     target_command: tuple[str, ...] = ()
+    target_evidence: dict[str, Any] | None = None
+    cwd: str | None = None
+    environment_overrides: dict[str, str] = field(default_factory=dict)
+    cache_control: str | None = None
+    clock_control: str | None = None
     arch: str | None = None
     extra_flags: tuple[str, ...] = ()
     link_flags: tuple[str, ...] = ()
@@ -62,6 +69,13 @@ class NcuResult:
             "binary_sha256": self.binary_sha256,
             "ncu_command": list(self.command),
             "target_command": list(self.target_command),
+            "target_evidence": (
+                dict(self.target_evidence) if self.target_evidence else None
+            ),
+            "cwd": self.cwd,
+            "environment_overrides": dict(self.environment_overrides),
+            "cache_control": self.cache_control,
+            "clock_control": self.clock_control,
             "arch": self.arch,
             "extra_flags": list(self.extra_flags),
             "link_flags": list(self.link_flags),
@@ -80,6 +94,9 @@ class PcStallSample:
     stalls: dict[str, float]
     raw_address: int | None = None
     address_base: int = 0
+    sass_joined: bool = False
+    sass_opcode: str | None = None
+    sass_instruction: str | None = None
     raw_row: dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, object]:
@@ -87,6 +104,9 @@ class PcStallSample:
             "pc_offset": self.pc_offset,
             "raw_address": self.raw_address,
             "address_base": self.address_base,
+            "sass_joined": self.sass_joined,
+            "sass_opcode": self.sass_opcode,
+            "sass_instruction": self.sass_instruction,
             "function": self.function,
             "opcode": self.opcode,
             "samples": self.samples,
@@ -108,13 +128,21 @@ class NcuPcSamplingResult:
     binary_path: Path | None = None
     binary_sha256: str | None = None
     report_path: Path | None = None
+    report_sha256: str | None = None
     profile_command: tuple[str, ...] = ()
     import_command: tuple[str, ...] = ()
     target_command: tuple[str, ...] = ()
+    target_evidence: dict[str, Any] | None = None
+    profile_stdout: str = ""
+    profile_stderr: str = ""
+    cwd: str | None = None
+    environment_overrides: dict[str, str] = field(default_factory=dict)
     arch: str | None = None
     sampling_interval: str | None = None
     sampling_interval_option: str | None = None
     section: str | None = None
+    cache_control: str | None = None
+    clock_control: str | None = None
     parser_metadata: dict[str, object] = field(default_factory=dict)
     extra_flags: tuple[str, ...] = ()
     link_flags: tuple[str, ...] = ()
@@ -126,13 +154,23 @@ class NcuPcSamplingResult:
             "binary_path": str(self.binary_path) if self.binary_path else None,
             "binary_sha256": self.binary_sha256,
             "report_path": str(self.report_path) if self.report_path else None,
+            "report_sha256": self.report_sha256,
             "ncu_profile_command": list(self.profile_command),
             "ncu_import_command": list(self.import_command),
             "target_command": list(self.target_command),
+            "target_evidence": (
+                dict(self.target_evidence) if self.target_evidence else None
+            ),
+            "profile_stdout": self.profile_stdout,
+            "profile_stderr": self.profile_stderr,
+            "cwd": self.cwd,
+            "environment_overrides": dict(self.environment_overrides),
             "arch": self.arch,
             "sampling_interval": self.sampling_interval,
             "sampling_interval_option": self.sampling_interval_option,
             "section": self.section,
+            "cache_control": self.cache_control,
+            "clock_control": self.clock_control,
             "source_parser": dict(self.parser_metadata),
             "extra_flags": list(self.extra_flags),
             "link_flags": list(self.link_flags),
@@ -445,12 +483,32 @@ def _ncu_path(capabilities: NvidiaCapabilities) -> str:
     return tool.path
 
 
-def _run_ncu(command_argv: tuple[str, ...], *, timeout: int) -> subprocess.CompletedProcess[str]:
+def _run_ncu(
+    command_argv: tuple[str, ...],
+    *,
+    timeout: int,
+    cwd: str | Path | None = None,
+    environment_overrides: Mapping[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    overrides = dict(environment_overrides or {})
+    if any(
+        not isinstance(key, str) or not isinstance(value, str)
+        for key, value in overrides.items()
+    ):
+        raise NcuUnavailable("environment overrides must be strings")
+    environment = dict(os.environ)
+    environment.update(overrides)
     try:
         return subprocess.run(
-            command_argv, check=False, capture_output=True, text=True, timeout=timeout
+            command_argv,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=str(cwd) if cwd is not None else None,
+            env=environment,
         )
-    except subprocess.SubprocessError as exc:
+    except (OSError, subprocess.SubprocessError) as exc:
         raise NcuUnavailable(f"ncu execution failed: {exc}") from exc
 
 
@@ -463,6 +521,127 @@ def _raise_on_ncu_failure(completed: subprocess.CompletedProcess[str]) -> None:
     raise NcuUnavailable(
         f"ncu rc={completed.returncode}: {diagnostic[:300] or 'no output'}"
     )
+
+
+def _artifact_path(
+    artifacts: Mapping[str, Any],
+    name: str,
+    *,
+    cwd: str | Path | None,
+) -> tuple[Path | None, str | None]:
+    value = artifacts.get(name)
+    expected_hash = None
+    if isinstance(value, str):
+        path = Path(value)
+    elif isinstance(value, Mapping) and isinstance(value.get("path"), str):
+        path = Path(value["path"])
+        if isinstance(value.get("sha256"), str):
+            expected_hash = value["sha256"]
+    else:
+        return None, None
+    if not path.is_absolute() and cwd is not None:
+        path = Path(cwd) / path
+    return path, expected_hash
+
+
+def _join_target_sass(
+    samples: list[PcStallSample],
+    *,
+    target_evidence: Mapping[str, Any] | None,
+    capabilities: NvidiaCapabilities,
+    kernel_name: str | None,
+    cwd: str | Path | None,
+    timeout: int,
+) -> tuple[list[PcStallSample], dict[str, object]]:
+    """Join normalized PCs to a target-declared SASS or cubin artifact."""
+
+    evidence = target_evidence or {}
+    artifacts = evidence.get("subject_artifacts")
+    if not isinstance(artifacts, Mapping):
+        return samples, {"status": "unavailable", "reason": "no_subject_artifacts"}
+    identity = evidence.get("subject_identity")
+    identity = identity if isinstance(identity, Mapping) else {}
+    sass_path, sass_hash = _artifact_path(artifacts, "sass", cwd=cwd)
+    cubin_path, cubin_hash = _artifact_path(artifacts, "cubin", cwd=cwd)
+    sass_text = None
+    source_kind = None
+    source_path = None
+    if sass_path is not None and sass_path.is_file():
+        actual = hashlib.sha256(sass_path.read_bytes()).hexdigest()
+        expected = sass_hash
+        if expected is not None and actual != expected:
+            raise NcuUnavailable("target SASS artifact hash does not match its manifest")
+        sass_text = sass_path.read_text(encoding="utf-8")
+        source_kind = "sass"
+        source_path = sass_path
+    elif cubin_path is not None and cubin_path.is_file():
+        actual = hashlib.sha256(cubin_path.read_bytes()).hexdigest()
+        expected = cubin_hash or identity.get("cubin_sha256")
+        if expected is not None and actual != expected:
+            raise NcuUnavailable("target cubin artifact hash does not match its identity")
+        disassembler = next(
+            (
+                tool.path
+                for name in ("cuobjdump", "nvdisasm")
+                for tool in [capabilities.tools.get(name)]
+                if tool and tool.available and tool.path
+            ),
+            None,
+        )
+        if disassembler is None:
+            return samples, {"status": "unavailable", "reason": "no_disassembler"}
+        flag = "-sass" if disassembler.endswith("cuobjdump") else "-c"
+        completed = _run_ncu(
+            (disassembler, flag, str(cubin_path)), timeout=min(timeout, 120)
+        )
+        _raise_on_ncu_failure(completed)
+        sass_text = completed.stdout
+        source_kind = "cubin_disassembly"
+        source_path = cubin_path
+    if sass_text is None:
+        return samples, {"status": "unavailable", "reason": "no_readable_sass_or_cubin"}
+
+    from amora.backends.nvidia.sass import extract_kernel_section, parse_sass_instructions
+
+    symbol = str(identity.get("kernel_name") or kernel_name or "")
+    section = extract_kernel_section(sass_text, symbol) if symbol else sass_text
+    section_hash = hashlib.sha256(section.encode("utf-8")).hexdigest()
+    expected_sass_hash = identity.get("sass_sha256")
+    full_sass_hash = hashlib.sha256(sass_text.encode("utf-8")).hexdigest()
+    if expected_sass_hash is not None and expected_sass_hash not in {
+        section_hash,
+        full_sass_hash,
+    }:
+        raise NcuUnavailable(
+            "target SASS content does not match its declared identity"
+        )
+    instructions = {inst.offset: inst for inst in parse_sass_instructions(section)}
+    joined = []
+    join_count = 0
+    for sample in samples:
+        instruction = instructions.get(sample.pc_offset)
+        if instruction is not None:
+            join_count += 1
+            joined.append(
+                replace(
+                    sample,
+                    sass_joined=True,
+                    sass_opcode=instruction.family,
+                    sass_instruction=instruction.text,
+                )
+            )
+        else:
+            joined.append(sample)
+    return joined, {
+        "status": "pass" if join_count == len(samples) else "incomplete",
+        "source_kind": source_kind,
+        "source_path": str(source_path),
+        "sass_sha256": section_hash,
+        "sass_artifact_sha256": full_sass_hash,
+        "instruction_count": len(instructions),
+        "join_count": join_count,
+        "join_fraction": join_count / len(samples) if samples else None,
+    }
 
 
 def _validate_target(target: tuple[str, ...]) -> None:
@@ -480,6 +659,10 @@ def run_command_profiled(
     launch_skip: int | None = None,
     launch_count: int = 1,
     timeout: int = 180,
+    cache_control: str | None = None,
+    clock_control: str | None = None,
+    cwd: str | Path | None = None,
+    environment_overrides: Mapping[str, str] | None = None,
 ) -> NcuResult:
     """Run an arbitrary target command under NCU for aggregate counters.
 
@@ -502,13 +685,22 @@ def run_command_profiled(
         launch_count=launch_count,
         kernel_name=kernel_name,
         kernel_name_base=kernel_name_base,
+        cache_control=cache_control,
+        clock_control=clock_control,
     )
     command_argv = tuple(command.argv())
-    completed = _run_ncu(command_argv, timeout=timeout)
+    completed = _run_ncu(
+        command_argv,
+        timeout=timeout,
+        cwd=cwd,
+        environment_overrides=environment_overrides,
+    )
     _raise_on_ncu_failure(completed)
     parsed, rows = parse_ncu_csv(completed.stdout)
     if not parsed:
         raise NcuUnavailable("ncu produced no parseable counter rows")
+    from amora.backends.nvidia.cuda_event_run import extract_measurement_identity
+
     return NcuResult(
         metrics=parsed,
         raw_rows=rows,
@@ -517,6 +709,11 @@ def run_command_profiled(
         returncode=completed.returncode,
         command=command_argv,
         target_command=tuple(target),
+        target_evidence=extract_measurement_identity(completed.stdout),
+        cwd=str(cwd) if cwd is not None else None,
+        environment_overrides=dict(environment_overrides or {}),
+        cache_control=cache_control,
+        clock_control=clock_control,
     )
 
 
@@ -535,6 +732,10 @@ def run_kernel_profiled(
     build_root: Path = DEFAULT_BUILD_ROOT,
     extra_flags: tuple[str, ...] = ("-O2",),
     link_flags: tuple[str, ...] = (),
+    cache_control: str | None = None,
+    clock_control: str | None = None,
+    cwd: str | Path | None = None,
+    environment_overrides: Mapping[str, str] | None = None,
 ) -> NcuResult:
     """Build (reusing the timing cache) and run the driver under NCU for counters.
 
@@ -567,6 +768,10 @@ def run_kernel_profiled(
         kernel_name=kernel_name,
         kernel_name_base=kernel_name_base,
         timeout=timeout,
+        cache_control=cache_control,
+        clock_control=clock_control,
+        cwd=cwd,
+        environment_overrides=environment_overrides,
     )
     return replace(
         result,
@@ -593,6 +798,10 @@ def run_command_pc_sampling(
     sampling_interval: str = "auto",
     sampling_interval_option: str | None = None,
     report_path: Path | None = None,
+    cache_control: str | None = None,
+    clock_control: str | None = None,
+    cwd: str | Path | None = None,
+    environment_overrides: Mapping[str, str] | None = None,
 ) -> NcuPcSamplingResult:
     """Collect source-correlated stalls from an arbitrary target command."""
 
@@ -624,11 +833,18 @@ def run_command_pc_sampling(
         kernel_name_base=kernel_name_base,
         sampling_interval=sampling_interval,
         sampling_interval_option=sampling_interval_option,
+        cache_control=cache_control,
+        clock_control=clock_control,
         output=str(report),
         force_overwrite=True,
     )
     profile_argv = tuple(profile_command.argv())
-    completed = _run_ncu(profile_argv, timeout=timeout)
+    completed = _run_ncu(
+        profile_argv,
+        timeout=timeout,
+        cwd=cwd,
+        environment_overrides=environment_overrides,
+    )
     _raise_on_ncu_failure(completed)
 
     import_command = NcuCommand(
@@ -651,6 +867,18 @@ def run_command_pc_sampling(
             "ncu source page produced no PC stall rows: "
             f"{parser_metadata.get('status', 'unknown parser status')}"
         )
+    from amora.backends.nvidia.cuda_event_run import extract_measurement_identity
+
+    target_evidence = extract_measurement_identity(completed.stdout)
+    samples, sass_join = _join_target_sass(
+        samples,
+        target_evidence=target_evidence,
+        capabilities=capabilities,
+        kernel_name=kernel_name,
+        cwd=cwd,
+        timeout=timeout,
+    )
+    parser_metadata = {**parser_metadata, "sass_join": sass_join}
     return NcuPcSamplingResult(
         samples=samples,
         stdout=imported.stdout,
@@ -659,12 +887,24 @@ def run_command_pc_sampling(
         ),
         returncode=imported.returncode,
         report_path=report,
+        report_sha256=(
+            hashlib.sha256(report.read_bytes()).hexdigest()
+            if report.is_file()
+            else None
+        ),
         profile_command=profile_argv,
         import_command=import_argv,
         target_command=tuple(target),
+        target_evidence=target_evidence,
+        profile_stdout=completed.stdout,
+        profile_stderr=completed.stderr,
+        cwd=str(cwd) if cwd is not None else None,
+        environment_overrides=dict(environment_overrides or {}),
         sampling_interval=sampling_interval,
         sampling_interval_option=sampling_interval_option,
         section=section,
+        cache_control=cache_control,
+        clock_control=clock_control,
         parser_metadata=parser_metadata,
     )
 
@@ -687,6 +927,10 @@ def run_kernel_pc_sampling(
     sampling_interval: str = "auto",
     sampling_interval_option: str | None = None,
     report_path: Path | None = None,
+    cache_control: str | None = None,
+    clock_control: str | None = None,
+    cwd: str | Path | None = None,
+    environment_overrides: Mapping[str, str] | None = None,
 ) -> NcuPcSamplingResult:
     """Collect source-correlated PC stall samples through an exported NCU report."""
 
@@ -713,6 +957,10 @@ def run_kernel_pc_sampling(
         sampling_interval_option=sampling_interval_option,
         report_path=report_path,
         timeout=timeout,
+        cache_control=cache_control,
+        clock_control=clock_control,
+        cwd=cwd,
+        environment_overrides=environment_overrides,
     )
     return replace(
         result,

@@ -110,6 +110,18 @@ def metric_supported(candidate: str, supported_metrics: frozenset[str]) -> bool:
     return base in supported_metrics
 
 
+def stall_reason_for_metric(metric: str) -> str | None:
+    """Return AMORA's logical reason for an aggregate NCU metric name."""
+
+    metric_base = metric.rsplit(".", 1)[0]
+    for family in STALL_METRIC_FAMILIES:
+        for reason in STALL_REASONS:
+            for candidate in family.candidates_for(reason):
+                if metric == candidate or metric_base == candidate.rsplit(".", 1)[0]:
+                    return reason
+    return None
+
+
 def resolve_stall_metric_family(
     supported_metrics: frozenset[str],
     *,

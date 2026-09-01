@@ -1,6 +1,8 @@
 """Unit tests for NCU CSV parsing and command building (no GPU required)."""
 
 import subprocess
+import hashlib
+import json
 
 import pytest
 
@@ -130,6 +132,48 @@ def test_ncu_command_argv_supports_2026_warp_sampling_option():
     assert "--sampling-interval" not in argv
 
 
+def test_ncu_command_validates_cache_control():
+    argv = NcuCommand(
+        executable="ncu",
+        metrics=("a.sum",),
+        target=("driver",),
+        cache_control="none",
+    ).argv()
+
+    assert argv[argv.index("--cache-control") :][:2] == [
+        "--cache-control",
+        "none",
+    ]
+    with pytest.raises(ValueError, match="cache control"):
+        NcuCommand(
+            executable="ncu",
+            metrics=(),
+            target=("driver",),
+            cache_control="invalid",
+        ).argv()
+
+
+def test_ncu_command_validates_clock_control():
+    argv = NcuCommand(
+        executable="ncu",
+        metrics=("a.sum",),
+        target=("driver",),
+        clock_control="base",
+    ).argv()
+
+    assert argv[argv.index("--clock-control") :][:2] == [
+        "--clock-control",
+        "base",
+    ]
+    with pytest.raises(ValueError, match="clock control"):
+        NcuCommand(
+            executable="ncu",
+            metrics=(),
+            target=("driver",),
+            clock_control="invalid",
+        ).argv()
+
+
 def test_sampling_interval_option_detection_prefers_new_spelling(monkeypatch):
     assert (
         parse_sampling_interval_option("--sampling-interval <cycles>")
@@ -233,6 +277,9 @@ def test_run_command_profiled_profiles_python_target_without_build(monkeypatch):
         capabilities=caps,
         metrics=("smsp__inst_executed.sum",),
         kernel_name="regex:jit_kernel",
+        cache_control="none",
+        cwd="/work",
+        environment_overrides={"CUDA_VISIBLE_DEVICES": "2"},
     )
 
     assert calls[0][-4:] == (
@@ -243,6 +290,10 @@ def test_run_command_profiled_profiles_python_target_without_build(monkeypatch):
     )
     assert result.target_command == calls[0][-4:]
     assert result.source_path is None
+    assert result.cache_control == "none"
+    assert result.cwd == "/work"
+    assert result.environment_overrides == {"CUDA_VISIBLE_DEVICES": "2"}
+    assert calls[0][calls[0].index("--cache-control") + 1] == "none"
     assert result.metrics["smsp__inst_executed.sum"] == 8192.0
 
 
@@ -274,6 +325,7 @@ def test_run_command_pc_sampling_detects_option_and_records_target(monkeypatch, 
         capabilities=caps,
         report_path=tmp_path / "jit.ncu-rep",
         sampling_interval="5",
+        cache_control="none",
     )
 
     profile = calls[1]
@@ -283,6 +335,61 @@ def test_run_command_pc_sampling_detects_option_and_records_target(monkeypatch, 
     assert result.sampling_interval_option == "--warp-sampling-interval"
     assert result.parser_metadata["column_mode"] == "not_issued"
     assert result.samples[0].pc_offset == 0
+    assert result.samples[0].sass_joined is False
+    assert result.parser_metadata["sass_join"]["status"] == "unavailable"
+    assert profile[profile.index("--cache-control") + 1] == "none"
+    assert result.cache_control == "none"
+
+
+def test_run_command_pc_sampling_joins_target_declared_sass(monkeypatch, tmp_path):
+    sass_path = tmp_path / "kernel.sass"
+    sass_path.write_text(
+        """
+        Function : jit_kernel
+        /*0000*/ NOP ;
+        /*0010*/ EXIT ;
+        """
+    )
+    sass_sha = hashlib.sha256(sass_path.read_bytes()).hexdigest()
+    target_payload = {
+        "schema_version": 1,
+        "kind": "cuda_event_timing",
+        "device": {"uuid": "GPU-test"},
+        "subject_identity": {
+            "kernel_name": "jit_kernel",
+            "ttgir_sha256": "ttgir",
+            "cubin_sha256": "cubin",
+            "sass_sha256": sass_sha,
+        },
+        "subject_artifacts": {
+            "sass": {"path": str(sass_path), "sha256": sass_sha}
+        },
+    }
+    source_csv = '''"Kernel Name","jit_kernel",
+"Address","Source","stall_wait (Not Issued)"
+"0x7f000010","NOP","4"
+"0x7f000020","EXIT","2"
+'''
+
+    def fake_run(args, **kwargs):
+        if "--import" in args:
+            return subprocess.CompletedProcess(args, 0, source_csv, "")
+        return subprocess.CompletedProcess(args, 0, json.dumps(target_payload), "")
+
+    monkeypatch.setattr(ncu_run.subprocess, "run", fake_run)
+    caps = NvidiaCapabilities(
+        tools={"ncu": ToolStatus("ncu", "/opt/ncu", True)},
+    )
+    result = run_command_pc_sampling(
+        ("python", "fixture.py"),
+        capabilities=caps,
+        sampling_interval_option="--warp-sampling-interval",
+        report_path=tmp_path / "report.ncu-rep",
+    )
+
+    assert result.parser_metadata["sass_join"]["status"] == "pass"
+    assert all(sample.sass_joined for sample in result.samples)
+    assert [sample.sass_opcode for sample in result.samples] == ["NOP", "EXIT"]
 
 
 def test_run_kernel_profiled_reports_ncu_stdout_when_stderr_is_empty(monkeypatch, tmp_path):
@@ -313,3 +420,62 @@ def test_run_kernel_profiled_reports_ncu_stdout_when_stderr_is_empty(monkeypatch
             metrics=("sm__inst_executed.sum",),
             build_root=tmp_path,
         )
+
+
+def test_kernel_wrappers_propagate_cache_and_clock_control(monkeypatch, tmp_path):
+    binary = tmp_path / "driver"
+    binary.write_text("binary")
+    source = tmp_path / "driver.cu"
+    source.write_text("source")
+    monkeypatch.setattr(
+        ncu_run,
+        "build_executable",
+        lambda *args, **kwargs: (binary, "source-sha"),
+    )
+    calls = []
+
+    def aggregate(target, **kwargs):
+        calls.append(("aggregate", target, kwargs))
+        return ncu_run.NcuResult(metrics={"metric.sum": 1.0})
+
+    def pc_sampling(target, **kwargs):
+        calls.append(("pc", target, kwargs))
+        return ncu_run.NcuPcSamplingResult(
+            samples=[
+                ncu_run.PcStallSample(
+                    pc_offset=0,
+                    function="k",
+                    opcode="NOP",
+                    samples=1.0,
+                    stalls={"wait": 1.0},
+                )
+            ]
+        )
+
+    caps = NvidiaCapabilities(
+        tools={"ncu": ToolStatus("ncu", "/opt/ncu", True)},
+    )
+    monkeypatch.setattr(ncu_run, "run_command_profiled", aggregate)
+    result = ncu_run.run_kernel_profiled(
+        source,
+        capabilities=caps,
+        metrics=("metric.sum",),
+        cache_control="none",
+        clock_control="base",
+        build_root=tmp_path,
+    )
+    monkeypatch.setattr(ncu_run, "run_command_pc_sampling", pc_sampling)
+    pc_result = ncu_run.run_kernel_pc_sampling(
+        source,
+        capabilities=caps,
+        cache_control="all",
+        clock_control="none",
+        build_root=tmp_path,
+    )
+
+    assert calls[0][2]["cache_control"] == "none"
+    assert calls[0][2]["clock_control"] == "base"
+    assert calls[1][2]["cache_control"] == "all"
+    assert calls[1][2]["clock_control"] == "none"
+    assert result.binary_sha256
+    assert pc_result.binary_sha256

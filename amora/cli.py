@@ -59,6 +59,48 @@ def _cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def _environment_overrides(values: list[str]) -> dict[str, str]:
+    overrides = {}
+    for value in values:
+        name, separator, setting = value.partition("=")
+        if not separator or not name:
+            raise ValueError(
+                f"environment override must have NAME=VALUE form: {value!r}"
+            )
+        overrides[name] = setting
+    return overrides
+
+
+def _cmd_measure_nvidia(args: argparse.Namespace) -> int:
+    from amora.backends.nvidia.mechanism_measurement import (
+        execute_mechanism_recipe,
+        load_mechanism_manifest,
+        load_mechanism_recipe,
+    )
+
+    recipe = load_mechanism_recipe(args.recipe)
+    capabilities = nvidia_discover()
+    run_dir = execute_mechanism_recipe(
+        recipe,
+        capabilities=capabilities,
+        output_root=args.out_root,
+        run_id=args.run_id,
+        timeout=args.timeout,
+        cwd=args.cwd,
+        environment_overrides=_environment_overrides(args.env),
+    )
+    manifest = load_mechanism_manifest(run_dir / "manifest.json")
+    _print_json(
+        {
+            "run_dir": str(run_dir),
+            "manifest": str(run_dir / "manifest.json"),
+            "run_digest": manifest["run_digest"],
+            "recipe_digest": manifest["recipe_digest"],
+        }
+    )
+    return 0
+
+
 # --- benchmark handlers ---
 
 
@@ -190,10 +232,10 @@ def _cmd_classify_benchmark(args: argparse.Namespace) -> int:
         / "classification.json"
     )
     destination = write_classification_manifest(classification, args.output or default_out)
-    counts = {}
+    counts: dict[str, int] = {}
     for result in classification.results:
         counts[result.status] = counts.get(result.status, 0) + 1
-    ranks = {}
+    ranks: dict[str, int] = {}
     for assignment in classification.rank_assignments.values():
         rank = assignment["size_rank"]
         ranks[rank] = ranks.get(rank, 0) + 1
@@ -467,7 +509,11 @@ def _cmd_compare_gcom(args: argparse.Namespace) -> int:
 
 
 def _add_backend_subparser(subparsers, name: str, baseline, discover, run_func,
-                           planned: tuple[str, ...]) -> argparse._SubParsersAction:
+                           planned: tuple[str, ...]) -> tuple[
+                               argparse.ArgumentParser,
+                               argparse._SubParsersAction,
+                               argparse.ArgumentParser,
+                           ]:
     backend = subparsers.add_parser(name)
     sub = backend.add_subparsers(dest="command")
 
@@ -558,6 +604,22 @@ def build_parser() -> argparse.ArgumentParser:
     report_parser.add_argument("--family", default=None)
     report_parser.add_argument("--sku", default=None)
     report_parser.set_defaults(func=_cmd_report)
+    measure_parser = nvidia_sub.add_parser("measure")
+    measure_parser.add_argument("--recipe", type=Path, required=True)
+    measure_parser.add_argument("--run-id", required=True)
+    measure_parser.add_argument(
+        "--out-root", type=Path, default=Path("out/measurements/nvidia")
+    )
+    measure_parser.add_argument("--timeout", type=int, default=300)
+    measure_parser.add_argument("--cwd", type=Path, default=None)
+    measure_parser.add_argument(
+        "--env",
+        action="append",
+        default=[],
+        metavar="NAME=VALUE",
+        help="target-process environment override; may be repeated",
+    )
+    measure_parser.set_defaults(func=_cmd_measure_nvidia)
 
     # --- gcom_cuda ---
     from amora.backends.gcom_cuda.gcom import discover_capabilities as gcom_discover
