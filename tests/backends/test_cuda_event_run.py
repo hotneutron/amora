@@ -6,6 +6,7 @@ import json
 import math
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -15,6 +16,7 @@ from amora.backends.nvidia.cuda_event_run import (
     parse_cuda_event_payload,
     parse_device_interval_payload,
     run_command_cuda_events,
+    run_command_device_intervals,
 )
 
 
@@ -268,4 +270,68 @@ def test_device_interval_downgrades_all_requested_diagnostic_conditions():
         "instruction_sequence_not_verified_unchanged",
         "instrumentation_overhead_exceeds_threshold",
         "clock_source_not_documented",
+    }
+
+
+def test_barrier_topology_synthetic_target_protocols(tmp_path):
+    target = str(
+        Path(__file__).parents[1] / "fixtures" / "barrier_topology_target.py"
+    )
+    command = (
+        sys.executable,
+        target,
+        "--panel",
+        "BT-CAUSAL",
+        "--topology",
+        "pairwise",
+    )
+    axes = {
+        "panel": "BT-CAUSAL",
+        "topology": "pairwise",
+        "M": 128,
+        "N": 128,
+        "K": 256,
+        "tile_shape": "128x128x64",
+        "grid": "132x1x1",
+        "pipeline_depth": 3,
+        "producer_asymmetry_level": "transition",
+        "cache_protocol": "disjoint_rotation",
+        "cta_concurrency": 132,
+        "address_partition_mapping": "round_robin",
+        "launch_batch_size": 8,
+        "clock_policy": "base",
+    }
+    identity_fields = (
+        "kernel_name",
+        "source_sha256",
+        "ttgir_sha256",
+        "ptx_sha256",
+        "sass_sha256",
+        "cubin_sha256",
+    )
+
+    timing = run_command_cuda_events(
+        command,
+        repeats=2,
+        cwd=tmp_path,
+        expected_launch_batch_size=8,
+        expected_cache_protocol="disjoint_rotation",
+        required_identity_fields=identity_fields,
+        expected_measurement_axes=axes,
+    )
+    intervals = run_command_device_intervals(
+        command,
+        cwd=tmp_path,
+        required_identity_fields=identity_fields,
+        expected_max_overhead_percent=5.0,
+        expected_measurement_axes=axes,
+    )
+
+    assert timing.process_cv == 0.0
+    assert timing.subject_metadata["numerical_result_valid"] is True
+    assert intervals.evidence_status == "qualifying"
+    assert {interval.name for interval in intervals.intervals} >= {
+        "fast_tma_issue_to_barrier_release",
+        "slow_tma_issue_to_barrier_release",
+        "fast_barrier_release_to_consumer_issue",
     }

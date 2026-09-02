@@ -129,12 +129,22 @@ created exclusively and contains a pre-execution `recipe.json`, one
 `points/<point-id>/bundle.json`, one `mediation.json`, and a content-digested
 `manifest.json`. Reusing a run ID fails rather than overwriting evidence.
 
-Each recipe declares `mechanism` as `wgmma_fixed_completion` or
-`tma_route_offered_load`, a calibration/held-out split chosen before execution, and
-controlled `interaction_groups`. Every requested physical axis must be the sole varied
-axis in at least one group. Set `requires_same_subject_identity` to `false` only when
-the intervention necessarily recompiles the kernel; runtime interventions default to
-requiring identical TTGIR/PTX/SASS/cubin identity.
+Each recipe declares `mechanism` as `wgmma_fixed_completion`,
+`tma_route_offered_load`, or `barrier_topology_release`, a calibration/held-out
+split chosen before execution, and controlled `interaction_groups`. Every requested
+physical axis must be the sole varied axis in at least one group. Set
+`requires_same_subject_identity` to `false` only when the intervention necessarily
+recompiles the kernel; runtime interventions default to requiring identical
+TTGIR/PTX/SASS/cubin identity.
+
+Barrier-topology recipes declare at least seven timing repeats and three independent
+PC-sampling repeats, complete BT-EQ and BT-CAUSAL topology pairs, all runtime axes,
+the full source/TTGIR/PTX/SASS/cubin identity, pair-control metadata, invariant
+useful-work/memory-route counters, and a reviewed exact-offset semantic-region map.
+The allowed binary difference is limited to synchronization, predicate, branch, and
+barrier-address setup classes. Each run retains repeat-level SourceCounters samples
+and report hashes, pools by cubin-relative offset, and emits compact timing, interval,
+aggregate-stall, PC-localization, fixture-control, and hardware-findings artifacts.
 
 Each point also declares `evidence_bindings`: dotted paths from its bundle, axes, or
 subject metadata into physical causal nodes. A path may select a named interval, for
@@ -174,5 +184,6 @@ bound `wgmma_completion` node is used for CTA-load sensitivity.
 
 | Revision | Timestamp | Change |
 |---|---|---|
+| r3 | 2026-09-02 12:09 -0700 | Added the barrier-topology recipe, repeated SourceCounters, pair-isolation, semantic-region, and compact handoff contracts. |
 | r2 | 2026-08-31 18:57 -0700 | Added runtime axes, target tool versions, frozen recipe semantics, direct PC-to-SASS evidence, complete controlled-axis requirements, and physical mediation outputs. |
 | r1 | 2026-08-31 17:46 -0700 | Documented the target protocols, instrumentation downgrade contract, environment signals, and immutable recipe CLI. |

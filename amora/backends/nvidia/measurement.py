@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from amora.backends.nvidia.cuda import NvidiaCapabilities
 from amora.backends.nvidia.cuda_event_run import (
@@ -62,7 +62,7 @@ def _identity_check(
     timing: CudaEventTimingResult,
     device_intervals: DeviceIntervalResult | None,
     aggregate: NcuResult,
-    pc_sampling: NcuPcSamplingResult | None,
+    pc_sampling: Sequence[NcuPcSamplingResult],
     required_fields: tuple[str, ...],
     required_metadata_fields: tuple[str, ...],
     expected_measurement_axes: Mapping[str, Any] | None,
@@ -99,12 +99,17 @@ def _identity_check(
         lane_tool_versions["device_intervals"] = dict(
             device_intervals.tool_versions
         )
-    if pc_sampling is not None:
-        lane_identities["pc_sampling"] = _ncu_identity(pc_sampling)
-        lane_devices["pc_sampling"] = _ncu_device(pc_sampling)
-        lane_metadata["pc_sampling"] = _ncu_subject_metadata(pc_sampling)
-        lane_axes["pc_sampling"] = _ncu_measurement_axes(pc_sampling)
-        lane_tool_versions["pc_sampling"] = _ncu_tool_versions(pc_sampling)
+    for repeat_index, result in enumerate(pc_sampling):
+        lane = (
+            "pc_sampling"
+            if len(pc_sampling) == 1
+            else f"pc_sampling_{repeat_index + 1:02d}"
+        )
+        lane_identities[lane] = _ncu_identity(result)
+        lane_devices[lane] = _ncu_device(result)
+        lane_metadata[lane] = _ncu_subject_metadata(result)
+        lane_axes[lane] = _ncu_measurement_axes(result)
+        lane_tool_versions[lane] = _ncu_tool_versions(result)
 
     reasons = []
     canonical = timing.subject_identity
@@ -164,7 +169,9 @@ def _identity_check(
     }
 
 
-def _aggregate_payload(result: NcuResult) -> tuple[dict[str, Any], dict[str, Any]]:
+def _aggregate_payload(
+    result: NcuResult, *, requested_metrics: Sequence[str] = ()
+) -> tuple[dict[str, Any], dict[str, Any]]:
     if len(result.raw_rows) != 1:
         raise ValueError(
             "aggregate NCU lane must contain exactly one filtered launch row, "
@@ -236,6 +243,7 @@ def _aggregate_payload(result: NcuResult) -> tuple[dict[str, Any], dict[str, Any
     return (
         {
             "metrics": counters,
+            "missing_metrics": sorted(set(requested_metrics) - set(selected_metrics)),
             "raw_rows": counter_rows,
             "stall_values": stall_values,
             "structural_stall_histogram": structural_histogram,
@@ -255,21 +263,14 @@ def _aggregate_payload(result: NcuResult) -> tuple[dict[str, Any], dict[str, Any
     )
 
 
-def _pc_payload(result: NcuPcSamplingResult | None) -> dict[str, Any] | None:
-    if result is None:
-        return None
+def _single_pc_payload(
+    result: NcuPcSamplingResult, *, repeat_index: int
+) -> dict[str, Any]:
+    """Preserve one independent SourceCounters collection verbatim."""
+
     instruction_join_count = sum(sample.sass_joined for sample in result.samples)
-    by_sass_opcode: dict[str, dict[str, Any]] = {}
-    for sample in result.samples:
-        opcode = sample.sass_opcode or sample.opcode or "unknown"
-        entry = by_sass_opcode.setdefault(
-            opcode, {"support_count": 0.0, "stall_counts": {}}
-        )
-        entry["support_count"] += sample.samples
-        stall_counts = entry["stall_counts"]
-        for reason, count in sample.stalls.items():
-            stall_counts[reason] = stall_counts.get(reason, 0.0) + count
     return {
+        "repeat_index": repeat_index,
         "raw_unit": "pc_sample_count",
         "samples": [sample.to_dict() for sample in result.samples],
         "support_count": sum(sample.samples for sample in result.samples),
@@ -280,9 +281,101 @@ def _pc_payload(result: NcuPcSamplingResult | None) -> dict[str, Any] | None:
         "source_instruction_count": sum(
             bool(sample.opcode) for sample in result.samples
         ),
-        "by_sass_opcode": by_sass_opcode,
         "provenance": result.provenance(),
     }
+
+
+def _pc_payload(
+    results: Sequence[NcuPcSamplingResult] | None,
+) -> dict[str, Any] | None:
+    """Pool independent PC samples without discarding repeat-level support."""
+
+    if not results:
+        return None
+    repeats = [
+        _single_pc_payload(result, repeat_index=index)
+        for index, result in enumerate(results)
+    ]
+    pooled_by_offset: dict[tuple[str | None, int], dict[str, Any]] = {}
+    by_sass_opcode: dict[str, dict[str, Any]] = {}
+    for repeat_index, result in enumerate(results):
+        for sample in result.samples:
+            offset_key = (sample.function, sample.pc_offset)
+            offset_entry = pooled_by_offset.setdefault(
+                offset_key,
+                {
+                    "function": sample.function,
+                    "pc_offset": sample.pc_offset,
+                    "sass_opcode": sample.sass_opcode,
+                    "sass_instruction": sample.sass_instruction,
+                    "support_count": 0.0,
+                    "stall_counts": {},
+                    "repeat_support_counts": [0.0] * len(results),
+                    "sass_joined_in_all_repeats": True,
+                },
+            )
+            offset_entry["support_count"] += sample.samples
+            offset_entry["repeat_support_counts"][repeat_index] += sample.samples
+            offset_entry["sass_joined_in_all_repeats"] = bool(
+                offset_entry["sass_joined_in_all_repeats"] and sample.sass_joined
+            )
+            if offset_entry["sass_opcode"] != sample.sass_opcode:
+                offset_entry["sass_opcode"] = None
+            if offset_entry["sass_instruction"] != sample.sass_instruction:
+                offset_entry["sass_instruction"] = None
+            for reason, count in sample.stalls.items():
+                offset_entry["stall_counts"][reason] = (
+                    offset_entry["stall_counts"].get(reason, 0.0) + count
+                )
+
+            opcode = sample.sass_opcode or sample.opcode or "unknown"
+            opcode_entry = by_sass_opcode.setdefault(
+                opcode, {"support_count": 0.0, "stall_counts": {}}
+            )
+            opcode_entry["support_count"] += sample.samples
+            for reason, count in sample.stalls.items():
+                opcode_entry["stall_counts"][reason] = (
+                    opcode_entry["stall_counts"].get(reason, 0.0) + count
+                )
+
+    all_samples = [sample for result in results for sample in result.samples]
+    instruction_join_count = sum(sample.sass_joined for sample in all_samples)
+    return {
+        "raw_unit": "pc_sample_count",
+        "repeat_count": len(results),
+        "repeats": repeats,
+        "samples": [sample.to_dict() for sample in all_samples],
+        "by_offset": [
+            pooled_by_offset[key]
+            for key in sorted(
+                pooled_by_offset, key=lambda item: (item[0] or "", item[1])
+            )
+        ],
+        "support_count": sum(sample.samples for sample in all_samples),
+        "instruction_join_count": instruction_join_count,
+        "instruction_join_fraction": (
+            instruction_join_count / len(all_samples) if all_samples else None
+        ),
+        "source_instruction_count": sum(
+            bool(sample.opcode) for sample in all_samples
+        ),
+        "by_sass_opcode": by_sass_opcode,
+        "provenance": {
+            **(results[0].provenance() if len(results) == 1 else {}),
+            "repeat_count": len(results),
+            "reports": [result.provenance() for result in results],
+        },
+    }
+
+
+def _repeat_report_path(
+    base: Path | None, *, repeat_index: int, repeat_count: int
+) -> Path | None:
+    if base is None or repeat_count == 1:
+        return base
+    suffix = "".join(base.suffixes)
+    stem = base.name[: -len(suffix)] if suffix else base.name
+    return base.with_name(f"{stem}.repeat-{repeat_index + 1:02d}{suffix}")
 
 
 @dataclass(frozen=True)
@@ -335,6 +428,7 @@ def collect_command_measurement_bundle(
     clock_control: str | None = None,
     repeats: int = 7,
     collect_pc_sampling: bool = True,
+    pc_sampling_repeats: int = 1,
     device_interval_target: tuple[str, ...] | None = None,
     expected_launch_batch_size: int | None = None,
     expected_cache_protocol: str | None = None,
@@ -351,6 +445,13 @@ def collect_command_measurement_bundle(
     pc_report_path: Path | None = None,
 ) -> CommandMeasurementBundle:
     """Collect independent timing, interval, and NCU evidence lanes."""
+
+    if (
+        isinstance(pc_sampling_repeats, bool)
+        or not isinstance(pc_sampling_repeats, int)
+        or pc_sampling_repeats <= 0
+    ):
+        raise ValueError("pc_sampling_repeats must be a positive integer")
 
     stall_families = {
         "per_warp_active"
@@ -408,25 +509,35 @@ def collect_command_measurement_bundle(
         },
     )
     pc_sampling = (
-        run_command_pc_sampling(
-            ncu_target,
-            capabilities=capabilities,
-            kernel_name=kernel_name,
-            launch_skip=(launch_skip if pc_launch_skip is None else pc_launch_skip),
-            launch_count=1,
-            timeout=timeout,
-            sampling_interval=sampling_interval,
-            report_path=pc_report_path,
-            cache_control=cache_control,
-            clock_control=clock_control,
-            cwd=cwd,
-            environment_overrides={
-                **base_environment,
-                "AMORA_MEASUREMENT_LANE": "ncu_pc_sampling",
-            },
+        tuple(
+            run_command_pc_sampling(
+                ncu_target,
+                capabilities=capabilities,
+                kernel_name=kernel_name,
+                launch_skip=(
+                    launch_skip if pc_launch_skip is None else pc_launch_skip
+                ),
+                launch_count=1,
+                timeout=timeout,
+                sampling_interval=sampling_interval,
+                report_path=_repeat_report_path(
+                    pc_report_path,
+                    repeat_index=repeat_index,
+                    repeat_count=pc_sampling_repeats,
+                ),
+                cache_control=cache_control,
+                clock_control=clock_control,
+                cwd=cwd,
+                environment_overrides={
+                    **base_environment,
+                    "AMORA_MEASUREMENT_LANE": "ncu_pc_sampling",
+                    "AMORA_PC_SAMPLING_REPEAT_INDEX": str(repeat_index),
+                },
+            )
+            for repeat_index in range(pc_sampling_repeats)
         )
         if collect_pc_sampling
-        else None
+        else ()
     )
     identity_check = _identity_check(
         timing=timing,
@@ -437,7 +548,9 @@ def collect_command_measurement_bundle(
         required_metadata_fields=required_subject_metadata_fields,
         expected_measurement_axes=expected_measurement_axes,
     )
-    aggregate_payload, profiler_duration = _aggregate_payload(aggregate)
+    aggregate_payload, profiler_duration = _aggregate_payload(
+        aggregate, requested_metrics=aggregate_metrics
+    )
     return CommandMeasurementBundle(
         timing=timing,
         device_intervals=intervals,

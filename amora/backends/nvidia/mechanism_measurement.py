@@ -7,11 +7,14 @@ as direct latency corrections. Model interpretation remains with the consumer.
 
 from __future__ import annotations
 
+import csv
 import hashlib
+import io
 import json
 import math
 import random
 import re
+import statistics
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,7 +27,13 @@ from amora.backends.nvidia.measurement import (
 )
 
 
-MECHANISMS = frozenset({"wgmma_fixed_completion", "tma_route_offered_load"})
+MECHANISMS = frozenset(
+    {
+        "wgmma_fixed_completion",
+        "tma_route_offered_load",
+        "barrier_topology_release",
+    }
+)
 SPLITS = frozenset({"calibration", "held_out"})
 CAUSAL_EDGES = (
     ("footprint_occupancy", "producer_eligibility"),
@@ -35,6 +44,17 @@ CAUSAL_EDGES = (
     ("tma_completion", "barrier_release"),
     ("barrier_release", "wgmma_issue"),
     ("wgmma_issue", "wgmma_completion"),
+    ("wgmma_completion", "stage_buffer_release"),
+    ("stage_buffer_release", "tma_issue"),
+)
+BARRIER_TOPOLOGY_CAUSAL_EDGES = (
+    ("footprint_occupancy", "producer_eligibility"),
+    ("producer_eligibility", "tma_issue"),
+    ("tma_issue", "memory_route"),
+    ("memory_route", "tma_completion"),
+    ("tma_completion", "barrier_release"),
+    ("barrier_release", "consumer_issue"),
+    ("consumer_issue", "wgmma_completion"),
     ("wgmma_completion", "stage_buffer_release"),
     ("stage_buffer_release", "tma_issue"),
 )
@@ -60,6 +80,24 @@ REQUIRED_AXES = {
             "per_cta_footprint_bytes",
         }
     ),
+    "barrier_topology_release": frozenset(
+        {
+            "panel",
+            "topology",
+            "M",
+            "N",
+            "K",
+            "tile_shape",
+            "grid",
+            "pipeline_depth",
+            "producer_asymmetry_level",
+            "cache_protocol",
+            "cta_concurrency",
+            "address_partition_mapping",
+            "launch_batch_size",
+            "clock_policy",
+        }
+    ),
 }
 REQUIRED_EVIDENCE_NODES = {
     "wgmma_fixed_completion": frozenset(
@@ -81,6 +119,20 @@ REQUIRED_EVIDENCE_NODES = {
             "memory_route",
             "tma_completion",
             "barrier_release",
+            "stage_buffer_release",
+            "total_latency",
+        }
+    ),
+    "barrier_topology_release": frozenset(
+        {
+            "footprint_occupancy",
+            "producer_eligibility",
+            "tma_issue",
+            "memory_route",
+            "tma_completion",
+            "barrier_release",
+            "consumer_issue",
+            "wgmma_completion",
             "stage_buffer_release",
             "total_latency",
         }
@@ -122,12 +174,127 @@ DIRECT_EVIDENCE_PREFIXES = {
         ),
         "total_latency": ("bundle.timing.",),
     },
+    "barrier_topology_release": {
+        "footprint_occupancy": ("bundle.aggregate_counters.",),
+        "producer_eligibility": ("bundle.aggregate_counters.",),
+        "tma_issue": (
+            "bundle.aggregate_counters.",
+            "bundle.pc_sampling.",
+        ),
+        "memory_route": ("bundle.aggregate_counters.",),
+        "tma_completion": ("bundle.device_intervals.",),
+        "barrier_release": (
+            "bundle.device_intervals.",
+            "bundle.pc_sampling.",
+        ),
+        "consumer_issue": (
+            "bundle.device_intervals.",
+            "bundle.pc_sampling.",
+        ),
+        "wgmma_completion": ("bundle.device_intervals.",),
+        "stage_buffer_release": ("bundle.device_intervals.",),
+        "total_latency": ("bundle.timing.",),
+    },
 }
 REQUIRED_SUBJECT_METADATA = frozenset(
     {"registers_per_thread", "shared_memory_bytes", "spill_count"}
 )
+BARRIER_REQUIRED_SUBJECT_METADATA = frozenset(
+    {
+        "registers_per_thread",
+        "shared_memory_bytes",
+        "spill_count",
+        "total_warps",
+        "total_threads",
+        "actor_count",
+        "compiled_queue_capacity",
+        "producer_lead",
+        "request_count",
+        "request_bytes",
+        "numerical_result_valid",
+        "numerical_result_fingerprint",
+        "useful_operation_fingerprint",
+        "synchronization_instruction_fingerprint",
+    }
+)
+BARRIER_REQUIRED_IDENTITY_FIELDS = frozenset(
+    {
+        "kernel_name",
+        "source_sha256",
+        "ttgir_sha256",
+        "ptx_sha256",
+        "sass_sha256",
+        "cubin_sha256",
+    }
+)
+BARRIER_PANELS = {
+    "BT-EQ": frozenset({"joint", "split"}),
+    "BT-CAUSAL": frozenset({"joint", "pairwise"}),
+}
+BARRIER_PC_REGIONS = frozenset(
+    {
+        "tma_issue",
+        "mbarrier_poll_fast",
+        "mbarrier_poll_retry",
+        "wgmma_wait",
+        "wgmma_issue",
+        "unrelated_prologue_epilogue",
+    }
+)
+BARRIER_ALLOWED_SASS_DIFFERENCE_CLASSES = frozenset(
+    {"synchronization", "predicate", "branch", "barrier_address_setup"}
+)
+BARRIER_HARD_INVARIANT_COUNTER_REQUIREMENTS = {
+    "GMMA instruction count": lambda path: (
+        "gmma" in path and ("inst" in path or "instruction" in path)
+    ),
+    "TMA global-load bytes": lambda path: (
+        "tma" in path and "global" in path and "byte" in path
+    ),
+    "shared-memory occupancy limit": lambda path: (
+        "occupancy_limit_shared_mem" in path
+    ),
+}
+BARRIER_HARD_INVARIANT_METADATA_FIELDS = frozenset(
+    {
+        "useful_operation_fingerprint",
+        "request_count",
+        "request_bytes",
+        "registers_per_thread",
+        "shared_memory_bytes",
+        "spill_count",
+    }
+)
+BARRIER_MEDIATION_COUNTER_REQUIREMENTS = {
+    "L2 read sectors": lambda path: (
+        "lts__" in path
+        and "op_read" in path
+        and "lookup_hit" not in path
+        and "lookup_miss" not in path
+    ),
+    "L2 hit sectors": lambda path: (
+        "lts__" in path and "lookup_hit" in path
+    ),
+    "L2 miss sectors": lambda path: (
+        "lts__" in path and "lookup_miss" in path
+    ),
+    "DRAM read bytes": lambda path: (
+        "dram__" in path and "read" in path and "byte" in path
+    ),
+}
 WGMMA_REQUIRED_STALL_REASONS = frozenset(
     {"wait", "math_pipe_throttle", "barrier", "warpgroup_arrive"}
+)
+BARRIER_REQUIRED_STALL_REASONS = frozenset(
+    {
+        "long_scoreboard",
+        "barrier",
+        "wait",
+        "mio_throttle",
+        "warpgroup_arrive",
+        "selected",
+        "not_selected",
+    }
 )
 DEFAULT_IDENTITY_FIELDS = (
     "ttgir_sha256",
@@ -156,6 +323,17 @@ PHYSICAL_TESTS = {
             "L_effective = L_request + Q_delay(rho)"
         ),
     },
+    "barrier_topology_release": {
+        "portable_test": (
+            "BT-EQ preserves release at max(A.complete, B.complete); "
+            "BT-CAUSAL pairwise topology permits the fast consumer to issue "
+            "before the slow producer completes."
+        ),
+        "classification_boundary": (
+            "Hardware evidence measures the partial order and localized "
+            "protocol cost; portable P3 interpretation remains external."
+        ),
+    },
 }
 
 
@@ -176,6 +354,8 @@ class MechanismPoint:
     ncu_target: tuple[str, ...]
     evidence_bindings: dict[str, tuple[str, ...]]
     subject_metadata: dict[str, Any]
+    pc_region_map: dict[str, tuple[int, ...]] = field(default_factory=dict)
+    pc_sampling_repeats: int | None = None
     device_interval_target: tuple[str, ...] | None = None
     expected_launch_batch_size: int | None = None
     expected_cache_protocol: str | None = None
@@ -197,6 +377,11 @@ class MechanismPoint:
                 node: list(paths) for node, paths in self.evidence_bindings.items()
             },
             "subject_metadata": dict(self.subject_metadata),
+            "pc_region_map": {
+                region: list(offsets)
+                for region, offsets in self.pc_region_map.items()
+            },
+            "pc_sampling_repeats": self.pc_sampling_repeats,
             "expected_launch_batch_size": self.expected_launch_batch_size,
             "expected_cache_protocol": self.expected_cache_protocol,
             "expected_max_interval_overhead_percent": (
@@ -213,6 +398,10 @@ class InteractionGroup:
     intervention_node: str
     change_threshold_fraction: float = 0.05
     requires_same_subject_identity: bool = True
+    invariant_counter_paths: tuple[str, ...] = ()
+    allowed_identity_differences: tuple[str, ...] = ()
+    allowed_subject_metadata_differences: tuple[str, ...] = ()
+    allowed_sass_difference_classes: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -222,6 +411,16 @@ class InteractionGroup:
             "intervention_node": self.intervention_node,
             "change_threshold_fraction": self.change_threshold_fraction,
             "requires_same_subject_identity": self.requires_same_subject_identity,
+            "invariant_counter_paths": list(self.invariant_counter_paths),
+            "allowed_identity_differences": list(
+                self.allowed_identity_differences
+            ),
+            "allowed_subject_metadata_differences": list(
+                self.allowed_subject_metadata_differences
+            ),
+            "allowed_sass_difference_classes": list(
+                self.allowed_sass_difference_classes
+            ),
         }
 
 
@@ -237,6 +436,7 @@ class MechanismRecipe:
     clock_control: str | None = None
     repeats: int = 7
     collect_pc_sampling: bool = True
+    pc_sampling_repeats: int = 1
     randomization_seed: int = 0
     launch_skip: int | None = None
     pc_launch_skip: int | None = None
@@ -260,6 +460,7 @@ class MechanismRecipe:
             "clock_control": self.clock_control,
             "repeats": self.repeats,
             "collect_pc_sampling": self.collect_pc_sampling,
+            "pc_sampling_repeats": self.pc_sampling_repeats,
             "randomization_seed": self.randomization_seed,
             "launch_skip": self.launch_skip,
             "pc_launch_skip": self.pc_launch_skip,
@@ -301,6 +502,11 @@ def load_mechanism_recipe(path: str | Path) -> MechanismRecipe:
                 for node, paths in (item.get("evidence_bindings") or {}).items()
             },
             subject_metadata=dict(item.get("subject_metadata") or {}),
+            pc_region_map={
+                region: tuple(offsets)
+                for region, offsets in (item.get("pc_region_map") or {}).items()
+            },
+            pc_sampling_repeats=item.get("pc_sampling_repeats"),
             expected_launch_batch_size=item.get("expected_launch_batch_size"),
             expected_cache_protocol=item.get("expected_cache_protocol"),
             expected_max_interval_overhead_percent=item.get(
@@ -321,6 +527,18 @@ def load_mechanism_recipe(path: str | Path) -> MechanismRecipe:
             requires_same_subject_identity=bool(
                 item.get("requires_same_subject_identity", True)
             ),
+            invariant_counter_paths=tuple(
+                item.get("invariant_counter_paths") or ()
+            ),
+            allowed_identity_differences=tuple(
+                item.get("allowed_identity_differences") or ()
+            ),
+            allowed_subject_metadata_differences=tuple(
+                item.get("allowed_subject_metadata_differences") or ()
+            ),
+            allowed_sass_difference_classes=tuple(
+                item.get("allowed_sass_difference_classes") or ()
+            ),
         )
         for item in data.get("interaction_groups") or ()
     )
@@ -335,6 +553,7 @@ def load_mechanism_recipe(path: str | Path) -> MechanismRecipe:
         clock_control=data.get("clock_control"),
         repeats=int(data.get("repeats", 7)),
         collect_pc_sampling=bool(data.get("collect_pc_sampling", True)),
+        pc_sampling_repeats=int(data.get("pc_sampling_repeats", 1)),
         randomization_seed=int(data.get("randomization_seed", 0)),
         launch_skip=data.get("launch_skip"),
         pc_launch_skip=data.get("pc_launch_skip"),
@@ -363,6 +582,14 @@ def validate_mechanism_recipe(recipe: MechanismRecipe) -> None:
         raise ValueError("clock_control must be 'base', 'boost', 'none', or null")
     if recipe.repeats <= 0:
         raise ValueError("repeats must be positive")
+    if (
+        isinstance(recipe.pc_sampling_repeats, bool)
+        or not isinstance(recipe.pc_sampling_repeats, int)
+        or recipe.pc_sampling_repeats <= 0
+    ):
+        raise ValueError("pc_sampling_repeats must be positive")
+    if recipe.mechanism == "barrier_topology_release" and recipe.repeats < 7:
+        raise ValueError("barrier topology recipes require at least seven timing repeats")
     if isinstance(recipe.randomization_seed, bool) or not isinstance(
         recipe.randomization_seed, int
     ):
@@ -382,6 +609,11 @@ def validate_mechanism_recipe(recipe: MechanismRecipe) -> None:
         raise ValueError("point IDs must be unique")
     required_axes = REQUIRED_AXES[recipe.mechanism]
     required_nodes = REQUIRED_EVIDENCE_NODES[recipe.mechanism]
+    required_metadata = (
+        BARRIER_REQUIRED_SUBJECT_METADATA
+        if recipe.mechanism == "barrier_topology_release"
+        else REQUIRED_SUBJECT_METADATA
+    )
     for point in recipe.points:
         if not _SAFE_ID.fullmatch(point.point_id):
             raise ValueError(f"point_id must be filesystem-safe: {point.point_id!r}")
@@ -401,7 +633,7 @@ def validate_mechanism_recipe(recipe: MechanismRecipe) -> None:
                 raise ValueError(
                     f"{point.point_id} node {node} lacks direct evidence binding"
                 )
-        missing_metadata = sorted(REQUIRED_SUBJECT_METADATA - set(point.subject_metadata))
+        missing_metadata = sorted(required_metadata - set(point.subject_metadata))
         if missing_metadata:
             raise ValueError(
                 f"{point.point_id} is missing subject metadata: {missing_metadata}"
@@ -414,6 +646,14 @@ def validate_mechanism_recipe(recipe: MechanismRecipe) -> None:
                 )
         if not point.timing_target or not point.ncu_target:
             raise ValueError(f"{point.point_id} has an empty target command")
+        if point.pc_sampling_repeats is not None and (
+            isinstance(point.pc_sampling_repeats, bool)
+            or not isinstance(point.pc_sampling_repeats, int)
+            or point.pc_sampling_repeats <= 0
+        ):
+            raise ValueError(
+                f"{point.point_id} pc_sampling_repeats must be positive"
+            )
         if point.expected_launch_batch_size is not None and (
             isinstance(point.expected_launch_batch_size, bool)
             or not isinstance(point.expected_launch_batch_size, int)
@@ -452,6 +692,76 @@ def validate_mechanism_recipe(recipe: MechanismRecipe) -> None:
             raise ValueError(
                 f"{point.point_id} does not bind SourceCounters PC evidence"
             )
+        if recipe.mechanism == "barrier_topology_release":
+            panel = point.axes["panel"]
+            topology = point.axes["topology"]
+            if panel not in BARRIER_PANELS:
+                raise ValueError(f"{point.point_id} has an invalid topology panel")
+            if topology not in BARRIER_PANELS[panel]:
+                raise ValueError(
+                    f"{point.point_id} topology {topology!r} is invalid for {panel}"
+                )
+            if point.subject_metadata["numerical_result_valid"] is not True:
+                raise ValueError(
+                    f"{point.point_id} does not declare a valid numerical result"
+                )
+            if (
+                point.pc_sampling_repeats or recipe.pc_sampling_repeats
+            ) < 3:
+                raise ValueError(
+                    f"{point.point_id} requires at least three PC-sampling repeats"
+                )
+            missing_identity = sorted(
+                BARRIER_REQUIRED_IDENTITY_FIELDS
+                - set(recipe.required_identity_fields)
+            )
+            if missing_identity:
+                raise ValueError(
+                    "barrier topology required_identity_fields omit: "
+                    f"{missing_identity}"
+                )
+            missing_regions = sorted(BARRIER_PC_REGIONS - set(point.pc_region_map))
+            if recipe.collect_pc_sampling and missing_regions:
+                raise ValueError(
+                    f"{point.point_id} is missing PC regions: {missing_regions}"
+                )
+            offsets = [
+                offset
+                for region_offsets in point.pc_region_map.values()
+                for offset in region_offsets
+            ]
+            if any(
+                isinstance(offset, bool)
+                or not isinstance(offset, int)
+                or offset < 0
+                for offset in offsets
+            ):
+                raise ValueError(
+                    f"{point.point_id} PC region offsets must be non-negative integers"
+                )
+            if len(offsets) != len(set(offsets)):
+                raise ValueError(
+                    f"{point.point_id} PC region offsets must map to one region"
+                )
+            if point.expected_launch_batch_size != point.axes["launch_batch_size"]:
+                raise ValueError(
+                    f"{point.point_id} launch batch declaration does not match axes"
+                )
+            if declared_cache_protocol != point.axes["cache_protocol"]:
+                raise ValueError(
+                    f"{point.point_id} cache protocol declaration does not match axes"
+                )
+            if recipe.clock_control != point.axes["clock_policy"]:
+                raise ValueError(
+                    f"{point.point_id} clock policy declaration does not match recipe"
+                )
+            if (
+                point.expected_max_interval_overhead_percent is None
+                or point.expected_max_interval_overhead_percent > 5.0
+            ):
+                raise ValueError(
+                    f"{point.point_id} interval overhead threshold must be at most 5%"
+                )
     if {point.split for point in recipe.points} != SPLITS:
         raise ValueError("recipe must predeclare calibration and held_out points")
 
@@ -476,7 +786,10 @@ def validate_mechanism_recipe(recipe: MechanismRecipe) -> None:
             raise ValueError(f"{group.group_id} varied axis is absent")
         if len({canonical_json(point.axes[group.varied_axis]) for point in members}) < 2:
             raise ValueError(f"{group.group_id} does not vary {group.varied_axis}")
-        control_axes = set(members[0].axes) - {group.varied_axis}
+        control_axes = (
+            set().union(*(set(point.axes) for point in members))
+            - {group.varied_axis}
+        )
         for axis in control_axes:
             values = {canonical_json(point.axes.get(axis)) for point in members}
             if len(values) != 1:
@@ -497,13 +810,177 @@ def validate_mechanism_recipe(recipe: MechanismRecipe) -> None:
                     raise ValueError(
                         f"{group.group_id} changes subject metadata {field_name}"
                     )
+        if recipe.mechanism == "barrier_topology_release":
+            if group.varied_axis != "topology":
+                raise ValueError(
+                    f"{group.group_id} must vary only topology for a topology pair"
+                )
+            if len(group.point_ids) != 2:
+                raise ValueError(f"{group.group_id} must contain exactly two points")
+            if len({point.split for point in members}) != 1:
+                raise ValueError(
+                    f"{group.group_id} cannot pair calibration and held-out points"
+                )
+            if {point.axes["topology"] for point in members} != BARRIER_PANELS[
+                members[0].axes["panel"]
+            ]:
+                raise ValueError(
+                    f"{group.group_id} does not contain the required topology pair"
+                )
+            if group.requires_same_subject_identity:
+                raise ValueError(
+                    f"{group.group_id} must allow declared topology binary differences"
+                )
+            required_allowed_identity = BARRIER_REQUIRED_IDENTITY_FIELDS - {
+                "kernel_name"
+            }
+            if set(group.allowed_identity_differences) != required_allowed_identity:
+                raise ValueError(
+                    f"{group.group_id} must declare only compiler-artifact identity "
+                    "differences"
+                )
+            if set(group.allowed_subject_metadata_differences) != {
+                "synchronization_instruction_fingerprint"
+            }:
+                raise ValueError(
+                    f"{group.group_id} must allow only the synchronization "
+                    "instruction fingerprint to differ"
+                )
+            if set(group.allowed_sass_difference_classes) != (
+                BARRIER_ALLOWED_SASS_DIFFERENCE_CLASSES
+            ):
+                raise ValueError(
+                    f"{group.group_id} must limit SASS differences to "
+                    "synchronization/control classes"
+                )
+            if not group.invariant_counter_paths:
+                raise ValueError(
+                    f"{group.group_id} must declare invariant counter paths"
+                )
+            lowered_counter_paths = tuple(
+                path.lower() for path in group.invariant_counter_paths
+            )
+            matched_invariants = {
+                name: [
+                    path
+                    for path in lowered_counter_paths
+                    if predicate(path)
+                ]
+                for name, predicate in (
+                    BARRIER_HARD_INVARIANT_COUNTER_REQUIREMENTS.items()
+                )
+            }
+            missing_invariants = [
+                name for name, paths in matched_invariants.items() if not paths
+            ]
+            if missing_invariants:
+                raise ValueError(
+                    f"{group.group_id} is missing invariant counter groups: "
+                    f"{missing_invariants}"
+                )
+            duplicate_invariants = {
+                name: paths
+                for name, paths in matched_invariants.items()
+                if len(paths) > 1
+            }
+            non_hard_invariants = [
+                path
+                for path in lowered_counter_paths
+                if not any(
+                    predicate(path)
+                    for predicate in (
+                        BARRIER_HARD_INVARIANT_COUNTER_REQUIREMENTS.values()
+                    )
+                )
+            ]
+            if duplicate_invariants or non_hard_invariants:
+                raise ValueError(
+                    f"{group.group_id} must declare exactly one counter path "
+                    "for each hard invariant group; "
+                    f"duplicates={duplicate_invariants}, "
+                    f"non_hard={non_hard_invariants}"
+                )
+            metadata_differences = {
+                field_name
+                for field_name in BARRIER_REQUIRED_SUBJECT_METADATA
+                if canonical_json(members[0].subject_metadata.get(field_name))
+                != canonical_json(members[1].subject_metadata.get(field_name))
+            }
+            hard_metadata_differences = (
+                metadata_differences & BARRIER_HARD_INVARIANT_METADATA_FIELDS
+            )
+            if hard_metadata_differences:
+                raise ValueError(
+                    f"{group.group_id} topology pair hard metadata differences "
+                    f"are invalid: {sorted(hard_metadata_differences)}"
+                )
+            for member in members:
+                useful_fingerprint = member.subject_metadata[
+                    "useful_operation_fingerprint"
+                ]
+                if not isinstance(useful_fingerprint, Mapping) or not {
+                    "tma", "hgmma"
+                } <= set(useful_fingerprint):
+                    raise ValueError(
+                        f"{member.point_id} useful-operation fingerprint must "
+                        "declare TMA and HGMMA components"
+                    )
+                fingerprint = member.subject_metadata[
+                    "synchronization_instruction_fingerprint"
+                ]
+                if not isinstance(fingerprint, Mapping):
+                    raise ValueError(
+                        f"{member.point_id} synchronization fingerprint must "
+                        "be an object"
+                    )
+                difference_classes = fingerprint.get("difference_classes")
+                if not isinstance(difference_classes, list) or not all(
+                    isinstance(value, str) for value in difference_classes
+                ):
+                    raise ValueError(
+                        f"{member.point_id} synchronization fingerprint must "
+                        "declare difference_classes"
+                    )
+                if not fingerprint.get("non_sync_digest"):
+                    raise ValueError(
+                        f"{member.point_id} synchronization fingerprint must "
+                        "declare non_sync_digest"
+                    )
+                if not set(difference_classes) <= set(
+                    group.allowed_sass_difference_classes
+                ):
+                    raise ValueError(
+                        f"{member.point_id} declares a disallowed SASS difference"
+                    )
     varied_axes = {group.varied_axis for group in recipe.interaction_groups}
-    missing_interventions = sorted(required_axes - varied_axes)
-    if missing_interventions:
-        raise ValueError(
-            f"{recipe.mechanism} recipe is missing controlled intervention groups: "
-            f"{missing_interventions}"
-        )
+    if recipe.mechanism == "barrier_topology_release":
+        represented_panels = {
+            points[group.point_ids[0]].axes["panel"]
+            for group in recipe.interaction_groups
+        }
+        if represented_panels != set(BARRIER_PANELS):
+            raise ValueError(
+                "barrier topology recipe must contain BT-EQ and BT-CAUSAL pairs"
+            )
+        represented_panel_splits = {
+            (points[group.point_ids[0]].axes["panel"], points[group.point_ids[0]].split)
+            for group in recipe.interaction_groups
+        }
+        required_panel_splits = {
+            (panel, split) for panel in BARRIER_PANELS for split in SPLITS
+        }
+        if represented_panel_splits != required_panel_splits:
+            raise ValueError(
+                "barrier topology recipe must pair calibration and held-out "
+                "points in both panels"
+            )
+    else:
+        missing_interventions = sorted(required_axes - varied_axes)
+        if missing_interventions:
+            raise ValueError(
+                f"{recipe.mechanism} recipe is missing controlled intervention groups: "
+                f"{missing_interventions}"
+            )
     if recipe.mechanism == "wgmma_fixed_completion" and not any(
         group.varied_axis == "cta_load" for group in recipe.interaction_groups
     ):
@@ -563,6 +1040,79 @@ def validate_mechanism_recipe(recipe: MechanismRecipe) -> None:
         if missing_metrics:
             raise ValueError(
                 f"TMA recipe is missing physical metric groups: {missing_metrics}"
+            )
+    if recipe.mechanism == "barrier_topology_release":
+        from amora.backends.nvidia.stall_metrics import stall_reason_for_metric
+
+        stall_metrics = [
+            metric for metric in recipe.aggregate_metrics
+            if stall_reason_for_metric(metric) is not None
+        ]
+        families = {
+            "per_warp_active"
+            for metric in stall_metrics
+            if "_per_warp_active" in metric
+        } | {
+            "per_issue_active"
+            for metric in stall_metrics
+            if "_per_issue_active" in metric
+        }
+        if families != {"per_warp_active"}:
+            raise ValueError(
+                "barrier topology stalls require one per_warp_active family"
+            )
+        present_reasons = {
+            reason
+            for metric in stall_metrics
+            for reason in [stall_reason_for_metric(metric)]
+            if reason is not None
+        }
+        missing_reasons = sorted(
+            BARRIER_REQUIRED_STALL_REASONS - present_reasons
+        )
+        if missing_reasons:
+            raise ValueError(
+                f"barrier topology recipe is missing stall reasons: {missing_reasons}"
+            )
+        lowered_metrics = tuple(metric.lower() for metric in recipe.aggregate_metrics)
+        metric_requirements = {
+            "GMMA instruction count": lambda metric: (
+                "gmma" in metric and ("inst" in metric or "instruction" in metric)
+            ),
+            "TMA global-load bytes": lambda metric: (
+                "tma" in metric and "global" in metric and "byte" in metric
+            ),
+            "active warps": lambda metric: (
+                "active_warps" in metric or "warps_active" in metric
+            ),
+            "eligible warps": lambda metric: (
+                "eligible_warps" in metric or "warps_eligible" in metric
+            ),
+            "shared-memory occupancy limit": lambda metric: (
+                "occupancy_limit_shared_mem" in metric
+            ),
+            "L2 read sectors": lambda metric: (
+                "lts__" in metric and "op_read" in metric
+            ),
+            "L2 hit sectors": lambda metric: (
+                "lts__" in metric and "lookup_hit" in metric
+            ),
+            "L2 miss sectors": lambda metric: (
+                "lts__" in metric and "lookup_miss" in metric
+            ),
+            "DRAM read bytes": lambda metric: (
+                "dram__" in metric and "read" in metric and "byte" in metric
+            ),
+        }
+        missing_metrics = [
+            name
+            for name, predicate in metric_requirements.items()
+            if not any(predicate(metric) for metric in lowered_metrics)
+        ]
+        if missing_metrics:
+            raise ValueError(
+                "barrier topology recipe is missing physical metric groups: "
+                f"{missing_metrics}"
             )
 
 
@@ -635,12 +1185,19 @@ def collect_causal_evidence(
     dominant_reason = (
         max(reason_fractions, key=reason_fractions.get) if reason_fractions else None
     )
+    graph_edges = (
+        BARRIER_TOPOLOGY_CAUSAL_EDGES
+        if set(point.evidence_bindings) >= REQUIRED_EVIDENCE_NODES[
+            "barrier_topology_release"
+        ]
+        else CAUSAL_EDGES
+    )
     return {
         "graph": {
-            "nodes": sorted({node for edge in CAUSAL_EDGES for node in edge}),
+            "nodes": sorted({node for edge in graph_edges for node in edge}),
             "edges": [
                 {"source": source, "target": target}
-                for source, target in CAUSAL_EDGES
+                for source, target in graph_edges
             ],
         },
         "nodes": nodes,
@@ -654,6 +1211,648 @@ def collect_causal_evidence(
             ),
             "interpretation": "hardware_reason_only",
         },
+    }
+
+
+def _structural_sample_count(sample: Mapping[str, Any]) -> float:
+    stalls = sample.get("stalls")
+    if not isinstance(stalls, Mapping):
+        return 0.0
+    return sum(
+        float(value)
+        for reason, value in stalls.items()
+        if reason not in {"selected", "not_selected"}
+        and isinstance(value, (int, float))
+        and not isinstance(value, bool)
+    )
+
+
+def localize_pc_regions(
+    pc_sampling: Mapping[str, Any] | None,
+    region_map: Mapping[str, tuple[int, ...]],
+) -> dict[str, Any]:
+    """Apply a consumer-reviewed offset map and assess repeat agreement."""
+
+    if not pc_sampling:
+        return {
+            "status": "diagnostic",
+            "reason": "pc_sampling_not_measured",
+            "raw_unit": "pc_sample_count",
+            "pooled_structural_support": 0.0,
+            "dominant_region": None,
+            "dominant_region_repeat_count": 0,
+            "repeats": [],
+            "regions": {},
+        }
+    offset_to_region = {
+        offset: region
+        for region, offsets in region_map.items()
+        for offset in offsets
+    }
+    repeat_rows = []
+    pooled = {region: 0.0 for region in region_map}
+    unmapped_offsets: set[int] = set()
+    for repeat in pc_sampling.get("repeats") or ():
+        regions = {region: 0.0 for region in region_map}
+        for sample in repeat.get("samples") or ():
+            support = _structural_sample_count(sample)
+            if support <= 0.0:
+                continue
+            offset = sample.get("pc_offset")
+            region = offset_to_region.get(offset)
+            if region is None:
+                if isinstance(offset, int):
+                    unmapped_offsets.add(offset)
+                continue
+            regions[region] += support
+            pooled[region] += support
+        supported = {region: count for region, count in regions.items() if count > 0.0}
+        dominant = max(supported, key=lambda region: supported[region]) if supported else None
+        repeat_rows.append(
+            {
+                "repeat_index": repeat.get("repeat_index"),
+                "structural_support_by_region": regions,
+                "structural_support_count": sum(regions.values()),
+                "dominant_region": dominant,
+            }
+        )
+    pooled_supported = {region: count for region, count in pooled.items() if count > 0.0}
+    dominant_region = (
+        max(pooled_supported, key=lambda region: pooled_supported[region])
+        if pooled_supported
+        else None
+    )
+    dominant_repeats = sum(
+        row["dominant_region"] == dominant_region for row in repeat_rows
+    )
+    pooled_support = sum(pooled.values())
+    qualifying = (
+        not unmapped_offsets
+        and pooled_support >= 100.0
+        and dominant_region is not None
+        and dominant_repeats >= 2
+    )
+    reasons = []
+    if unmapped_offsets:
+        reasons.append("semantic_region_map_incomplete")
+    if pooled_support < 100.0:
+        reasons.append("pooled_structural_support_below_100")
+    if dominant_region is None or dominant_repeats < 2:
+        reasons.append("dominant_region_not_reproduced_in_two_profiles")
+    return {
+        "status": "qualifying" if qualifying else "diagnostic",
+        "raw_unit": "pc_sample_count",
+        "pooled_structural_support": pooled_support,
+        "regions": pooled,
+        "dominant_region": dominant_region,
+        "dominant_region_repeat_count": dominant_repeats,
+        "required_repeat_agreement": 2,
+        "unmapped_offsets": sorted(unmapped_offsets),
+        "repeats": repeat_rows,
+        "diagnostic_reasons": reasons,
+    }
+
+
+def _relative_difference(left: float, right: float) -> float:
+    return abs(right - left) / max(abs(left), abs(right), 1e-12)
+
+
+def _paired_timing_difference(
+    baseline: Mapping[str, Any], variant: Mapping[str, Any]
+) -> dict[str, Any]:
+    left = [
+        float(row["median_us"])
+        for row in baseline.get("process_samples") or ()
+    ]
+    right = [
+        float(row["median_us"])
+        for row in variant.get("process_samples") or ()
+    ]
+    count = min(len(left), len(right))
+    differences = [right[index] - left[index] for index in range(count)]
+    if not differences:
+        return {
+            "status": "not_measured",
+            "unit": "us_per_launch",
+            "paired_process_count": 0,
+        }
+    mean_difference = statistics.fmean(differences)
+    t_critical_95 = {
+        1: 12.706,
+        2: 4.303,
+        3: 3.182,
+        4: 2.776,
+        5: 2.571,
+        6: 2.447,
+        7: 2.365,
+        8: 2.306,
+        9: 2.262,
+        10: 2.228,
+        11: 2.201,
+        12: 2.179,
+        13: 2.160,
+        14: 2.145,
+        15: 2.131,
+        16: 2.120,
+        17: 2.110,
+        18: 2.101,
+        19: 2.093,
+        20: 2.086,
+        24: 2.064,
+        29: 2.045,
+    }
+    degrees_of_freedom = count - 1
+    if degrees_of_freedom <= 20:
+        critical = t_critical_95[degrees_of_freedom]
+    elif degrees_of_freedom <= 24:
+        critical = t_critical_95[24]
+    elif degrees_of_freedom <= 29:
+        critical = t_critical_95[29]
+    else:
+        critical = 1.96
+    half_width = (
+        critical * statistics.stdev(differences) / math.sqrt(count)
+        if count > 1
+        else None
+    )
+    baseline_mean = statistics.fmean(left[:count])
+    return {
+        "status": "measured",
+        "unit": "us_per_launch",
+        "paired_process_count": count,
+        "paired_differences": differences,
+        "mean_difference": mean_difference,
+        "mean_difference_percent": (
+            mean_difference / baseline_mean * 100.0 if baseline_mean else None
+        ),
+        "confidence_level": 0.95,
+        "confidence_interval_method": "paired_student_t",
+        "confidence_interval": (
+            [mean_difference - half_width, mean_difference + half_width]
+            if half_width is not None
+            else None
+        ),
+        "confidence_half_width": half_width,
+        "baseline_mean_us": baseline_mean,
+    }
+
+
+def _interval_by_name(point_result: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
+    interval_payload = point_result.get("bundle", {}).get("device_intervals")
+    intervals = (
+        interval_payload.get("intervals", [])
+        if isinstance(interval_payload, Mapping)
+        else []
+    )
+    return {
+        str(interval.get("name")): interval
+        for interval in intervals or ()
+        if isinstance(interval, Mapping)
+    }
+
+
+def _interval_order_assessment(
+    panel: str, point_results: Mapping[str, Mapping[str, Any]]
+) -> dict[str, Any]:
+    if panel != "BT-CAUSAL":
+        required = {
+            "tma_issue_to_barrier_release",
+            "barrier_release_to_consumer_issue",
+            "wgmma_issue_to_completion",
+            "stage_buffer_release",
+        }
+        missing = {
+            point_id: sorted(required - set(_interval_by_name(result)))
+            for point_id, result in point_results.items()
+        }
+        missing = {point_id: names for point_id, names in missing.items() if names}
+        diagnostic = {
+            point_id: list(
+                (result["bundle"].get("device_intervals") or {}).get(
+                    "diagnostic_reasons"
+                ) or ()
+            )
+            for point_id, result in point_results.items()
+            if (result["bundle"].get("device_intervals") or {}).get(
+                "evidence_status"
+            ) != "qualifying"
+        }
+        return {
+            "status": (
+                "not_measured" if missing or diagnostic else "supported"
+            ),
+            "required_intervals": sorted(required),
+            "missing_intervals": missing,
+            "diagnostic_intervals": diagnostic,
+        }
+
+    required = {
+        "fast_tma_issue_to_barrier_release",
+        "slow_tma_issue_to_barrier_release",
+        "fast_barrier_release_to_consumer_issue",
+        "slow_barrier_release_to_consumer_issue",
+        "wgmma_issue_to_completion",
+        "stage_buffer_release",
+    }
+    observations = {}
+    missing = {}
+    diagnostic = {}
+    for point_id, result in point_results.items():
+        interval_payload = result["bundle"].get("device_intervals") or {}
+        if interval_payload.get("evidence_status") != "qualifying":
+            diagnostic[point_id] = list(
+                interval_payload.get("diagnostic_reasons") or ()
+            )
+            continue
+        intervals = _interval_by_name(result)
+        absent = sorted(required - set(intervals))
+        if absent:
+            missing[point_id] = absent
+            continue
+        fast_consumer_issue = float(
+            intervals["fast_barrier_release_to_consumer_issue"]["end_ns"]
+        )
+        slow_producer_release = float(
+            intervals["slow_tma_issue_to_barrier_release"]["end_ns"]
+        )
+        observations[point_id] = {
+            "topology": result["axes"]["topology"],
+            "fast_consumer_issue_ns": fast_consumer_issue,
+            "slow_producer_release_ns": slow_producer_release,
+            "fast_consumer_precedes_slow_producer_release": (
+                fast_consumer_issue < slow_producer_release
+            ),
+        }
+    if diagnostic or missing or len(observations) != 2:
+        status = "not_measured"
+    else:
+        by_topology = {row["topology"]: row for row in observations.values()}
+        status = (
+            "supported"
+            if by_topology["pairwise"][
+                "fast_consumer_precedes_slow_producer_release"
+            ]
+            and not by_topology["joint"][
+                "fast_consumer_precedes_slow_producer_release"
+            ]
+            else "falsified"
+        )
+    return {
+        "status": status,
+        "required_intervals": sorted(required),
+        "missing_intervals": missing,
+        "diagnostic_intervals": diagnostic,
+        "observations": observations,
+    }
+
+
+def _pair_control_scorecard(
+    group: InteractionGroup,
+    baseline: Mapping[str, Any],
+    variant: Mapping[str, Any],
+    *,
+    aggregate_metrics: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    drift_reasons = []
+    missing_reasons = []
+    left_bundle = baseline["bundle"]
+    right_bundle = variant["bundle"]
+    axis_differences = sorted(
+        axis
+        for axis in set(baseline["axes"]) | set(variant["axes"])
+        if canonical_json(baseline["axes"].get(axis))
+        != canonical_json(variant["axes"].get(axis))
+    )
+    if axis_differences != [group.varied_axis]:
+        drift_reasons.append("runtime_axis_drift")
+
+    left_identity = left_bundle["timing"].get("subject_identity", {})
+    right_identity = right_bundle["timing"].get("subject_identity", {})
+    identity_differences = sorted(
+        field
+        for field in set(left_identity) | set(right_identity)
+        if left_identity.get(field) != right_identity.get(field)
+    )
+    unexpected_identity = sorted(
+        set(identity_differences) - set(group.allowed_identity_differences)
+    )
+    if unexpected_identity:
+        drift_reasons.append("unexpected_subject_identity_drift")
+
+    left_metadata = left_bundle["timing"].get("subject_metadata", {})
+    right_metadata = right_bundle["timing"].get("subject_metadata", {})
+    metadata_differences = sorted(
+        field
+        for field in set(left_metadata) | set(right_metadata)
+        if canonical_json(left_metadata.get(field))
+        != canonical_json(right_metadata.get(field))
+    )
+    hard_metadata_differences = sorted(
+        set(metadata_differences) & BARRIER_HARD_INVARIANT_METADATA_FIELDS
+    )
+    unexpected_metadata = sorted(
+        set(metadata_differences)
+        - set(group.allowed_subject_metadata_differences)
+        - BARRIER_HARD_INVARIANT_METADATA_FIELDS
+    )
+    if hard_metadata_differences:
+        drift_reasons.append("hard_subject_metadata_drift")
+    if left_metadata.get("spill_count") or right_metadata.get("spill_count"):
+        drift_reasons.append("subject_contains_spills")
+    sync_field = "synchronization_instruction_fingerprint"
+    if left_metadata.get(sync_field) == right_metadata.get(sync_field):
+        drift_reasons.append("topology_intervention_not_observed")
+    left_sync = left_metadata.get(sync_field)
+    right_sync = right_metadata.get(sync_field)
+    if not isinstance(left_sync, Mapping) or not isinstance(right_sync, Mapping):
+        drift_reasons.append("invalid_synchronization_fingerprint")
+    else:
+        observed_classes = set(left_sync.get("difference_classes") or ()) | set(
+            right_sync.get("difference_classes") or ()
+        )
+        if not observed_classes <= set(group.allowed_sass_difference_classes):
+            drift_reasons.append("disallowed_sass_difference_class")
+
+    counter_checks = []
+    for path in group.invariant_counter_paths:
+        left_value = _resolve_path(left_bundle, path)
+        right_value = _resolve_path(right_bundle, path)
+        if not (
+            isinstance(left_value, (int, float))
+            and not isinstance(left_value, bool)
+            and isinstance(right_value, (int, float))
+            and not isinstance(right_value, bool)
+        ):
+            status = "not_measured"
+            relative_difference = None
+            missing_reasons.append(f"counter_not_measured:{path}")
+        else:
+            relative_difference = _relative_difference(
+                float(left_value), float(right_value)
+            )
+            status = (
+                "pass"
+                if relative_difference <= group.change_threshold_fraction
+                else "drift"
+            )
+            if status == "drift":
+                drift_reasons.append(f"counter_drift:{path}")
+        counter_checks.append(
+            {
+                "path": path,
+                "role": "hard_invariant",
+                "blocking": True,
+                "baseline": left_value,
+                "variant": right_value,
+                "relative_difference": relative_difference,
+                "threshold_fraction": group.change_threshold_fraction,
+                "status": status,
+            }
+        )
+    mediation_counter_checks = []
+    for metric in aggregate_metrics:
+        lowered_metric = metric.lower()
+        groups = [
+            name
+            for name, predicate in BARRIER_MEDIATION_COUNTER_REQUIREMENTS.items()
+            if predicate(lowered_metric)
+        ]
+        if not groups:
+            continue
+        path = f"aggregate_counters.metrics.{metric}"
+        left_value = _resolve_path(left_bundle, path)
+        right_value = _resolve_path(right_bundle, path)
+        measured = (
+            isinstance(left_value, (int, float))
+            and not isinstance(left_value, bool)
+            and isinstance(right_value, (int, float))
+            and not isinstance(right_value, bool)
+        )
+        mediation_counter_checks.append(
+            {
+                "path": path,
+                "groups": groups,
+                "role": "mediation_evidence",
+                "blocking": False,
+                "baseline": left_value,
+                "variant": right_value,
+                "relative_difference": (
+                    _relative_difference(float(left_value), float(right_value))
+                    if measured
+                    else None
+                ),
+                "status": "measured" if measured else "not_measured",
+            }
+        )
+    cross_lane_diagnostic_reasons = {}
+    for point_id, bundle in (
+        (baseline["point_id"], left_bundle),
+        (variant["point_id"], right_bundle),
+    ):
+        reasons = list(bundle.get("identity_check", {}).get("reasons") or ())
+        blocking_reasons = [
+            reason
+            for reason in reasons
+            if not reason.endswith(
+                "subject_metadata_mismatch:synchronization_instruction_fingerprint"
+            )
+        ]
+        if blocking_reasons:
+            missing_reasons.extend(
+                f"{point_id}:cross_lane:{reason}" for reason in blocking_reasons
+            )
+        if reasons:
+            cross_lane_diagnostic_reasons[point_id] = reasons
+
+    sass_diagnostics = {
+        "baseline_non_sync_digest": (
+            left_sync.get("non_sync_digest")
+            if isinstance(left_sync, Mapping)
+            else None
+        ),
+        "variant_non_sync_digest": (
+            right_sync.get("non_sync_digest")
+            if isinstance(right_sync, Mapping)
+            else None
+        ),
+        "non_sync_digest_matches": (
+            left_sync.get("non_sync_digest")
+            == right_sync.get("non_sync_digest")
+            if isinstance(left_sync, Mapping)
+            and isinstance(right_sync, Mapping)
+            else None
+        ),
+        "role": "non_blocking_compiler_artifact_diagnostic",
+    }
+
+    if drift_reasons:
+        status = "coupled_fixture"
+    elif missing_reasons:
+        status = "not_measured"
+    else:
+        status = "pass"
+    return {
+        "status": status,
+        "baseline_point_id": baseline["point_id"],
+        "variant_point_id": variant["point_id"],
+        "axis_differences": axis_differences,
+        "identity_differences": identity_differences,
+        "allowed_identity_differences": list(
+            group.allowed_identity_differences
+        ),
+        "unexpected_identity_differences": unexpected_identity,
+        "metadata_differences": metadata_differences,
+        "hard_subject_metadata_differences": hard_metadata_differences,
+        "allowed_subject_metadata_differences": list(
+            group.allowed_subject_metadata_differences
+        ),
+        "unexpected_subject_metadata_differences": unexpected_metadata,
+        "counter_checks": counter_checks,
+        "hard_invariant_counter_checks": counter_checks,
+        "mediation_counter_checks": mediation_counter_checks,
+        "cross_lane_diagnostic_reasons": cross_lane_diagnostic_reasons,
+        "sass_diagnostics": sass_diagnostics,
+        "drift_reasons": list(dict.fromkeys(drift_reasons)),
+        "missing_reasons": list(dict.fromkeys(missing_reasons)),
+    }
+
+
+def build_barrier_topology_report(
+    recipe: MechanismRecipe,
+    point_results: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Reduce topology pairs without mixing counter and PC-sample units."""
+
+    if recipe.mechanism != "barrier_topology_release":
+        raise ValueError("barrier topology report requires a topology recipe")
+    pairs = []
+    for group in recipe.interaction_groups:
+        baseline = point_results[group.point_ids[0]]
+        variant = point_results[group.point_ids[1]]
+        controls = _pair_control_scorecard(
+            group,
+            baseline,
+            variant,
+            aggregate_metrics=recipe.aggregate_metrics,
+        )
+        timing = _paired_timing_difference(
+            baseline["bundle"]["timing"], variant["bundle"]["timing"]
+        )
+        timing_quality_reasons = []
+        for point in (baseline, variant):
+            point_timing = point["bundle"]["timing"]
+            if len(point_timing.get("process_samples") or ()) < 7:
+                timing_quality_reasons.append(
+                    f"{point['point_id']}:fewer_than_seven_process_repeats"
+                )
+            if float(point_timing.get("process_cv", math.inf)) > 0.02:
+                timing_quality_reasons.append(
+                    f"{point['point_id']}:process_cv_exceeds_2_percent"
+                )
+        timing["quality_status"] = (
+            "qualifying" if not timing_quality_reasons else "diagnostic"
+        )
+        timing["diagnostic_reasons"] = timing_quality_reasons
+        panel = str(baseline["axes"]["panel"])
+        intervals = _interval_order_assessment(
+            panel, {point["point_id"]: point for point in (baseline, variant)}
+        )
+        pc_localization = {
+            point["point_id"]: point.get("pc_localization")
+            for point in (baseline, variant)
+        }
+
+        if controls["status"] == "coupled_fixture":
+            classification = "coupled_fixture"
+        elif controls["status"] != "pass":
+            classification = "not_measured"
+        elif timing["quality_status"] != "qualifying":
+            classification = "not_measured"
+        elif panel == "BT-CAUSAL":
+            classification = intervals["status"]
+        else:
+            baseline_scale = float(timing.get("baseline_mean_us") or 0.0)
+            half_width = float(timing.get("confidence_half_width") or 0.0)
+            allowed = max(0.02 * baseline_scale, half_width)
+            difference = abs(float(timing.get("mean_difference") or 0.0))
+            if difference <= allowed:
+                classification = "supported"
+            elif any(
+                localization
+                and localization.get("status") == "qualifying"
+                and localization.get("dominant_region")
+                in {"mbarrier_poll_fast", "mbarrier_poll_retry", "wgmma_wait"}
+                for localization in pc_localization.values()
+            ):
+                classification = "missing_sync_protocol_service"
+            else:
+                classification = "falsified"
+
+        edge_rows = []
+        left_nodes = baseline["causal_evidence"]["nodes"]
+        right_nodes = variant["causal_evidence"]["nodes"]
+        for source, target in BARRIER_TOPOLOGY_CAUSAL_EDGES:
+            source_changed = _changed(
+                _numeric_measurements(left_nodes.get(source)),
+                _numeric_measurements(right_nodes.get(source)),
+                group.change_threshold_fraction,
+            )
+            target_changed = _changed(
+                _numeric_measurements(left_nodes.get(target)),
+                _numeric_measurements(right_nodes.get(target)),
+                group.change_threshold_fraction,
+            )
+            if controls["status"] == "coupled_fixture":
+                status = "coupled_fixture"
+            elif controls["status"] != "pass":
+                status = "not_measured"
+            elif source_changed is None or target_changed is None:
+                status = "not_measured"
+            elif source_changed and target_changed:
+                status = "supported"
+            elif source_changed:
+                status = "falsified"
+            else:
+                status = "not_measured"
+            edge_rows.append(
+                {
+                    "source": source,
+                    "target": target,
+                    "source_changed": source_changed,
+                    "target_changed": target_changed,
+                    "status": status,
+                }
+            )
+        pairs.append(
+            {
+                "group_id": group.group_id,
+                "panel": panel,
+                "point_ids": list(group.point_ids),
+                "control_scorecard": controls,
+                "cuda_event_timing": timing,
+                "interval_order": intervals,
+                "aggregate_stalls": {
+                    point["point_id"]: point["bundle"][
+                        "aggregate_counters"
+                    ].get("structural_stall_histogram")
+                    for point in (baseline, variant)
+                },
+                "pc_localization": pc_localization,
+                "causal_edges": edge_rows,
+                "classification": classification,
+            }
+        )
+    return {
+        "schema_version": 1,
+        "kind": "barrier_topology_hardware_findings",
+        "latency_oracle": "cuda_events",
+        "aggregate_stall_unit": "coherent_ncu_metric_family",
+        "pc_localization_unit": "pc_sample_count",
+        "pairs": pairs,
+        "interpretation_boundary": (
+            "Amora reports measured topology evidence; portable P3 semantic "
+            "interpretation belongs to the consumer."
+        ),
     }
 
 
@@ -694,6 +1893,9 @@ def build_mediation_report(
     point_results: Mapping[str, Mapping[str, Any]],
 ) -> dict[str, Any]:
     """Report measured edge mediation for controlled intervention groups."""
+
+    if recipe.mechanism == "barrier_topology_release":
+        return build_barrier_topology_report(recipe, point_results)
 
     groups: list[dict[str, Any]] = []
     for group in recipe.interaction_groups:
@@ -895,6 +2097,158 @@ def _write_new_json(path: Path, value: Any) -> None:
         handle.write(json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n")
 
 
+def _write_new_csv(
+    path: Path, rows: list[dict[str, Any]], fieldnames: tuple[str, ...]
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    buffer = io.StringIO(newline="")
+    writer = csv.DictWriter(buffer, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows(rows)
+    with path.open("x", encoding="utf-8", newline="") as handle:
+        handle.write(buffer.getvalue())
+
+
+def _topology_consumer_rows(
+    point_results: Mapping[str, Mapping[str, Any]],
+    findings: Mapping[str, Any],
+) -> dict[str, tuple[list[dict[str, Any]], tuple[str, ...]]]:
+    timing_rows = []
+    interval_rows = []
+    aggregate_rows = []
+    pc_rows = []
+    control_rows = []
+    for point_id, result in point_results.items():
+        timing = result["bundle"]["timing"]
+        timing_rows.append(
+            {
+                "point_id": point_id,
+                "split": result["split"],
+                "panel": result["axes"]["panel"],
+                "topology": result["axes"]["topology"],
+                "process_repeat_count": len(timing.get("process_samples") or ()),
+                "median_us": timing.get("median_us"),
+                "p05_us": timing.get("p05_us"),
+                "p95_us": timing.get("p95_us"),
+                "process_cv": timing.get("process_cv"),
+                "qualification_status": result["qualification_status"],
+            }
+        )
+        interval_payload = result["bundle"].get("device_intervals") or {}
+        for interval in interval_payload.get("intervals") or ():
+            interval_rows.append(
+                {
+                    "point_id": point_id,
+                    "panel": result["axes"]["panel"],
+                    "topology": result["axes"]["topology"],
+                    "name": interval.get("name"),
+                    "start_ns": interval.get("start_ns"),
+                    "end_ns": interval.get("end_ns"),
+                    "duration_ns": interval.get("duration_ns"),
+                    "evidence_status": interval_payload.get("evidence_status"),
+                }
+            )
+        histogram = result["bundle"]["aggregate_counters"].get(
+            "structural_stall_histogram"
+        ) or {}
+        reason_values = histogram.get("reason_values") or {}
+        reason_fractions = histogram.get("reason_fractions") or {}
+        for reason in sorted(reason_values):
+            aggregate_rows.append(
+                {
+                    "point_id": point_id,
+                    "panel": result["axes"]["panel"],
+                    "topology": result["axes"]["topology"],
+                    "reason": reason,
+                    "raw_unit": histogram.get("raw_unit"),
+                    "reason_value": reason_values[reason],
+                    "structural_denominator": histogram.get("denominator"),
+                    "structural_fraction": reason_fractions.get(reason),
+                }
+            )
+        localization = result.get("pc_localization") or {}
+        region_by_offset = {
+            offset: region
+            for region, offsets in result.get("pc_region_map", {}).items()
+            for offset in offsets
+        }
+        pc_payload = result["bundle"].get("pc_sampling") or {}
+        for offset_row in pc_payload.get("by_offset") or ():
+            pc_rows.append(
+                {
+                    "point_id": point_id,
+                    "panel": result["axes"]["panel"],
+                    "topology": result["axes"]["topology"],
+                    "function": offset_row.get("function"),
+                    "pc_offset": offset_row.get("pc_offset"),
+                    "sass_opcode": offset_row.get("sass_opcode"),
+                    "sass_instruction": offset_row.get("sass_instruction"),
+                    "region": region_by_offset.get(offset_row.get("pc_offset")),
+                    "support_count": offset_row.get("support_count"),
+                    "repeat_support_counts": canonical_json(
+                        offset_row.get("repeat_support_counts") or []
+                    ),
+                    "stall_counts": canonical_json(
+                        offset_row.get("stall_counts") or {}
+                    ),
+                    "localization_status": localization.get("status"),
+                }
+            )
+    for pair in findings.get("pairs") or ():
+        controls = pair["control_scorecard"]
+        control_rows.append(
+            {
+                "group_id": pair["group_id"],
+                "panel": pair["panel"],
+                "baseline_point_id": controls["baseline_point_id"],
+                "variant_point_id": controls["variant_point_id"],
+                "status": controls["status"],
+                "classification": pair["classification"],
+                "drift_reasons": canonical_json(controls["drift_reasons"]),
+                "missing_reasons": canonical_json(controls["missing_reasons"]),
+            }
+        )
+    return {
+        "cuda_event_timing.csv": (
+            timing_rows,
+            (
+                "point_id", "split", "panel", "topology",
+                "process_repeat_count", "median_us", "p05_us", "p95_us",
+                "process_cv", "qualification_status",
+            ),
+        ),
+        "device_intervals.csv": (
+            interval_rows,
+            (
+                "point_id", "panel", "topology", "name", "start_ns",
+                "end_ns", "duration_ns", "evidence_status",
+            ),
+        ),
+        "aggregate_stalls.csv": (
+            aggregate_rows,
+            (
+                "point_id", "panel", "topology", "reason", "raw_unit",
+                "reason_value", "structural_denominator", "structural_fraction",
+            ),
+        ),
+        "pc_samples_by_offset.csv": (
+            pc_rows,
+            (
+                "point_id", "panel", "topology", "function", "pc_offset",
+                "sass_opcode", "sass_instruction", "region", "support_count",
+                "repeat_support_counts", "stall_counts", "localization_status",
+            ),
+        ),
+        "fixture_control_scorecard.csv": (
+            control_rows,
+            (
+                "group_id", "panel", "baseline_point_id", "variant_point_id",
+                "status", "classification", "drift_reasons", "missing_reasons",
+            ),
+        ),
+    }
+
+
 def validate_mechanism_manifest(manifest: Mapping[str, Any]) -> None:
     """Validate the content digest of a persisted mechanism-run manifest."""
 
@@ -921,10 +2275,14 @@ def load_mechanism_manifest(path: str | Path) -> dict[str, Any]:
             artifact_entries.append(point_artifact)
             if isinstance(point_artifact.get("pc_report"), Mapping):
                 artifact_entries.append(point_artifact["pc_report"])
+            for pc_report in point_artifact.get("pc_reports") or ():
+                artifact_entries.append(pc_report)
     if isinstance(value.get("frozen_recipe"), Mapping):
         artifact_entries.append(value["frozen_recipe"])
     if isinstance(value.get("mediation"), Mapping):
         artifact_entries.append(value["mediation"])
+    for compact_artifact in (value.get("compact_artifacts") or {}).values():
+        artifact_entries.append(compact_artifact)
     for artifact in artifact_entries:
         if not isinstance(artifact, Mapping):
             raise ValueError("mechanism manifest artifact must be an object")
@@ -972,6 +2330,11 @@ def execute_mechanism_recipe(
         point_dir = run_dir / "points" / point.point_id
         point_dir.mkdir(parents=True, exist_ok=False)
         pc_report = point_dir / "pc_sampling.ncu-rep"
+        required_subject_metadata = (
+            BARRIER_REQUIRED_SUBJECT_METADATA
+            if recipe.mechanism == "barrier_topology_release"
+            else REQUIRED_SUBJECT_METADATA
+        )
         bundle = bundle_collector(
             timing_target=point.timing_target,
             ncu_target=point.ncu_target,
@@ -983,6 +2346,9 @@ def execute_mechanism_recipe(
             clock_control=recipe.clock_control,
             repeats=recipe.repeats,
             collect_pc_sampling=recipe.collect_pc_sampling,
+            pc_sampling_repeats=(
+                point.pc_sampling_repeats or recipe.pc_sampling_repeats
+            ),
             expected_launch_batch_size=point.expected_launch_batch_size,
             expected_cache_protocol=(
                 point.expected_cache_protocol or point.axes.get("cache_protocol")
@@ -993,7 +2359,7 @@ def execute_mechanism_recipe(
             expected_measurement_axes=point.axes,
             required_identity_fields=recipe.required_identity_fields,
             required_subject_metadata_fields=tuple(
-                sorted(REQUIRED_SUBJECT_METADATA)
+                sorted(required_subject_metadata)
             ),
             timeout=timeout,
             launch_skip=recipe.launch_skip,
@@ -1004,6 +2370,11 @@ def execute_mechanism_recipe(
             pc_report_path=pc_report,
         )
         causal = collect_causal_evidence(point, bundle)
+        pc_localization = (
+            localize_pc_regions(bundle.pc_sampling, point.pc_region_map)
+            if recipe.mechanism == "barrier_topology_release"
+            else None
+        )
         diagnostic_reasons: list[str] = []
         if not bundle.valid_for_comparison:
             diagnostic_reasons.extend(bundle.identity_check.get("reasons") or ())
@@ -1027,7 +2398,7 @@ def execute_mechanism_recipe(
                         f"recipe_interval_identity_mismatch:{field_name}"
                     )
         measured_metadata = bundle.timing.subject_metadata
-        for field_name in REQUIRED_SUBJECT_METADATA:
+        for field_name in required_subject_metadata:
             if measured_metadata.get(field_name) != point.subject_metadata.get(field_name):
                 diagnostic_reasons.append(
                     f"recipe_subject_metadata_mismatch:{field_name}"
@@ -1066,12 +2437,17 @@ def execute_mechanism_recipe(
             "split": point.split,
             "axes": dict(point.axes),
             "subject_metadata": dict(point.subject_metadata),
+            "pc_region_map": {
+                region: list(offsets)
+                for region, offsets in point.pc_region_map.items()
+            },
             "qualification_status": (
                 "diagnostic" if diagnostic_reasons else "qualifying"
             ),
             "diagnostic_reasons": list(dict.fromkeys(diagnostic_reasons)),
             "bundle": bundle.to_dict(),
             "causal_evidence": causal,
+            "pc_localization": pc_localization,
         }
         bundle_path = point_dir / "bundle.json"
         _write_new_json(bundle_path, point_payload)
@@ -1084,16 +2460,43 @@ def execute_mechanism_recipe(
         }
         if bundle.pc_sampling is not None:
             pc_provenance = bundle.pc_sampling.get("provenance") or {}
-            report_hash = pc_provenance.get("report_sha256")
-            if pc_report.is_file() and isinstance(report_hash, str):
-                artifacts[point.point_id]["pc_report"] = {
-                    "path": str(pc_report.relative_to(run_dir)),
-                    "sha256": report_hash,
-                }
+            report_entries = []
+            for provenance in pc_provenance.get("reports") or ():
+                report_path = provenance.get("report_path")
+                report_hash = provenance.get("report_sha256")
+                if not isinstance(report_path, str) or not isinstance(report_hash, str):
+                    continue
+                candidate = Path(report_path)
+                if candidate.is_file():
+                    report_entries.append(
+                        {
+                            "path": str(candidate.relative_to(run_dir)),
+                            "sha256": report_hash,
+                        }
+                    )
+            if report_entries:
+                artifacts[point.point_id]["pc_reports"] = report_entries
 
     mediation = build_mediation_report(recipe, point_results)
     mediation_path = run_dir / "mediation.json"
     _write_new_json(mediation_path, mediation)
+    compact_artifacts = {}
+    if recipe.mechanism == "barrier_topology_release":
+        findings_path = run_dir / "hardware_findings.json"
+        _write_new_json(findings_path, mediation)
+        compact_artifacts[findings_path.name] = {
+            "path": findings_path.name,
+            "sha256": hashlib.sha256(findings_path.read_bytes()).hexdigest(),
+        }
+        for filename, (rows, fields) in _topology_consumer_rows(
+            point_results, mediation
+        ).items():
+            compact_path = run_dir / filename
+            _write_new_csv(compact_path, rows, fields)
+            compact_artifacts[filename] = {
+                "path": filename,
+                "sha256": hashlib.sha256(compact_path.read_bytes()).hexdigest(),
+            }
     manifest = {
         "schema_version": 1,
         "kind": "physical_mechanism_run",
@@ -1113,6 +2516,7 @@ def execute_mechanism_recipe(
             "path": str(mediation_path.relative_to(run_dir)),
             "sha256": hashlib.sha256(mediation_path.read_bytes()).hexdigest(),
         },
+        "compact_artifacts": compact_artifacts,
         "split_counts": {
             split: sum(point.split == split for point in recipe.points)
             for split in sorted(SPLITS)
