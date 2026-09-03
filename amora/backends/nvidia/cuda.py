@@ -27,6 +27,19 @@ def _first_line(text: str) -> str | None:
     return None
 
 
+def _version_line(text: str) -> str | None:
+    """Return the most specific version-bearing line from tool output."""
+
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    for line in lines:
+        if line.lower().startswith("version "):
+            return line
+    for line in lines:
+        if " release " in f" {line.lower()} " and " v" in line.lower():
+            return line
+    return lines[0] if lines else None
+
+
 @dataclass(frozen=True)
 class ToolStatus:
     name: str
@@ -99,7 +112,7 @@ def discover_tool(name: str, version_args: list[str] | None = None) -> ToolStatu
         completed = _run([path, *version_args])
     except Exception as exc:  # pragma: no cover - defensive subprocess path
         return ToolStatus(name=name, path=path, available=True, error=str(exc))
-    output = _first_line(completed.stdout) or _first_line(completed.stderr)
+    output = _version_line(completed.stdout) or _version_line(completed.stderr)
     return ToolStatus(
         name=name,
         path=path,

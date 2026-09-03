@@ -297,6 +297,29 @@ def test_run_command_profiled_profiles_python_target_without_build(monkeypatch):
     assert result.metrics["smsp__inst_executed.sum"] == 8192.0
 
 
+def test_run_command_profiled_records_exported_report_hash(monkeypatch, tmp_path):
+    report = tmp_path / "aggregate.ncu-rep"
+
+    def fake_run(args, **kwargs):
+        report.write_bytes(b"aggregate-report")
+        return subprocess.CompletedProcess(args, 0, NCU_CSV, "")
+
+    monkeypatch.setattr(ncu_run.subprocess, "run", fake_run)
+    caps = NvidiaCapabilities(
+        tools={"ncu": ToolStatus("ncu", "/opt/ncu", True)},
+    )
+    result = ncu_run.run_command_profiled(
+        ("driver",),
+        capabilities=caps,
+        metrics=("smsp__inst_executed.sum",),
+        report_path=report,
+    )
+
+    assert result.report_path == report
+    assert result.report_sha256 == hashlib.sha256(b"aggregate-report").hexdigest()
+    assert result.provenance()["report_sha256"] == result.report_sha256
+
+
 def test_run_command_pc_sampling_detects_option_and_records_target(monkeypatch, tmp_path):
     source_csv = '''"Kernel Name","jit_kernel",
 "Address","Source","stall_wait (Not Issued)"

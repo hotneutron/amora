@@ -83,6 +83,25 @@ def _axis_mapping(value: object) -> dict[str, Any]:
     return axes
 
 
+def _json_object(value: object, *, field_name: str) -> dict[str, Any]:
+    """Validate that ``value`` is a JSON-compatible object."""
+
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        raise MeasurementProtocolError(f"{field_name} must be an object")
+    try:
+        encoded = json.dumps(value, allow_nan=False, sort_keys=True)
+        decoded = json.loads(encoded)
+    except (TypeError, ValueError) as exc:
+        raise MeasurementProtocolError(
+            f"{field_name} must contain finite JSON values"
+        ) from exc
+    if not isinstance(decoded, dict):
+        raise MeasurementProtocolError(f"{field_name} must be an object")
+    return decoded
+
+
 def _positive_int(value: object, *, field_name: str, allow_zero: bool = False) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise MeasurementProtocolError(f"{field_name} must be an integer")
@@ -164,6 +183,11 @@ def extract_measurement_identity(stdout: str) -> dict[str, Any] | None:
             if isinstance(payload.get("tool_versions"), Mapping)
             else {}
         ),
+        "measurement_context": (
+            dict(payload["measurement_context"])
+            if isinstance(payload.get("measurement_context"), Mapping)
+            else {}
+        ),
     }
 
 
@@ -188,6 +212,7 @@ class CudaEventProcessSample:
     returncode: int
     started_at: str
     completed_at: str
+    measurement_context: dict[str, Any] = field(default_factory=dict)
     payload: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -208,6 +233,7 @@ class CudaEventProcessSample:
             "subject_metadata": dict(self.subject_metadata),
             "measurement_axes": dict(self.measurement_axes),
             "tool_versions": dict(self.tool_versions),
+            "measurement_context": dict(self.measurement_context),
             "command": list(self.command),
             "cwd": self.cwd,
             "environment_overrides": dict(self.environment_overrides),
@@ -237,6 +263,7 @@ class CudaEventTimingResult:
     measurement_axes: dict[str, Any]
     tool_versions: dict[str, str]
     provenance: dict[str, Any]
+    measurement_context: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -258,6 +285,7 @@ class CudaEventTimingResult:
             "subject_metadata": dict(self.subject_metadata),
             "measurement_axes": dict(self.measurement_axes),
             "tool_versions": dict(self.tool_versions),
+            "measurement_context": dict(self.measurement_context),
             "provenance": dict(self.provenance),
         }
 
@@ -291,6 +319,7 @@ def parse_cuda_event_payload(
     expected_cache_protocol: str | None = None,
     required_identity_fields: tuple[str, ...] = DEFAULT_IDENTITY_FIELDS,
     expected_measurement_axes: Mapping[str, Any] | None = None,
+    expected_measurement_context: Mapping[str, Any] | None = None,
 ) -> CudaEventProcessSample:
     """Validate one target-emitted CUDA-event payload."""
 
@@ -369,6 +398,45 @@ def parse_cuda_event_payload(
     )
     if not tool_versions:
         raise MeasurementProtocolError("tool_versions must not be empty")
+    measurement_context = _json_object(
+        payload.get("measurement_context"), field_name="measurement_context"
+    )
+    if (
+        expected_measurement_context is not None
+        and measurement_context != dict(expected_measurement_context)
+    ):
+        raise MeasurementProtocolError(
+            "measurement context does not match the expected launch"
+        )
+    ordered_launches = measurement_context.get("ordered_launches")
+    launch_ordinal = measurement_context.get("launch_ordinal")
+    if isinstance(ordered_launches, list) and isinstance(launch_ordinal, int):
+        operation_scope = measurement_context.get("scope") == "application_operation"
+        if launch_ordinal == -1 and operation_scope:
+            pass
+        elif launch_ordinal < 0 or launch_ordinal >= len(ordered_launches):
+            raise MeasurementProtocolError("measurement launch ordinal is invalid")
+        else:
+            descriptor = ordered_launches[launch_ordinal]
+            if not isinstance(descriptor, Mapping):
+                raise MeasurementProtocolError(
+                    "selected launch descriptor must be an object"
+                )
+            descriptor_identity = descriptor.get("subject_identity")
+            if not isinstance(descriptor_identity, Mapping):
+                raise MeasurementProtocolError(
+                    "selected launch descriptor must include subject_identity"
+                )
+            for name, expected in descriptor_identity.items():
+                if identity.get(name) != expected:
+                    raise MeasurementProtocolError(
+                        "selected launch identity does not match descriptor: "
+                        f"{name}"
+                    )
+            if descriptor.get("kernel_name") != identity.get("kernel_name"):
+                raise MeasurementProtocolError(
+                    "selected launch kernel does not match subject identity"
+                )
     return CudaEventProcessSample(
         process_index=process_index,
         samples_us=samples,
@@ -389,6 +457,7 @@ def parse_cuda_event_payload(
         returncode=returncode,
         started_at=started_at,
         completed_at=completed_at,
+        measurement_context=measurement_context,
         payload=dict(payload),
     )
 
@@ -402,6 +471,7 @@ def run_command_cuda_events(
     expected_cache_protocol: str | None = None,
     required_identity_fields: tuple[str, ...] = DEFAULT_IDENTITY_FIELDS,
     expected_measurement_axes: Mapping[str, Any] | None = None,
+    expected_measurement_context: Mapping[str, Any] | None = None,
     cwd: str | Path | None = None,
     environment_overrides: Mapping[str, str] | None = None,
 ) -> CudaEventTimingResult:
@@ -470,6 +540,7 @@ def run_command_cuda_events(
                 expected_cache_protocol=expected_cache_protocol,
                 required_identity_fields=required_identity_fields,
                 expected_measurement_axes=expected_measurement_axes,
+                expected_measurement_context=expected_measurement_context,
             )
         )
 
@@ -483,6 +554,10 @@ def run_command_cuda_events(
             raise MeasurementProtocolError("measurement axes changed across process repeats")
         if sample.tool_versions != first.tool_versions:
             raise MeasurementProtocolError("tool versions changed across process repeats")
+        if sample.measurement_context != first.measurement_context:
+            raise MeasurementProtocolError(
+                "measurement context changed across process repeats"
+            )
         if sample.device.get("uuid") != first.device.get("uuid"):
             raise MeasurementProtocolError("GPU UUID changed across process repeats")
         if sample.launch_batch_size != first.launch_batch_size:
@@ -528,6 +603,7 @@ def run_command_cuda_events(
                 "AMORA_CACHE_PROTOCOL": expected_cache_protocol,
             },
         },
+        measurement_context=dict(first.measurement_context),
     )
 
 
@@ -561,6 +637,7 @@ class DeviceIntervalResult:
     diagnostic_reasons: tuple[str, ...]
     target_command: tuple[str, ...] = ()
     provenance: dict[str, Any] = field(default_factory=dict)
+    measurement_context: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -578,6 +655,7 @@ class DeviceIntervalResult:
             "diagnostic_reasons": list(self.diagnostic_reasons),
             "target_command": list(self.target_command),
             "provenance": dict(self.provenance),
+            "measurement_context": dict(self.measurement_context),
         }
 
 
@@ -587,6 +665,7 @@ def parse_device_interval_payload(
     required_identity_fields: tuple[str, ...] = DEFAULT_IDENTITY_FIELDS,
     expected_max_overhead_percent: float | None = None,
     expected_measurement_axes: Mapping[str, Any] | None = None,
+    expected_measurement_context: Mapping[str, Any] | None = None,
     target_command: tuple[str, ...] = (),
     provenance: Mapping[str, Any] | None = None,
 ) -> DeviceIntervalResult:
@@ -697,6 +776,14 @@ def parse_device_interval_payload(
     )
     if not tool_versions:
         raise MeasurementProtocolError("tool_versions must not be empty")
+    measurement_context = _json_object(
+        payload.get("measurement_context"), field_name="measurement_context"
+    )
+    if (
+        expected_measurement_context is not None
+        and measurement_context != dict(expected_measurement_context)
+    ):
+        diagnostic_reasons.append("measurement_context_does_not_match_expected_launch")
     reasons = tuple(dict.fromkeys(diagnostic_reasons))
     return DeviceIntervalResult(
         clock=clock,
@@ -711,6 +798,7 @@ def parse_device_interval_payload(
         diagnostic_reasons=reasons,
         target_command=tuple(target_command),
         provenance=dict(provenance or {}),
+        measurement_context=measurement_context,
     )
 
 
@@ -721,6 +809,7 @@ def run_command_device_intervals(
     required_identity_fields: tuple[str, ...] = DEFAULT_IDENTITY_FIELDS,
     expected_max_overhead_percent: float | None = None,
     expected_measurement_axes: Mapping[str, Any] | None = None,
+    expected_measurement_context: Mapping[str, Any] | None = None,
     cwd: str | Path | None = None,
     environment_overrides: Mapping[str, str] | None = None,
 ) -> DeviceIntervalResult:
@@ -763,6 +852,7 @@ def run_command_device_intervals(
         required_identity_fields=required_identity_fields,
         expected_max_overhead_percent=expected_max_overhead_percent,
         expected_measurement_axes=expected_measurement_axes,
+        expected_measurement_context=expected_measurement_context,
         target_command=target,
         provenance={
             "cwd": cwd_text,

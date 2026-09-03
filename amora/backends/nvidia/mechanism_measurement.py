@@ -2357,6 +2357,7 @@ def execute_mechanism_recipe(
                 point.expected_max_interval_overhead_percent
             ),
             expected_measurement_axes=point.axes,
+            expected_measurement_context={},
             required_identity_fields=recipe.required_identity_fields,
             required_subject_metadata_fields=tuple(
                 sorted(required_subject_metadata)

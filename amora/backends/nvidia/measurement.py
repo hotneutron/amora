@@ -57,6 +57,14 @@ def _ncu_tool_versions(result: NcuResult | NcuPcSamplingResult) -> dict[str, Any
     return dict(versions) if isinstance(versions, Mapping) else {}
 
 
+def _ncu_measurement_context(
+    result: NcuResult | NcuPcSamplingResult,
+) -> dict[str, Any]:
+    evidence = result.target_evidence or {}
+    context = evidence.get("measurement_context")
+    return dict(context) if isinstance(context, Mapping) else {}
+
+
 def _identity_check(
     *,
     timing: CudaEventTimingResult,
@@ -66,6 +74,7 @@ def _identity_check(
     required_fields: tuple[str, ...],
     required_metadata_fields: tuple[str, ...],
     expected_measurement_axes: Mapping[str, Any] | None,
+    expected_measurement_context: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
     lane_identities = {
         "timing": dict(timing.subject_identity),
@@ -87,6 +96,10 @@ def _identity_check(
         "timing": dict(timing.tool_versions),
         "aggregate_counters": _ncu_tool_versions(aggregate),
     }
+    lane_context = {
+        "timing": dict(timing.measurement_context),
+        "aggregate_counters": _ncu_measurement_context(aggregate),
+    }
     if device_intervals is not None:
         lane_identities["device_intervals"] = dict(
             device_intervals.subject_identity
@@ -99,6 +112,9 @@ def _identity_check(
         lane_tool_versions["device_intervals"] = dict(
             device_intervals.tool_versions
         )
+        lane_context["device_intervals"] = dict(
+            device_intervals.measurement_context
+        )
     for repeat_index, result in enumerate(pc_sampling):
         lane = (
             "pc_sampling"
@@ -110,6 +126,7 @@ def _identity_check(
         lane_metadata[lane] = _ncu_subject_metadata(result)
         lane_axes[lane] = _ncu_measurement_axes(result)
         lane_tool_versions[lane] = _ncu_tool_versions(result)
+        lane_context[lane] = _ncu_measurement_context(result)
 
     reasons = []
     canonical = timing.subject_identity
@@ -148,6 +165,12 @@ def _identity_check(
     for lane, versions in lane_tool_versions.items():
         if versions != timing.tool_versions:
             reasons.append(f"{lane}_tool_versions_mismatch")
+    expected_context = dict(
+        expected_measurement_context or timing.measurement_context
+    )
+    for lane, context in lane_context.items():
+        if context != expected_context:
+            reasons.append(f"{lane}_measurement_context_mismatch")
     unique_reasons = list(dict.fromkeys(reasons))
     return {
         "status": "pass" if not unique_reasons else "invalid",
@@ -165,6 +188,8 @@ def _identity_check(
         "measurement_axes": expected_axes,
         "lane_measurement_axes": lane_axes,
         "lane_tool_versions": lane_tool_versions,
+        "measurement_context": expected_context,
+        "lane_measurement_context": lane_context,
         "reasons": unique_reasons,
     }
 
@@ -378,6 +403,17 @@ def _repeat_report_path(
     return base.with_name(f"{stem}.repeat-{repeat_index + 1:02d}{suffix}")
 
 
+def pool_pc_sampling_results(
+    results: Sequence[NcuPcSamplingResult],
+) -> dict[str, Any]:
+    """Public repeat-preserving SourceCounters reduction contract."""
+
+    payload = _pc_payload(results)
+    if payload is None:
+        raise ValueError("at least one PC-sampling result is required")
+    return payload
+
+
 @dataclass(frozen=True)
 class CommandMeasurementBundle:
     timing: CudaEventTimingResult
@@ -436,6 +472,7 @@ def collect_command_measurement_bundle(
     required_identity_fields: tuple[str, ...] = DEFAULT_IDENTITY_FIELDS,
     required_subject_metadata_fields: tuple[str, ...] = (),
     expected_measurement_axes: Mapping[str, Any] | None = None,
+    expected_measurement_context: Mapping[str, Any] | None = None,
     launch_skip: int | None = None,
     pc_launch_skip: int | None = None,
     sampling_interval: str = "auto",
@@ -476,6 +513,7 @@ def collect_command_measurement_bundle(
         expected_cache_protocol=expected_cache_protocol,
         required_identity_fields=required_identity_fields,
         expected_measurement_axes=expected_measurement_axes,
+        expected_measurement_context=expected_measurement_context,
         cwd=cwd,
         environment_overrides=base_environment,
     )
@@ -486,6 +524,7 @@ def collect_command_measurement_bundle(
             required_identity_fields=required_identity_fields,
             expected_max_overhead_percent=expected_max_interval_overhead_percent,
             expected_measurement_axes=expected_measurement_axes,
+            expected_measurement_context=expected_measurement_context,
             cwd=cwd,
             environment_overrides=base_environment,
         )
@@ -547,6 +586,7 @@ def collect_command_measurement_bundle(
         required_fields=required_identity_fields,
         required_metadata_fields=required_subject_metadata_fields,
         expected_measurement_axes=expected_measurement_axes,
+        expected_measurement_context=expected_measurement_context,
     )
     aggregate_payload, profiler_duration = _aggregate_payload(
         aggregate, requested_metrics=aggregate_metrics

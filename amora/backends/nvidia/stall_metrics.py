@@ -66,6 +66,122 @@ STALL_METRIC_FAMILIES = (
 )
 
 
+STALL_CYCLE_COUNTER_CANDIDATES = {
+    "active_warp_cycles": ("smsp__warps_active.sum",),
+    "active_smsp_cycles": ("smsp__cycles_active.sum",),
+    "eligible_warp_cycles": ("smsp__warps_eligible.sum",),
+}
+STALL_CYCLE_REPLAY_METRIC = "profiler__replayer_passes"
+
+
+@dataclass(frozen=True)
+class StallCycleMetricSelection:
+    """One per-warp-active issue-state family plus cycle denominators."""
+
+    family: str | None
+    input_unit: str | None
+    reason_to_metric: dict[str, str]
+    cycle_metrics: dict[str, str]
+    replay_metric: str | None
+    missing_reasons: tuple[str, ...]
+    missing_cycle_metrics: tuple[str, ...]
+
+    @property
+    def available(self) -> bool:
+        return bool(self.reason_to_metric) and not self.missing_cycle_metrics
+
+    @property
+    def metrics(self) -> tuple[str, ...]:
+        return tuple(
+            dict.fromkeys(
+                (
+                    *self.cycle_metrics.values(),
+                    *self.reason_to_metric.values(),
+                    *((self.replay_metric,) if self.replay_metric else ()),
+                )
+            )
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "family": self.family,
+            "input_unit": self.input_unit,
+            "reason_to_metric": dict(self.reason_to_metric),
+            "cycle_metrics": dict(self.cycle_metrics),
+            "replay_metric": self.replay_metric,
+            "missing_reasons": list(self.missing_reasons),
+            "missing_cycle_metrics": list(self.missing_cycle_metrics),
+            "available": self.available,
+        }
+
+
+def resolve_stall_cycle_metrics(
+    supported_metrics: frozenset[str],
+) -> StallCycleMetricSelection:
+    """Resolve metrics suitable for absolute replay warp-cycle derivation.
+
+    Only ``warp_issue_stalled_*_per_warp_active`` is dimensionally eligible.
+    The ``.ratio`` suffix is preferred; ``.pct`` is a coherent fallback. The
+    differently normalized ``average_warps_*_per_issue_active`` family is never
+    selected by this contract.
+    """
+
+    cycle_metrics = {}
+    missing_cycle_metrics = []
+    for logical, candidates in STALL_CYCLE_COUNTER_CANDIDATES.items():
+        selected = next(
+            (
+                candidate
+                for candidate in candidates
+                if metric_supported(candidate, supported_metrics)
+            ),
+            None,
+        )
+        if selected is None:
+            missing_cycle_metrics.append(logical)
+        else:
+            cycle_metrics[logical] = selected
+
+    reason_to_metric: dict[str, str] = {}
+    selected_unit = None
+    for unit in ("ratio", "pct"):
+        resolved = {}
+        for reason in STALL_REASONS:
+            aliases = _REASON_ALIASES.get(reason, (reason,))
+            for alias in aliases:
+                candidate = (
+                    f"smsp__warp_issue_stalled_{alias}_per_warp_active.{unit}"
+                )
+                if metric_supported(candidate, supported_metrics):
+                    resolved[reason] = candidate
+                    break
+        if resolved:
+            reason_to_metric = resolved
+            selected_unit = unit
+            break
+
+    missing_reasons = tuple(
+        reason for reason in STALL_REASONS if reason not in reason_to_metric
+    )
+    return StallCycleMetricSelection(
+        family=(
+            "warp_issue_stalled_per_warp_active"
+            if reason_to_metric
+            else None
+        ),
+        input_unit=selected_unit,
+        reason_to_metric=reason_to_metric,
+        cycle_metrics=cycle_metrics,
+        replay_metric=(
+            STALL_CYCLE_REPLAY_METRIC
+            if metric_supported(STALL_CYCLE_REPLAY_METRIC, supported_metrics)
+            else None
+        ),
+        missing_reasons=missing_reasons,
+        missing_cycle_metrics=tuple(missing_cycle_metrics),
+    )
+
+
 STALL_LOGICAL_CANDIDATES = {
     f"stall_{reason}": tuple(
         candidate
@@ -208,6 +324,7 @@ def select_stall_launch_row(
     reason_to_metric: Mapping[str, str],
     *,
     strategy: str = "median_total_stall",
+    excluded_total_reasons: frozenset[str] = frozenset(),
 ) -> tuple[int | None, dict[str, float], float | None]:
     """Select one whole launch row and return its stall vector.
 
@@ -225,7 +342,17 @@ def select_stall_launch_row(
                 stalls[reason] = value
         if not stalls:
             continue
-        candidates.append((sum(stalls.values()), index, stalls))
+        candidates.append(
+            (
+                sum(
+                    value
+                    for reason, value in stalls.items()
+                    if reason not in excluded_total_reasons
+                ),
+                index,
+                stalls,
+            )
+        )
     if not candidates:
         return None, {}, None
     if strategy != "median_total_stall":

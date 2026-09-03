@@ -101,6 +101,36 @@ def _cmd_measure_nvidia(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_measure_stall_cycles_nvidia(args: argparse.Namespace) -> int:
+    from amora.backends.nvidia.stall_cycle_measurement import (
+        execute_all_corner_campaign,
+        load_all_corner_campaign,
+        validate_all_corner_manifest,
+    )
+
+    campaign = load_all_corner_campaign(args.campaign)
+    capabilities = nvidia_discover()
+    run_dir = execute_all_corner_campaign(
+        campaign,
+        capabilities=capabilities,
+        output_root=args.out_root,
+        run_id=args.run_id,
+        timeout=args.timeout,
+        cwd=args.cwd,
+        environment_overrides=_environment_overrides(args.env),
+    )
+    manifest = validate_all_corner_manifest(run_dir / "manifest.json")
+    _print_json(
+        {
+            "run_dir": str(run_dir),
+            "manifest": str(run_dir / "manifest.json"),
+            "run_digest": manifest["run_digest"],
+            "campaign_digest": manifest["campaign_digest"],
+        }
+    )
+    return 0
+
+
 # --- benchmark handlers ---
 
 
@@ -620,6 +650,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="target-process environment override; may be repeated",
     )
     measure_parser.set_defaults(func=_cmd_measure_nvidia)
+    stall_cycles_parser = nvidia_sub.add_parser("measure-stall-cycles")
+    stall_cycles_parser.add_argument("--campaign", type=Path, required=True)
+    stall_cycles_parser.add_argument("--run-id", required=True)
+    stall_cycles_parser.add_argument(
+        "--out-root",
+        type=Path,
+        default=Path("out/measurements/nvidia/stall-cycles"),
+    )
+    stall_cycles_parser.add_argument("--timeout", type=int, default=300)
+    stall_cycles_parser.add_argument("--cwd", type=Path, default=None)
+    stall_cycles_parser.add_argument(
+        "--env", action="append", default=[], metavar="NAME=VALUE"
+    )
+    stall_cycles_parser.set_defaults(func=_cmd_measure_stall_cycles_nvidia)
 
     # --- gcom_cuda ---
     from amora.backends.gcom_cuda.gcom import discover_capabilities as gcom_discover

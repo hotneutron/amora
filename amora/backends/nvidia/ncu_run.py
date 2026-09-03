@@ -48,6 +48,8 @@ class NcuResult:
     source_sha256: str | None = None
     binary_path: Path | None = None
     binary_sha256: str | None = None
+    report_path: Path | None = None
+    report_sha256: str | None = None
     command: tuple[str, ...] = ()
     target_command: tuple[str, ...] = ()
     target_evidence: dict[str, Any] | None = None
@@ -67,6 +69,8 @@ class NcuResult:
             "source_sha256": self.source_sha256,
             "binary_path": str(self.binary_path) if self.binary_path else None,
             "binary_sha256": self.binary_sha256,
+            "report_path": str(self.report_path) if self.report_path else None,
+            "report_sha256": self.report_sha256,
             "ncu_command": list(self.command),
             "target_command": list(self.target_command),
             "target_evidence": (
@@ -663,6 +667,7 @@ def run_command_profiled(
     clock_control: str | None = None,
     cwd: str | Path | None = None,
     environment_overrides: Mapping[str, str] | None = None,
+    report_path: Path | None = None,
 ) -> NcuResult:
     """Run an arbitrary target command under NCU for aggregate counters.
 
@@ -687,6 +692,8 @@ def run_command_profiled(
         kernel_name_base=kernel_name_base,
         cache_control=cache_control,
         clock_control=clock_control,
+        output=str(report_path) if report_path is not None else None,
+        force_overwrite=report_path is not None,
     )
     command_argv = tuple(command.argv())
     completed = _run_ncu(
@@ -709,6 +716,12 @@ def run_command_profiled(
         returncode=completed.returncode,
         command=command_argv,
         target_command=tuple(target),
+        report_path=report_path,
+        report_sha256=(
+            hashlib.sha256(report_path.read_bytes()).hexdigest()
+            if report_path is not None and report_path.is_file()
+            else None
+        ),
         target_evidence=extract_measurement_identity(completed.stdout),
         cwd=str(cwd) if cwd is not None else None,
         environment_overrides=dict(environment_overrides or {}),
@@ -736,6 +749,7 @@ def run_kernel_profiled(
     clock_control: str | None = None,
     cwd: str | Path | None = None,
     environment_overrides: Mapping[str, str] | None = None,
+    report_path: Path | None = None,
 ) -> NcuResult:
     """Build (reusing the timing cache) and run the driver under NCU for counters.
 
@@ -772,6 +786,7 @@ def run_kernel_profiled(
         clock_control=clock_control,
         cwd=cwd,
         environment_overrides=environment_overrides,
+        report_path=report_path,
     )
     return replace(
         result,

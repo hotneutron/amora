@@ -26,8 +26,10 @@ def _axes(panel: str, topology: str) -> dict[str, object]:
     }
 
 
-def _common(panel: str, topology: str) -> dict[str, object]:
-    return {
+def _common(
+    panel: str, topology: str, *, launch_ordinal: int = 0
+) -> dict[str, object]:
+    payload = {
         "schema_version": 1,
         "device": {"uuid": "GPU-synthetic", "name": "synthetic-h100"},
         "subject_identity": {
@@ -68,15 +70,44 @@ def _common(panel: str, topology: str) -> dict[str, object]:
         },
         "measurement_axes": _axes(panel, topology),
         "tool_versions": {"synthetic_target": "1"},
+        "measurement_context": {},
     }
+    if os.environ.get("AMORA_STALL_CYCLE_SYNTHETIC") == "1":
+        operation_id = f"synthetic-{panel.lower()}"
+        contract = f"{panel.lower()}-contract"
+        corner_id = f"{panel.lower()}-corner"
+        ordered_launches = [
+            {
+                "launch_ordinal": index,
+                "kernel_name": "synthetic_barrier_topology",
+                "subject_identity": dict(payload["subject_identity"]),
+            }
+            for index in range(2)
+        ]
+        payload["measurement_context"] = {
+            "operation_id": operation_id,
+            "contract": contract,
+            "corner_id": corner_id,
+            "launch_ordinal": launch_ordinal,
+            "kernel_name": "synthetic_barrier_topology",
+            "grid": "132x1x1",
+            "workgroup": "256x1x1",
+            "compile_time_axes": {"topology": topology},
+            "runtime_axes": _axes(panel, topology),
+            "ordered_launches": ordered_launches,
+        }
+    return payload
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--panel", choices=("BT-EQ", "BT-CAUSAL"), required=True)
     parser.add_argument("--topology", required=True)
+    parser.add_argument("--launch-ordinal", type=int, default=0)
     args = parser.parse_args()
-    payload = _common(args.panel, args.topology)
+    payload = _common(
+        args.panel, args.topology, launch_ordinal=args.launch_ordinal
+    )
     lane = os.environ.get("AMORA_MEASUREMENT_LANE", "cuda_event_timing")
     if lane == "device_intervals":
         payload["kind"] = "cuda_device_intervals"

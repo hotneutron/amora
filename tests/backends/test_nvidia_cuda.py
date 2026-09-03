@@ -5,6 +5,7 @@ from amora.backends.nvidia.cuda import NvidiaCapabilities, NvidiaDevice, ToolSta
 from amora.backends.nvidia.metrics import MetricResolver
 from amora.backends.nvidia.stall_metrics import (
     resolve_stall_metric_family,
+    resolve_stall_cycle_metrics,
     select_stall_launch_row,
 )
 
@@ -23,6 +24,30 @@ def test_capabilities_to_dict_contains_tools_and_devices():
     assert data["gpu_available"] is True
     assert data["tools"]["nvcc"]["available"] is True
     assert data["devices"][0]["name"] == "GPU"
+
+
+def test_discover_tool_prefers_specific_multiline_version(monkeypatch):
+    monkeypatch.setattr(cuda.shutil, "which", lambda name: f"/opt/{name}")
+    monkeypatch.setattr(
+        cuda,
+        "_run",
+        lambda args: subprocess.CompletedProcess(
+            args,
+            0,
+            (
+                "NVIDIA (R) Nsight Compute Command Line Profiler\n"
+                "Copyright (c) NVIDIA Corporation\n"
+                "Version 2026.2.1.0 (build 38283040) (public-release)\n"
+            ),
+            "",
+        ),
+    )
+
+    status = cuda.discover_tool("ncu", ["--version"])
+
+    assert status.version == (
+        "Version 2026.2.1.0 (build 38283040) (public-release)"
+    )
 
 
 def test_metric_resolver_selects_first_supported_candidate():
@@ -79,6 +104,26 @@ def test_stall_metric_selection_maps_hopper_gmma_to_warpgroup_arrive():
         "smsp__warp_issue_stalled_gmma_per_warp_active.pct"
     )
     assert "warpgroup_arrive" not in selection.missing_reasons
+
+
+def test_stall_cycle_resolution_never_uses_per_issue_active_family():
+    selection = resolve_stall_cycle_metrics(
+        frozenset(
+            {
+                "smsp__warps_active",
+                "smsp__cycles_active",
+                "smsp__warps_eligible",
+                "smsp__warp_issue_stalled_wait_per_warp_active",
+                "smsp__average_warps_issue_stalled_barrier_per_issue_active",
+            }
+        )
+    )
+
+    assert selection.available is True
+    assert selection.reason_to_metric == {
+        "wait": "smsp__warp_issue_stalled_wait_per_warp_active.ratio"
+    }
+    assert "barrier" in selection.missing_reasons
 
 
 def test_select_stall_launch_row_uses_whole_median_vector():

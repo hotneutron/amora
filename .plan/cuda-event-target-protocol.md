@@ -62,6 +62,33 @@ load, queue, and cache interventions cannot silently drift across evidence lanes
 `tool_versions` is required and must contain non-empty strings; it is also checked
 across timing, interval, aggregate, and SourceCounters lanes.
 
+For ordered multi-launch operations, add a `measurement_context` object. It is validated
+separately from axes and must remain identical across timing and profiling lanes:
+
+```json
+{
+  "operation_id": "canonical-operation-id",
+  "contract": "gluon-contract-id",
+  "corner_id": "finite-corner-id",
+  "launch_ordinal": 0,
+  "kernel_name": "selected_kernel",
+  "grid": "132x1x1",
+  "workgroup": "256x1x1",
+  "compile_time_axes": {"pipeline_depth": 3},
+  "runtime_axes": {"K": 4096, "cache_protocol": "warm_reuse"},
+  "ordered_launches": [
+    {
+      "launch_ordinal": 0,
+      "kernel_name": "selected_kernel",
+      "subject_identity": {"cubin_sha256": "..."}
+    }
+  ]
+}
+```
+
+AMORA requires one campaign entry per ordered launch. The number of launches describes
+operation topology; it is not a substitute for the number of generated corners.
+
 ## Device intervals
 
 An optional independently launched instrumented target must emit:
@@ -180,10 +207,35 @@ The WGMMA knee test binds a distinct `wgmma_exposed_wait` interval and evaluates
 `independent_register_work_gap_ns + exposed_wait_ns` for stability. The separately
 bound `wgmma_completion` node is used for CTA-load sensitivity.
 
+## All-corner stall-cycle campaigns
+
+Use `amora nvidia measure-stall-cycles` with a frozen
+`all_corner_stall_cycle_campaign` JSON. A campaign declares the finite corner-registry
+digest, `expected_corner_count`, `expected_launch_count`, and one entry for every ordered
+launch in every corner. AMORA validates the unique operation/contract/corner cardinality
+separately from the launch-record cardinality. Each entry carries exact
+`measurement_axes` plus the `measurement_context` above.
+
+AMORA resolves one `warp_issue_stalled_*_per_warp_active` family, preferring `.ratio`
+and falling back coherently to `.pct`, together with `smsp__warps_active.sum`,
+`smsp__cycles_active.sum`, and `smsp__warps_eligible.sum`. It exports three independent
+aggregate NCU reports, selects an observed whole row from each, then selects the
+median-total observed repeat. It never combines reason-wise maxima or uses elapsed
+duration to derive stall cycles.
+
+Selected sentinels and diagnostic/dominant-transition points collect three independent
+SourceCounters reports. Their counts remain `pc_sample_count`; aggregate derived values
+use `diagnostic_profiler_replay_warp_cycle`. The immutable output includes
+`aggregate_stall_cycles.csv`, `aggregate_stall_cycle_repeats.csv`,
+`aggregate_stall_cycle_findings.json`, and, when selected,
+`pc_samples_by_offset.csv`.
+
 ## Revision History
 
 | Revision | Timestamp | Change |
 |---|---|---|
+| r5 | 2026-09-03 14:34 -0700 | Split finite-registry corner cardinality from ordered launch-record cardinality and made both mandatory campaign fields. |
+| r4 | 2026-09-03 12:45 -0700 | Added ordered multi-launch context and the all-corner same-row warp-stall-cycle campaign contract. |
 | r3 | 2026-09-02 12:09 -0700 | Added the barrier-topology recipe, repeated SourceCounters, pair-isolation, semantic-region, and compact handoff contracts. |
 | r2 | 2026-08-31 18:57 -0700 | Added runtime axes, target tool versions, frozen recipe semantics, direct PC-to-SASS evidence, complete controlled-axis requirements, and physical mediation outputs. |
 | r1 | 2026-08-31 17:46 -0700 | Documented the target protocols, instrumentation downgrade contract, environment signals, and immutable recipe CLI. |

@@ -36,6 +36,16 @@ def main() -> int:
     properties = torch.cuda.get_device_properties(device)
     subject = b"torch.add(float32, 2**20 elements)"
     identity = hashlib.sha256(subject).hexdigest()
+    kernel_name = os.environ.get(
+        "AMORA_SMOKE_KERNEL_NAME",
+        "void vectorized_elementwise_kernel<4, FillFunctor<float>, Array<char *, 1>>(int, T2, T3)",
+    )
+    measurement_axes = json.loads(
+        os.environ.get("AMORA_SMOKE_MEASUREMENT_AXES", "{}")
+    )
+    measurement_context = json.loads(
+        os.environ.get("AMORA_SMOKE_MEASUREMENT_CONTEXT", "{}")
+    )
     payload = {
         "schema_version": 1,
         "kind": "cuda_event_timing",
@@ -45,7 +55,9 @@ def main() -> int:
             "warmup_launches": 5,
             "launches_per_sample": 10,
             "cache_protocol": "warm_reuse",
-            "clock_policy": "uncontrolled",
+            "clock_policy": os.environ.get(
+                "AMORA_SMOKE_CLOCK_POLICY", "uncontrolled"
+            ),
         },
         "device": {
             "uuid": os.environ.get("AMORA_SMOKE_GPU_UUID", f"index:{device}"),
@@ -53,7 +65,7 @@ def main() -> int:
             "sm_clock_mhz": "uncontrolled",
         },
         "subject_identity": {
-            "kernel_name": "aten_add",
+            "kernel_name": kernel_name,
             "ttgir_sha256": identity,
             "cubin_sha256": identity,
         },
@@ -61,13 +73,15 @@ def main() -> int:
             "registers_per_thread": 0,
             "shared_memory_bytes": 0,
             "spill_count": 0,
+            "total_warps": 4,
         },
-        "measurement_axes": {},
+        "measurement_axes": measurement_axes,
         "tool_versions": {
             "python": os.sys.version.split()[0],
             "torch": torch.__version__,
             "cuda_runtime": str(torch.version.cuda),
         },
+        "measurement_context": measurement_context,
     }
     print(json.dumps(payload, sort_keys=True))
     return 0

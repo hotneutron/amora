@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -135,6 +136,25 @@ def test_parse_cuda_event_payload_rejects_measurement_axis_mismatch():
         )
 
 
+def test_parse_cuda_event_payload_accepts_operation_scope():
+    payload = _timing_payload()
+    payload["measurement_context"] = {
+        "scope": "application_operation",
+        "launch_ordinal": -1,
+        "ordered_launches": [
+            {
+                "launch_ordinal": 0,
+                "kernel_name": "kernel_a",
+                "subject_identity": {"cubin_sha256": "launch-cubin"},
+            }
+        ],
+    }
+
+    result = parse_cuda_event_payload(payload)
+
+    assert result.measurement_context["launch_ordinal"] == -1
+
+
 def test_run_cuda_events_retains_process_samples_and_summary(monkeypatch):
     outputs = [_timing_payload(samples=(10.0, 12.0)), _timing_payload(samples=(14.0, 16.0))]
 
@@ -217,6 +237,27 @@ def test_run_cuda_events_uses_real_process_isolation(tmp_path):
         sample.environment_overrides["AMORA_PROCESS_REPEAT"]
         for sample in result.process_samples
     ] == ["0", "1"]
+
+
+def test_cuda_event_fixture_preserves_environment_measurement_context(tmp_path):
+    context = {
+        "operation_id": "operation",
+        "launch_ordinal": 0,
+        "ordered_launches": [],
+    }
+    completed = subprocess.run(
+        [sys.executable, "tests/fixtures/cuda_event_target.py"],
+        check=True,
+        capture_output=True,
+        text=True,
+        env={
+            **os.environ,
+            "AMORA_SMOKE_MEASUREMENT_CONTEXT": json.dumps(context),
+        },
+    )
+    payload = json.loads(completed.stdout.splitlines()[-1])
+
+    assert payload["measurement_context"] == context
 
 
 def test_device_interval_downgrades_slope_change():

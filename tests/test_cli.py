@@ -98,6 +98,49 @@ def test_cli_nvidia_measure_executes_recipe(monkeypatch, tmp_path, capsys):
     assert captured["environment_overrides"] == {"CUDA_VISIBLE_DEVICES": "0"}
 
 
+def test_cli_nvidia_measure_stall_cycles_executes_campaign(
+    monkeypatch, tmp_path, capsys
+):
+    campaign_path = tmp_path / "campaign.json"
+    campaign_path.write_text("{}")
+    captured = {}
+    monkeypatch.setattr(
+        "amora.backends.nvidia.stall_cycle_measurement.load_all_corner_campaign",
+        lambda path: {"campaign": str(path)},
+    )
+
+    def execute(campaign, **kwargs):
+        captured.update({"campaign": campaign, **kwargs})
+        run_dir = tmp_path / "runs" / "campaign" / "run-1"
+        run_dir.mkdir(parents=True)
+        (run_dir / "manifest.json").write_text("{}")
+        return run_dir
+
+    monkeypatch.setattr(
+        "amora.backends.nvidia.stall_cycle_measurement.execute_all_corner_campaign",
+        execute,
+    )
+    monkeypatch.setattr(
+        "amora.backends.nvidia.stall_cycle_measurement.validate_all_corner_manifest",
+        lambda path: {"run_digest": "run", "campaign_digest": "campaign"},
+    )
+    monkeypatch.setattr(cli, "nvidia_discover", lambda: object())
+
+    code = cli.main(
+        [
+            "nvidia", "measure-stall-cycles",
+            "--campaign", str(campaign_path),
+            "--run-id", "run-1",
+            "--out-root", str(tmp_path / "runs"),
+        ]
+    )
+
+    response = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert response["run_digest"] == "run"
+    assert captured["run_id"] == "run-1"
+
+
 def test_cli_lists_and_materializes_benchmarks(tmp_path, capsys):
     code = cli.main(["benchmarks", "list"])
 
