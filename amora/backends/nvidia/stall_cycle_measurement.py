@@ -12,7 +12,7 @@ import hashlib
 import json
 import math
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
@@ -39,6 +39,7 @@ from amora.backends.nvidia.stall_metrics import (
 
 
 RAW_STALL_CYCLE_UNIT = "diagnostic_profiler_replay_warp_cycle"
+TIMING_PROCESS_CV_LIMIT = 0.02
 STRUCTURAL_EXCLUSIONS = frozenset({"selected", "not_selected"})
 REQUIRED_CONTEXT_FIELDS = (
     "operation_id",
@@ -54,6 +55,7 @@ REQUIRED_CONTEXT_FIELDS = (
 )
 SOURCE_COUNTER_SELECTION_REASONS = frozenset(
     {
+        "all_executable_corner",
         "minimum",
         "alignment_boundary",
         "first_tail",
@@ -71,6 +73,69 @@ _SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 
 def _canonical_json(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+
+def _timing_attempt_signature(
+    timing: CudaEventTimingResult,
+) -> tuple[object, ...]:
+    return (
+        timing.subject_identity,
+        timing.device.get("uuid"),
+        timing.subject_metadata,
+        timing.measurement_axes,
+        timing.measurement_context,
+        timing.tool_versions,
+        timing.launch_batch_size,
+        timing.cache_protocol,
+        timing.clock_policy,
+    )
+
+
+def _collect_timing_with_retry(
+    collector: Callable[..., CudaEventTimingResult],
+    *args: Any,
+    **kwargs: Any,
+) -> CudaEventTimingResult:
+    attempts = [collector(*args, **kwargs)]
+    if attempts[0].process_cv > TIMING_PROCESS_CV_LIMIT:
+        attempts.append(collector(*args, **kwargs))
+        if _timing_attempt_signature(attempts[0]) != _timing_attempt_signature(
+            attempts[1]
+        ):
+            raise ValueError("timing retry changed subject or measurement axes")
+    selected = attempts[-1]
+    provenance = {
+        **selected.provenance,
+        "timing_quality_gate": {
+            "metric": "process_cv",
+            "maximum": TIMING_PROCESS_CV_LIMIT,
+            "attempt_count": len(attempts),
+            "selected_attempt": len(attempts),
+            "selection_policy": (
+                "first_attempt_when_stable_else_entire_second_attempt"
+            ),
+            "status": (
+                "pass"
+                if selected.process_cv <= TIMING_PROCESS_CV_LIMIT
+                else "persistent_instability"
+            ),
+            "attempts": [
+                {
+                    "attempt": index + 1,
+                    "process_cv": attempt.process_cv,
+                    "median_us": attempt.median_us,
+                    "p05_us": attempt.p05_us,
+                    "p95_us": attempt.p95_us,
+                    "process_samples": [
+                        sample.to_dict()
+                        for sample in attempt.process_samples
+                    ],
+                }
+                for index, attempt in enumerate(attempts)
+            ],
+        },
+    }
+    return replace(selected, provenance=provenance)
 
 
 def _digest(value: Any) -> str:
@@ -1131,7 +1196,8 @@ def execute_all_corner_campaign(
         if operation_timing and operation_key in operation_timings:
             timing = operation_timings[operation_key]
         else:
-            timing = timing_collector(
+            timing = _collect_timing_with_retry(
+                timing_collector,
                 spec.operation_target or spec.target,
                 repeats=spec.timing_repeats,
                 timeout=timeout,
@@ -1240,6 +1306,7 @@ def execute_all_corner_campaign(
                             spec.measurement_axes["cache_protocol"]
                         ),
                     },
+                    allow_zero_support=True,
                 )
                 if (
                     result.report_path is None
@@ -1442,4 +1509,36 @@ def validate_all_corner_manifest(path: str | Path) -> dict[str, Any]:
             raise ValueError(f"missing all-corner artifact: {entry['path']}")
         if hashlib.sha256(artifact.read_bytes()).hexdigest() != entry["sha256"]:
             raise ValueError(f"all-corner artifact hash mismatch: {entry['path']}")
+    findings_entry = manifest.get("compact_artifacts", {}).get(
+        "aggregate_stall_cycle_findings.json"
+    )
+    if isinstance(findings_entry, Mapping):
+        findings = json.loads(
+            (manifest_path.parent / findings_entry["path"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        _validate_timing_retry_evidence(findings)
     return manifest
+
+
+def _validate_timing_retry_evidence(findings: Mapping[str, Any]) -> None:
+    for launch in findings.get("launches") or ():
+        timing = launch.get("timing") or {}
+        process_cv = float(timing.get("process_cv", math.inf))
+        gate = (timing.get("provenance") or {}).get(
+            "timing_quality_gate"
+        )
+        if process_cv > TIMING_PROCESS_CV_LIMIT:
+            if not isinstance(gate, Mapping):
+                raise ValueError(
+                    "unstable timing lacks the required retry evidence"
+                )
+            if int(gate.get("attempt_count", 0)) != 2:
+                raise ValueError(
+                    "unstable timing did not consume exactly one retry"
+                )
+            if gate.get("status") != "persistent_instability":
+                raise ValueError(
+                    "unstable timing retry status is inconsistent"
+                )

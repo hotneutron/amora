@@ -6,6 +6,10 @@ Request: `.plan/20260903-1233-request-all-corner-gluon-stall-cycle-measurement.m
 Started: 2026-09-03 12:45 -0700
 Completed: 2026-09-03 14:53 -0700
 
+## User Prompt, Verbatim
+
+> amora request done.
+
 ## Checklist
 
 ### Metric Contract
@@ -122,6 +126,7 @@ ordered-launch target protocol, not on the preregistry's pending points.
 
 | Revision | Timestamp | Change |
 |---|---|---|
+| r8 | 2026-09-03 17:15 -0700 | Added post-commit all-corner robustness: SourceCounters zero-support results can be retained as diagnostic evidence instead of aborting an otherwise valid CUDA-event and aggregate-stall row. Strict callers still fail closed by default. |
 | r7 | 2026-09-03 14:53 -0700 | Corrected multiline tool-version provenance, regenerated the immutable H100 smokes, and closed at 108 focused plus 183 full-suite passing tests. |
 | r6 | 2026-09-03 14:50 -0700 | Required semantic cache/clock axes, separated capability and row-level missing reasons, recorded the final-schema GH100 digests, and closed at 107 focused plus 182 full-suite passing tests. |
 | r5 | 2026-09-03 14:42 -0700 | Added independent corner-versus-launch cardinality and SourceCounters control-drift gates, reran the finalized-schema GH100 smokes, and recorded the final 178-test result. |

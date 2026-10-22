@@ -12,15 +12,18 @@ license = {file = "LICENSE"}
 
 [project.optional-dependencies]
 test = ["pytest>=7"]
+portable-core = ["numpy>=1.24"]
 
 [project.scripts]
 amora = "amora.cli:main"
+amora-portable-core = "benchmark_generators.portable_core.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["amora*", "benchmark_generators*"]
 
 [tool.setuptools.package-data]
 "benchmark_generators.ppp_canonical" = ["templates/*.cu"]
+"benchmark_generators.portable_core" = ["LICENSE.Apache-2.0", "NOTICE", "PROVENANCE.json", "SEMANTIC_FINGERPRINTS.json", "README.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

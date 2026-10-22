@@ -1,0 +1,30 @@
+{
+  "algorithm": "canonical JSON case payload SHA-256",
+  "created_at": "2026-10-22T01:02:55.483837+00:00",
+  "fingerprints": {
+    "20/native": {
+      "case_payload_sha256": "38e1d77ea4ca238fea38f1a073724213b52b71f45ae505a9fbbeba4dee9b09fa",
+      "cases": 304
+    },
+    "20/smoke": {
+      "case_payload_sha256": "5f81c0626deb447784f28eb0e6d3d2cc5d43bc29518aa156984cf194c2ddaf9c",
+      "cases": 152
+    },
+    "24/native": {
+      "case_payload_sha256": "12d2876c332377b43a9d33cb2cb28b35f5e74c5fe59180664665c2e0755e960f",
+      "cases": 336
+    },
+    "24/smoke": {
+      "case_payload_sha256": "ef96e0139a04967253162664d5453c4e92cd59bcaa632ba0e56b7c23f453eeb8",
+      "cases": 168
+    },
+    "28/native": {
+      "case_payload_sha256": "e419bbd6699c8f4997d9ba519fbfc458db2d6197beb3497ffc7131941a7864d0",
+      "cases": 368
+    },
+    "28/smoke": {
+      "case_payload_sha256": "d69cc548b598d123f4ebd8ef859df583eee00f30e320975f7c4e09dca9d759bf",
+      "cases": 184
+    }
+  }
+}

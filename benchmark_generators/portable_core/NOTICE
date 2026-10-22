@@ -1,0 +1,8 @@
+Portable core20/core24/core28 kernels
+
+Derived from the Accorde cross-ISA campaign source, Apache License 2.0.
+Source-tree base: 7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5 plus
+the separately hashed, uncommitted campaign files listed in PROVENANCE.json.
+Package adaptation: namespace relocation only; mathematical contracts preserved.
+AMORA root LICENSE is unchanged; it does not relicense these Apache components.
+No performance-model or native-ISA qualification is implied.
