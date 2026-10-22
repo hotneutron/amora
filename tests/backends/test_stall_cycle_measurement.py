@@ -17,12 +17,15 @@ from amora.backends.nvidia.stall_cycle_measurement import (
     AllCornerCampaign,
     AllCornerLaunchSpec,
     RAW_STALL_CYCLE_UNIT,
+    _collect_timing_with_retry,
     _operation_timing_identity_reasons,
+    _validate_timing_retry_evidence,
     collect_stall_cycle_repeats,
     execute_all_corner_campaign,
     load_all_corner_campaign,
     reduce_stall_cycle_repeats,
     reduce_stall_cycle_row,
+    validate_all_corner_campaign,
     validate_all_corner_manifest,
     _operation_totals,
 )
@@ -227,6 +230,85 @@ def _spec(*, point_id="point-a", context=CONTEXT, source_counters=False):
         timing_repeats=1,
         collect_source_counters=source_counters,
         source_counter_selection_reasons=("minimum",) if source_counters else (),
+    )
+
+
+def test_campaign_accepts_all_executable_sourcecounter_reason() -> None:
+    campaign = AllCornerCampaign(
+        "campaign",
+        "registry",
+        1,
+        1,
+        (
+            replace(
+                _spec(source_counters=True),
+                source_counter_selection_reasons=(
+                    "all_executable_corner",
+                ),
+            ),
+        ),
+    )
+
+    validate_all_corner_campaign(campaign)
+
+
+def test_timing_retry_selects_whole_second_attempt() -> None:
+    attempts = [
+        replace(_timing(), process_cv=0.03, median_us=10.0),
+        replace(_timing(), process_cv=0.01, median_us=12.0),
+    ]
+    calls = []
+
+    def collect(*args, **kwargs):
+        calls.append((args, kwargs))
+        return attempts[len(calls) - 1]
+
+    selected = _collect_timing_with_retry(collect, ("target",))
+
+    assert len(calls) == 2
+    assert selected.median_us == 12.0
+    assert selected.provenance["timing_quality_gate"]["attempt_count"] == 2
+    assert selected.provenance["timing_quality_gate"]["selected_attempt"] == 2
+    assert selected.provenance["timing_quality_gate"]["status"] == "pass"
+
+
+def test_stable_timing_does_not_retry() -> None:
+    calls = []
+
+    def collect(*args, **kwargs):
+        calls.append((args, kwargs))
+        return _timing()
+
+    selected = _collect_timing_with_retry(collect, ("target",))
+
+    assert len(calls) == 1
+    assert selected.provenance["timing_quality_gate"]["attempt_count"] == 1
+
+
+def test_manifest_timing_gate_rejects_legacy_unstable_row() -> None:
+    with pytest.raises(ValueError, match="lacks the required retry"):
+        _validate_timing_retry_evidence(
+            {"launches": [{"timing": {"process_cv": 0.03}}]}
+        )
+
+
+def test_manifest_timing_gate_accepts_persistent_second_attempt() -> None:
+    _validate_timing_retry_evidence(
+        {
+            "launches": [
+                {
+                    "timing": {
+                        "process_cv": 0.03,
+                        "provenance": {
+                            "timing_quality_gate": {
+                                "attempt_count": 2,
+                                "status": "persistent_instability",
+                            }
+                        },
+                    }
+                }
+            ]
+        }
     )
 
 

@@ -364,6 +364,51 @@ def test_run_command_pc_sampling_detects_option_and_records_target(monkeypatch, 
     assert result.cache_control == "none"
 
 
+def test_run_command_pc_sampling_can_retain_zero_support(monkeypatch, tmp_path):
+    source_csv = '"Address","Source","stall_wait (Not Issued)"\n'
+
+    def fake_run(args, **kwargs):
+        if args[1] == "--help":
+            return subprocess.CompletedProcess(
+                args, 0, "--warp-sampling-interval <cycles>", ""
+            )
+        if "--import" in args:
+            return subprocess.CompletedProcess(args, 0, source_csv, "")
+        return subprocess.CompletedProcess(
+            args,
+            0,
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "kind": "cuda_event_timing",
+                    "device": {"uuid": "GPU-test"},
+                    "subject_identity": {
+                        "kernel_name": "jit_kernel",
+                        "ttgir_sha256": "ttgir",
+                        "cubin_sha256": "cubin",
+                    },
+                }
+            ),
+            "",
+        )
+
+    monkeypatch.setattr(ncu_run.subprocess, "run", fake_run)
+    caps = NvidiaCapabilities(
+        tools={"ncu": ToolStatus("ncu", "/opt/ncu", True)},
+    )
+
+    result = run_command_pc_sampling(
+        ("python", "fixture.py"),
+        capabilities=caps,
+        report_path=tmp_path / "zero.ncu-rep",
+        allow_zero_support=True,
+    )
+
+    assert result.samples == []
+    assert result.parser_metadata["status"] == "no_address_rows"
+    assert result.parser_metadata["sass_join"]["status"] == "zero_support"
+
+
 def test_run_command_pc_sampling_joins_target_declared_sass(monkeypatch, tmp_path):
     sass_path = tmp_path / "kernel.sass"
     sass_path.write_text(

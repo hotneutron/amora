@@ -817,6 +817,7 @@ def run_command_pc_sampling(
     clock_control: str | None = None,
     cwd: str | Path | None = None,
     environment_overrides: Mapping[str, str] | None = None,
+    allow_zero_support: bool = False,
 ) -> NcuPcSamplingResult:
     """Collect source-correlated stalls from an arbitrary target command."""
 
@@ -877,7 +878,7 @@ def run_command_pc_sampling(
     samples, parser_metadata = parse_ncu_source_pc_sampling_csv_with_metadata(
         imported.stdout
     )
-    if not samples:
+    if not samples and not allow_zero_support:
         raise NcuUnavailable(
             "ncu source page produced no PC stall rows: "
             f"{parser_metadata.get('status', 'unknown parser status')}"
@@ -885,14 +886,23 @@ def run_command_pc_sampling(
     from amora.backends.nvidia.cuda_event_run import extract_measurement_identity
 
     target_evidence = extract_measurement_identity(completed.stdout)
-    samples, sass_join = _join_target_sass(
-        samples,
-        target_evidence=target_evidence,
-        capabilities=capabilities,
-        kernel_name=kernel_name,
-        cwd=cwd,
-        timeout=timeout,
-    )
+    if samples:
+        samples, sass_join = _join_target_sass(
+            samples,
+            target_evidence=target_evidence,
+            capabilities=capabilities,
+            kernel_name=kernel_name,
+            cwd=cwd,
+            timeout=timeout,
+        )
+    else:
+        sass_join = {
+            "status": "zero_support",
+            "reason": "ncu_source_page_produced_no_pc_stall_rows",
+            "instruction_count": 0,
+            "join_count": 0,
+            "join_fraction": None,
+        }
     parser_metadata = {**parser_metadata, "sass_join": sass_join}
     return NcuPcSamplingResult(
         samples=samples,
