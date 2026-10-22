@@ -1,0 +1,98 @@
+{
+  "bulk_input_banks_or_performance_artifacts_copied": false,
+  "created_at": "2026-10-22T00:59:11.455969+00:00",
+  "files": [
+    {
+      "modifications": [
+        "Apache SPDX/adaptation notice",
+        "package namespace relocation"
+      ],
+      "package_path": "base/__init__.py",
+      "packaged_sha256": "6b9df8faadb56d91c4be88e671ab6b9ec5f44832af17476438b8c6045858888d",
+      "source_path": "tools/cross_isa_campaign/__init__.py",
+      "source_sha256": "1cf398687c92397e6f7af17ef074530a4c2e396c5121fee68b9886ed772836cc"
+    },
+    {
+      "modifications": [
+        "Apache SPDX/adaptation notice",
+        "package namespace relocation"
+      ],
+      "package_path": "base/backends.py",
+      "packaged_sha256": "7e2cb5ac6884df3aa02e3e8d512eb73e29b33043cdf2b54e097294a54a4dba32",
+      "source_path": "tools/cross_isa_campaign/backends.py",
+      "source_sha256": "93359984b72234fa93961510143244d37266e1b22c27e48a1a9861cc0f791327"
+    },
+    {
+      "modifications": [
+        "Apache SPDX/adaptation notice",
+        "package namespace relocation"
+      ],
+      "package_path": "base/core.py",
+      "packaged_sha256": "e7e2e7597c30f509a2349893299877a77ad5a7d0b53cfaa6131e3b28ca7b9a3b",
+      "source_path": "tools/cross_isa_campaign/core.py",
+      "source_sha256": "1fcfb04a2b6e722599128cb590679b3e2485dcd16eaa7477f722382d3d1e0e88"
+    },
+    {
+      "modifications": [
+        "Apache SPDX/adaptation notice",
+        "package namespace relocation"
+      ],
+      "package_path": "base/runner.py",
+      "packaged_sha256": "a781695cfbe3f655552b1569bc7848fbaf0bd3bfb1b59cc1ad8014bb4fc76bb4",
+      "source_path": "tools/cross_isa_campaign/runner.py",
+      "source_sha256": "e94fe233c7815e768d80a27815f5376a3462340d57cbcd058ee213c02d9f97fc"
+    },
+    {
+      "modifications": [
+        "Apache SPDX/adaptation notice",
+        "package namespace relocation"
+      ],
+      "package_path": "expanded/__init__.py",
+      "packaged_sha256": "3bf6b56de1bdbb02f081920febfd43a8f74b4dc2a95bd87bc11000b9776b03ea",
+      "source_path": "tools/cross_isa_expansion/__init__.py",
+      "source_sha256": "dfa2128ff1d3d89166d2fe3cc9e36e0d8648aa887dd445aeb0b5bbb7796f9726"
+    },
+    {
+      "modifications": [
+        "Apache SPDX/adaptation notice",
+        "package namespace relocation"
+      ],
+      "package_path": "expanded/backends.py",
+      "packaged_sha256": "ace365102aab9a9a369b2fe0a57fa0197a42954cfcd7431c210ae140f4adfe94",
+      "source_path": "tools/cross_isa_expansion/backends.py",
+      "source_sha256": "879a22841606e09b660f0e29ae4bd482e2256ee1fb2e5e0b0a68b324494b1e4d"
+    },
+    {
+      "modifications": [
+        "Apache SPDX/adaptation notice",
+        "package namespace relocation"
+      ],
+      "package_path": "expanded/core.py",
+      "packaged_sha256": "aa8e85dfaea2771d6445b9896a9a0ba03d25fef4593c79792ad7b233696fce2a",
+      "source_path": "tools/cross_isa_expansion/core.py",
+      "source_sha256": "9e7e2f4d0e2bbe049bbe42ae7eaa0c17ea45cfaaa1c1bed9d3ed26a57f11fe56"
+    },
+    {
+      "modifications": [
+        "Apache SPDX/adaptation notice",
+        "package namespace relocation"
+      ],
+      "package_path": "expanded/runner.py",
+      "packaged_sha256": "7ca29208557892e02578307ae546ce7e50ee0a618cbf7d5c23f48f077673017c",
+      "source_path": "tools/cross_isa_expansion/runner.py",
+      "source_sha256": "47076dcd6af5fa1ea3a102d3865b62603de34a7f1637786dc066868935a9e421"
+    }
+  ],
+  "license": "Apache-2.0",
+  "native_performance_qualification": false,
+  "origin_base_commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+  "origin_files_are_uncommitted_campaign_sources": true,
+  "origin_repository": "hotneutron/accorde",
+  "ownership_boundary": "AMORA workload package; Accorde predictor/campaign evidence remains separate",
+  "schema_version": 1,
+  "user_prompts": [
+    "package the kernel set",
+    "package the kernel set into ~/wk/amora/, good or bad?",
+    "if good, execute."
+  ]
+}
