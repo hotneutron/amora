@@ -58,8 +58,13 @@ and gate tests that require a real CUDA-capable host or external tools.
 
 ## Benchmarks
 
-Benchmark definitions are separate from the 36 diagnostic probes. The initial
-AMORA-owned `ppp_canonical` generator materializes deterministic
+Benchmark definitions are separate from the 36 diagnostic probes. AMORA hosts
+both the NVIDIA-focused `ppp_canonical` evidence pipeline and portable
+mathematical workload definitions.
+
+### PPP canonical
+
+The AMORA-owned `ppp_canonical` generator materializes deterministic
 kernel-and-shape case sets without requiring a GPU:
 
 ```bash
@@ -94,11 +99,39 @@ invocation writes an immutable `runs/<rank>/<classification-digest>/<run-id>/`
 directory containing raw hardware/GCoM JSONL, the comparison, and `run.json`;
 existing evidence is never overwritten.
 
+### Portable core workloads
+
+`benchmark_generators.portable_core` provides the versioned core20, core24, and
+core28 mathematical workload tiers. It includes deterministic inputs,
+independent oracles, and NumPy, PyTorch, and optional JAX execution backends:
+
+```bash
+pip install -e '.[portable-core,test]'
+amora-portable-core list --tier 28
+amora-portable-core freeze --tier 24 --out out/portable_core/core24
+amora-portable-core check \
+  --frozen out/portable_core/core24 \
+  --out out/portable_core/core24-check \
+  --backends numpy,torch,jax
+```
+
+The same CLI is available as `python -m benchmark_generators.portable_core`.
+Frozen manifests and runtime sources are hash-bound and are never overwritten.
+PyTorch, JAX, and accelerator runtimes must be installed separately when those
+backends are needed.
+
+Portable-core checks establish mathematical correctness only. They do not
+qualify native lowering, accelerator instructions, compiler fusion, or
+performance, and the package is intentionally separate from the existing
+CUDA-template classification/detail runner. See the
+[portable-core documentation](benchmark_generators/portable_core/README.md) for
+the API, tier contents, provenance, licensing, and scope details.
+
 ## Layout
 
 - `amora/cli.py` — argparse CLI
 - `amora/benchmarking/` — benchmark materialization contracts
-- `benchmark_generators/` — local generated benchmark definitions
+- `benchmark_generators/` — canonical PPP and portable-core workload definitions
 - `amora/backends/nvidia/` — toolchain discovery, build adapters, CUPTI/NCU/NVBit hooks
 - `amora/probes/nvidia/baseline/` — the baseline probe family
 - `amora/reports/json_report.py` — JSON renderer
