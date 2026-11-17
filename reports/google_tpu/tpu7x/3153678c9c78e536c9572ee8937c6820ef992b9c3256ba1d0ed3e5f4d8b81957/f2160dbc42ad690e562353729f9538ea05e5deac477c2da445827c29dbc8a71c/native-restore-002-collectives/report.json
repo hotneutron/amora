@@ -1,0 +1,4990 @@
+{
+  "metadata": {
+    "backend_capabilities": {
+      "architecture": {
+        "generation": "tpu7x",
+        "profile": {
+          "aliases": [
+            "TPU7x",
+            "TPU 7x",
+            "Ironwood",
+            "7x"
+          ],
+          "facts": {
+            "hbm_capacity_bytes": {
+              "evidence": "unknown",
+              "scope": "chip",
+              "value": null
+            },
+            "hbm_capacity_bytes_per_tensorcore": {
+              "evidence": "published_fact",
+              "scope": "TPU TensorCore",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 103000000000
+            },
+            "matrix_tile": {
+              "evidence": "unknown",
+              "scope": "MXU",
+              "value": null
+            },
+            "mxu_column_size": {
+              "evidence": "published_fact",
+              "scope": "architecture",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 256
+            },
+            "num_lanes": {
+              "evidence": "published_fact",
+              "scope": "architecture",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 128
+            },
+            "num_mxus_per_tensorcore": {
+              "evidence": "published_fact",
+              "scope": "TPU TensorCore",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 2
+            },
+            "num_sublanes": {
+              "evidence": "published_fact",
+              "scope": "architecture",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 8
+            },
+            "physical_tensorcores_per_chip": {
+              "evidence": "published_fact",
+              "scope": "chip",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 2
+            },
+            "sparsecore": {
+              "evidence": "published_fact",
+              "scope": "generation",
+              "value": true
+            },
+            "supports_megacore": {
+              "evidence": "published_fact",
+              "scope": "architecture",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": false
+            },
+            "vmem_capacity_bytes": {
+              "evidence": "unknown",
+              "scope": "TPU TensorCore",
+              "value": null
+            },
+            "vmem_capacity_bytes_per_tensorcore": {
+              "evidence": "published_fact",
+              "scope": "TPU TensorCore",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 67108864
+            }
+          },
+          "generation": "tpu7x",
+          "policy": {
+            "device_core_mapping": "runtime observation required",
+            "pallas": "compile-and-execute qualification required",
+            "profiling": "trace qualification required"
+          },
+          "profile_digest": "6302a3fe1aa76595e76a8827555998569c57751f4c36feed645a8fb654c54d1d",
+          "revision": 1,
+          "sources": [
+            {
+              "consulted": "2026-11-17",
+              "role": "generation identity and architecture",
+              "url": "https://cloud.google.com/tpu/docs/tpu7x"
+            },
+            {
+              "role": "TPU TensorCore, logical device and SparseCore scopes",
+              "url": "https://docs.jax.dev/en/latest/pallas/tpu/core_map.html"
+            }
+          ]
+        },
+        "raw_chip_version": "7x",
+        "raw_device_kind": "TPU7x",
+        "resolution": "runtime"
+      },
+      "backend": "tpu_jax",
+      "devices": [
+        {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 1,
+          "id": 1,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            1,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 2,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            1,
+            0,
+            0
+          ],
+          "core_on_chip": 1,
+          "id": 3,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            0,
+            1,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 4,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            0,
+            1,
+            0
+          ],
+          "core_on_chip": 1,
+          "id": 5,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            1,
+            1,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 6,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            1,
+            1,
+            0
+          ],
+          "core_on_chip": 1,
+          "id": 7,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        }
+      ],
+      "features": {
+        "collectives": {
+          "state": "declared"
+        },
+        "jax_jit": {
+          "state": "observed"
+        },
+        "pallas": {
+          "state": "declared"
+        },
+        "profiling": {
+          "state": "unknown"
+        },
+        "runtime": {
+          "state": "observed"
+        }
+      },
+      "ownership": {
+        "holders": [],
+        "inaccessible": 0,
+        "privileged": true,
+        "scope": "all visible accelerator nodes",
+        "state": "exclusive"
+      },
+      "runtime": {
+        "packages": {
+          "jax": "0.12.0.1",
+          "jaxlib": "0.12.0.1",
+          "libtpu": "0.0.50.1",
+          "numpy": "2.5.5",
+          "xprof": null
+        },
+        "platform": "Linux-6.8.0-1061-gke-x86_64-with-glibc2.39",
+        "python": "3.12.3",
+        "runtime_digest": "f2160dbc42ad690e562353729f9538ea05e5deac477c2da445827c29dbc8a71c",
+        "runtime_lock_sha256": "7cd241d382bb7be16d125bb837f1eacf6e19d3d80173f370581353652b737fd6",
+        "runtime_lock_versions_verified": true
+      },
+      "runtime_available": true,
+      "selected_device": {
+        "addressable": true,
+        "coords": [
+          0,
+          0,
+          0
+        ],
+        "core_on_chip": 0,
+        "id": 0,
+        "kind": "TPU7x",
+        "memory_stats": {
+          "bytes_in_use": 65536,
+          "bytes_limit": 101724450816,
+          "bytes_reservable_limit": 101724450816,
+          "bytes_reserved": 0,
+          "largest_alloc_size": 64000,
+          "largest_free_block_bytes": 101724385280,
+          "num_allocs": 2,
+          "peak_bytes_in_use": 65536,
+          "peak_bytes_reserved": 0
+        },
+        "name": "TPU7x",
+        "process_index": 0
+      },
+      "status": "ok",
+      "target": {
+        "devices": [
+          {
+            "addressable": true,
+            "coords": [
+              0,
+              0,
+              0
+            ],
+            "core_on_chip": 0,
+            "id": 0,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              0,
+              0,
+              0
+            ],
+            "core_on_chip": 1,
+            "id": 1,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              1,
+              0,
+              0
+            ],
+            "core_on_chip": 0,
+            "id": 2,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              1,
+              0,
+              0
+            ],
+            "core_on_chip": 1,
+            "id": 3,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              0,
+              1,
+              0
+            ],
+            "core_on_chip": 0,
+            "id": 4,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              0,
+              1,
+              0
+            ],
+            "core_on_chip": 1,
+            "id": 5,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              1,
+              1,
+              0
+            ],
+            "core_on_chip": 0,
+            "id": 6,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              1,
+              1,
+              0
+            ],
+            "core_on_chip": 1,
+            "id": 7,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          }
+        ],
+        "generation": "tpu7x",
+        "hardware_info": {
+          "chip_version": "7x",
+          "hbm_capacity_bytes": 103000000000,
+          "mxu_column_size": 256,
+          "num_cores": 1,
+          "num_lanes": 128,
+          "num_mxus": 2,
+          "num_sublanes": 8,
+          "smem_capacity_bytes": 1048576,
+          "source": "JAX TPU registry resolved by runtime identity; architecture metadata",
+          "vmem_capacity_bytes": 67108864
+        },
+        "instance": "gke-tpu-f20b10b7-2pbv",
+        "instance_config_sha256": "be356a51bebe34edb3a42c66ba54e3c26c16c00ca96aa1a5cd98b93bfc914c8d",
+        "local_index": 0,
+        "process_count": 1,
+        "process_index": 0,
+        "selected_device_id": 0,
+        "target_config_digest": "3153678c9c78e536c9572ee8937c6820ef992b9c3256ba1d0ed3e5f4d8b81957",
+        "visibility": {
+          "TPU_CHIPS_PER_HOST_BOUNDS": "2,2,1",
+          "TPU_HOST_BOUNDS": "1,1,1",
+          "TPU_LOG_DIR": "/home/maas/amora-tpu-20261116-1659/out/tpu/runtime-logs",
+          "TPU_SKIP_MDS_QUERY": "1",
+          "TPU_TOPOLOGY": "2x2x1",
+          "TPU_WORKER_HOSTNAMES": "localhost",
+          "TPU_WORKER_ID": "0"
+        }
+      },
+      "unsupported_reasons": []
+    },
+    "qualification": {
+      "ownership_final": "exclusive",
+      "runtime_locked": true,
+      "status": "passed"
+    },
+    "recipe": {
+      "batch": 16,
+      "capture_profile": false,
+      "cases": [
+        {
+          "devices": 2,
+          "primitive": "psum",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            128
+          ]
+        },
+        {
+          "devices": 2,
+          "primitive": "all_gather",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            128
+          ]
+        },
+        {
+          "devices": 2,
+          "primitive": "ppermute",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            128
+          ]
+        },
+        {
+          "devices": 2,
+          "primitive": "psum",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            65536
+          ]
+        },
+        {
+          "devices": 2,
+          "primitive": "all_gather",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            65536
+          ]
+        },
+        {
+          "devices": 2,
+          "primitive": "ppermute",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            65536
+          ]
+        },
+        {
+          "devices": 4,
+          "primitive": "psum",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            128
+          ]
+        },
+        {
+          "devices": 4,
+          "primitive": "all_gather",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            128
+          ]
+        },
+        {
+          "devices": 4,
+          "primitive": "ppermute",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            128
+          ]
+        },
+        {
+          "devices": 4,
+          "primitive": "psum",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            65536
+          ]
+        },
+        {
+          "devices": 4,
+          "primitive": "all_gather",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            65536
+          ]
+        },
+        {
+          "devices": 4,
+          "primitive": "ppermute",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            65536
+          ]
+        },
+        {
+          "devices": 8,
+          "primitive": "psum",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            128
+          ]
+        },
+        {
+          "devices": 8,
+          "primitive": "all_gather",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            128
+          ]
+        },
+        {
+          "devices": 8,
+          "primitive": "ppermute",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            128
+          ]
+        },
+        {
+          "devices": 8,
+          "primitive": "psum",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            65536
+          ]
+        },
+        {
+          "devices": 8,
+          "primitive": "all_gather",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            65536
+          ]
+        },
+        {
+          "devices": 8,
+          "primitive": "ppermute",
+          "probe_id": "interconnect.collectives",
+          "shape": [
+            65536
+          ]
+        }
+      ],
+      "device": "tpu:0",
+      "max_buffer_bytes": 268435456,
+      "max_relative_mad": 0.05,
+      "recipe_id": "tpu-collective-sweep-v1",
+      "repeats": 3,
+      "samples": 30,
+      "schema_version": 1,
+      "warmup": 5
+    },
+    "report_identity": {
+      "family": "tpu7x",
+      "runtime_digest": "f2160dbc42ad690e562353729f9538ea05e5deac477c2da445827c29dbc8a71c",
+      "sku": "tpu7x",
+      "target_config_digest": "3153678c9c78e536c9572ee8937c6820ef992b9c3256ba1d0ed3e5f4d8b81957",
+      "vendor": "google_tpu"
+    },
+    "source_evidence": {
+      "artifact_paths_relative_to": "root",
+      "manifest_sha256": "c7be9ea3fdd27c40b2193a89d9254acb8f9e0c4190fcf35f64eff093f7732308",
+      "report_sha256": "64a923742f1f91daf851c67739ff679c234bcbf2e088a7670dfd8ad6bc5a188c",
+      "root": "out/tpu_backend_execution/evidence/native-002/out/tpu/tpu-collective-sweep-v1/9b5a8040d51a329f64ca42978f5708dce9fd7ffd05218fcf49ce5dc917414852/native-restore-002-collectives",
+      "run_digest": "cad07e424af93e6963b0981ffe1c6a17ffcca3e2cd0c92d87f349c21feb1500e"
+    }
+  },
+  "results": [
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/0",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 328347719,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0000/optimized_hlo.txt",
+              "sha256": "577ee802ba78835a43a601d700081757cb54f2b39e8a93a0dc76a758fd436f6d"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0000/stablehlo.txt",
+              "sha256": "371e923860d105be702c3f5cead0efbebde75658890249b6234985ae04ea94a3"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1327339,
+          "input_digest": "04012f09d325596f241a3e36349cdbecf60fa6a4854794fe93abf5810d561b73",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 2,
+          "primitive": "psum",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 1024,
+          "shape": [
+            128
+          ],
+          "staging_ns": 5512376
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 88527.875,
+        "variance": {
+          "count": 3,
+          "mad": 8052.5,
+          "max": 1427425.0,
+          "median": 1416446.0,
+          "min": 1408393.5
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/0",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  2,
+                  128
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 11566978.197545124,
+          "metadata": {
+            "compile_ns": 328347719,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "577ee802ba78835a43a601d700081757cb54f2b39e8a93a0dc76a758fd436f6d"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "371e923860d105be702c3f5cead0efbebde75658890249b6234985ae04ea94a3"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1327339,
+            "input_digest": "04012f09d325596f241a3e36349cdbecf60fa6a4854794fe93abf5810d561b73",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 2,
+            "primitive": "psum",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 1024,
+            "shape": [
+              128
+            ],
+            "staging_ns": 5512376
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 2,
+            "primitive": "psum",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              128
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 88527.875,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 27416.0,
+                "max": 1612769.0,
+                "median": 1416446.0,
+                "min": 1358692.0,
+                "relative_mad": 0.019355485489739813
+              },
+              {
+                "count": 30,
+                "mad": 14615.5,
+                "max": 1511975.0,
+                "median": 1427425.0,
+                "min": 1355924.0,
+                "relative_mad": 0.010239066851148046
+              },
+              {
+                "count": 30,
+                "mad": 21580.5,
+                "max": 1443039.0,
+                "median": 1408393.5,
+                "min": 1357788.0,
+                "relative_mad": 0.015322777334601445
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 8052.5,
+              "max": 1427425.0,
+              "median": 1416446.0,
+              "min": 1408393.5
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/1",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 48551170,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0001/optimized_hlo.txt",
+              "sha256": "326314ffdff730608aab86f2acf1f6bdfeec06fcff69cc73ea1572cb6b4a73e4"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0001/stablehlo.txt",
+              "sha256": "9e4034dc8244c8f7a9930dee2f01322f7073ff126d15c134a1234a1479e7227c"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1100456,
+          "input_digest": "04012f09d325596f241a3e36349cdbecf60fa6a4854794fe93abf5810d561b73",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 2,
+          "primitive": "all_gather",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 1024,
+          "shape": [
+            128
+          ],
+          "staging_ns": 803939
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 86492.40625,
+        "variance": {
+          "count": 3,
+          "mad": 3462.5,
+          "max": 1387341.0,
+          "median": 1383878.5,
+          "min": 1370573.5
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/1",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  2,
+                  128
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 11839189.639841937,
+          "metadata": {
+            "compile_ns": 48551170,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "326314ffdff730608aab86f2acf1f6bdfeec06fcff69cc73ea1572cb6b4a73e4"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "9e4034dc8244c8f7a9930dee2f01322f7073ff126d15c134a1234a1479e7227c"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1100456,
+            "input_digest": "04012f09d325596f241a3e36349cdbecf60fa6a4854794fe93abf5810d561b73",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 2,
+            "primitive": "all_gather",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 1024,
+            "shape": [
+              128
+            ],
+            "staging_ns": 803939
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 2,
+            "primitive": "all_gather",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              128
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 86492.40625,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 21747.5,
+                "max": 1547721.0,
+                "median": 1383878.5,
+                "min": 1311585.0,
+                "relative_mad": 0.015714891155545807
+              },
+              {
+                "count": 30,
+                "mad": 22075.5,
+                "max": 1449218.0,
+                "median": 1387341.0,
+                "min": 1337849.0,
+                "relative_mad": 0.015912093710198142
+              },
+              {
+                "count": 30,
+                "mad": 14987.5,
+                "max": 1412170.0,
+                "median": 1370573.5,
+                "min": 1339742.0,
+                "relative_mad": 0.010935203402079494
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 3462.5,
+              "max": 1387341.0,
+              "median": 1383878.5,
+              "min": 1370573.5
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/2",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 48272053,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0002/optimized_hlo.txt",
+              "sha256": "4af8f481f963cffd4e9f267a78a220bdff6eabeee5871042134c61bc29e559a9"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0002/stablehlo.txt",
+              "sha256": "9a3378e7189dad20038bad971e77e3e9c18fb7ef089a235f20b28703d86f0340"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 954368,
+          "input_digest": "04012f09d325596f241a3e36349cdbecf60fa6a4854794fe93abf5810d561b73",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 2,
+          "primitive": "ppermute",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 1024,
+          "routes": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "shape": [
+            128
+          ],
+          "staging_ns": 695484
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 86487.78125,
+        "variance": {
+          "count": 3,
+          "mad": 4230.5,
+          "max": 1388035.0,
+          "median": 1383804.5,
+          "min": 1378279.0
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/2",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  2,
+                  128
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 11839822.749528565,
+          "metadata": {
+            "compile_ns": 48272053,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "4af8f481f963cffd4e9f267a78a220bdff6eabeee5871042134c61bc29e559a9"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "9a3378e7189dad20038bad971e77e3e9c18fb7ef089a235f20b28703d86f0340"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 954368,
+            "input_digest": "04012f09d325596f241a3e36349cdbecf60fa6a4854794fe93abf5810d561b73",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 2,
+            "primitive": "ppermute",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 1024,
+            "routes": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                0
+              ]
+            ],
+            "shape": [
+              128
+            ],
+            "staging_ns": 695484
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 2,
+            "primitive": "ppermute",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              128
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 86487.78125,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 19173.0,
+                "max": 1439177.0,
+                "median": 1383804.5,
+                "min": 1294925.0,
+                "relative_mad": 0.013855280857953562
+              },
+              {
+                "count": 30,
+                "mad": 25589.5,
+                "max": 2402342.0,
+                "median": 1388035.0,
+                "min": 1331809.0,
+                "relative_mad": 0.018435774314048275
+              },
+              {
+                "count": 30,
+                "mad": 17668.5,
+                "max": 1448962.0,
+                "median": 1378279.0,
+                "min": 1331077.0,
+                "relative_mad": 0.012819247772040349
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 4230.5,
+              "max": 1388035.0,
+              "median": 1383804.5,
+              "min": 1378279.0
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/3",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 58724744,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0003/optimized_hlo.txt",
+              "sha256": "887ebd2719e6fdaf28101192fc550f15325b427afdab5b85154a334cecb108b2"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0003/stablehlo.txt",
+              "sha256": "b04ffea95546c3616cfc7217c5a0b854a6ebb607d688010923af83a7de9db7e4"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1025885,
+          "input_digest": "cbe447f1028b687c648fe65f18adbfd22e9d3d56a61aa83a0b30bf848960a42c",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 2,
+          "primitive": "psum",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 524288,
+          "shape": [
+            65536
+          ],
+          "staging_ns": 2342763
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 85646.125,
+        "variance": {
+          "count": 3,
+          "mad": 848.5,
+          "max": 1371186.5,
+          "median": 1370338.0,
+          "min": 1345393.0
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/3",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  2,
+                  65536
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 6121561249.852226,
+          "metadata": {
+            "compile_ns": 58724744,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "887ebd2719e6fdaf28101192fc550f15325b427afdab5b85154a334cecb108b2"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "b04ffea95546c3616cfc7217c5a0b854a6ebb607d688010923af83a7de9db7e4"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1025885,
+            "input_digest": "cbe447f1028b687c648fe65f18adbfd22e9d3d56a61aa83a0b30bf848960a42c",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 2,
+            "primitive": "psum",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 524288,
+            "shape": [
+              65536
+            ],
+            "staging_ns": 2342763
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 2,
+            "primitive": "psum",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              65536
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 85646.125,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 18403.5,
+                "max": 1406158.0,
+                "median": 1371186.5,
+                "min": 1315961.0,
+                "relative_mad": 0.013421587800054915
+              },
+              {
+                "count": 30,
+                "mad": 16665.0,
+                "max": 1397127.0,
+                "median": 1345393.0,
+                "min": 1303733.0,
+                "relative_mad": 0.012386715257177643
+              },
+              {
+                "count": 30,
+                "mad": 18326.0,
+                "max": 1439995.0,
+                "median": 1370338.0,
+                "min": 1305282.0,
+                "relative_mad": 0.013373342927073466
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 848.5,
+              "max": 1371186.5,
+              "median": 1370338.0,
+              "min": 1345393.0
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/4",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 88563325,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0004/optimized_hlo.txt",
+              "sha256": "1dd0c647d02759161b90f506bddb6cefc689f9a6577e357ae18712e12f6ffca4"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0004/stablehlo.txt",
+              "sha256": "313c4e53c997617ab7d4deaec9e8688f006da6e1f1eba2284b6c661fa7ae36e3"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1000426,
+          "input_digest": "cbe447f1028b687c648fe65f18adbfd22e9d3d56a61aa83a0b30bf848960a42c",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 2,
+          "primitive": "all_gather",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 524288,
+          "shape": [
+            65536
+          ],
+          "staging_ns": 2119406
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 86055.8125,
+        "variance": {
+          "count": 3,
+          "mad": 1695.0,
+          "max": 1379226.0,
+          "median": 1376893.0,
+          "min": 1375198.0
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/4",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  2,
+                  65536
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 6092418219.861674,
+          "metadata": {
+            "compile_ns": 88563325,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "1dd0c647d02759161b90f506bddb6cefc689f9a6577e357ae18712e12f6ffca4"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "313c4e53c997617ab7d4deaec9e8688f006da6e1f1eba2284b6c661fa7ae36e3"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1000426,
+            "input_digest": "cbe447f1028b687c648fe65f18adbfd22e9d3d56a61aa83a0b30bf848960a42c",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 2,
+            "primitive": "all_gather",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 524288,
+            "shape": [
+              65536
+            ],
+            "staging_ns": 2119406
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 2,
+            "primitive": "all_gather",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              65536
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 86055.8125,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 22001.5,
+                "max": 1449753.0,
+                "median": 1376893.0,
+                "min": 1323892.0,
+                "relative_mad": 0.015979092057262258
+              },
+              {
+                "count": 30,
+                "mad": 16885.5,
+                "max": 1420043.0,
+                "median": 1375198.0,
+                "min": 1299147.0,
+                "relative_mad": 0.012278595518608956
+              },
+              {
+                "count": 30,
+                "mad": 17625.0,
+                "max": 1444428.0,
+                "median": 1379226.0,
+                "min": 1333530.0,
+                "relative_mad": 0.012778906430128202
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 1695.0,
+              "max": 1379226.0,
+              "median": 1376893.0,
+              "min": 1375198.0
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/5",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 47393728,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0005/optimized_hlo.txt",
+              "sha256": "800372f0700cae2e723a248e2472ed7086a178e3dd29c1372a78e48b4e64f0b5"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0005/stablehlo.txt",
+              "sha256": "abda444e994a4cbd0c39fcf1371407d9a341d6b2291999725d8305c2122a0be7"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1051882,
+          "input_digest": "cbe447f1028b687c648fe65f18adbfd22e9d3d56a61aa83a0b30bf848960a42c",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 2,
+          "primitive": "ppermute",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 524288,
+          "routes": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "shape": [
+            65536
+          ],
+          "staging_ns": 2152729
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 85021.6875,
+        "variance": {
+          "count": 3,
+          "mad": 3320.5,
+          "max": 1366489.0,
+          "median": 1360347.0,
+          "min": 1357026.5
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/5",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  2,
+                  65536
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 6166520748.015028,
+          "metadata": {
+            "compile_ns": 47393728,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "800372f0700cae2e723a248e2472ed7086a178e3dd29c1372a78e48b4e64f0b5"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "abda444e994a4cbd0c39fcf1371407d9a341d6b2291999725d8305c2122a0be7"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1051882,
+            "input_digest": "cbe447f1028b687c648fe65f18adbfd22e9d3d56a61aa83a0b30bf848960a42c",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 2,
+            "primitive": "ppermute",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 524288,
+            "routes": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                0
+              ]
+            ],
+            "shape": [
+              65536
+            ],
+            "staging_ns": 2152729
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 2,
+            "primitive": "ppermute",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              65536
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 85021.6875,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 20041.0,
+                "max": 1442191.0,
+                "median": 1366489.0,
+                "min": 1303218.0,
+                "relative_mad": 0.0146660529283441
+              },
+              {
+                "count": 30,
+                "mad": 18652.5,
+                "max": 1414231.0,
+                "median": 1360347.0,
+                "min": 1312367.0,
+                "relative_mad": 0.01371157506136302
+              },
+              {
+                "count": 30,
+                "mad": 17269.0,
+                "max": 1433301.0,
+                "median": 1357026.5,
+                "min": 1320594.0,
+                "relative_mad": 0.012725617370036621
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 3320.5,
+              "max": 1366489.0,
+              "median": 1360347.0,
+              "min": 1357026.5
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/6",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 44944261,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0006/optimized_hlo.txt",
+              "sha256": "b6ba64b62af5e8687fb253a40f727b609254952513541e8e20f8b5987ec107e2"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0006/stablehlo.txt",
+              "sha256": "db7af58e6ff6d6c791562689e38eb3cd0dae134031aa189d7364451dcddc5c7c"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1053528,
+          "input_digest": "e60e5245b92eec993db5f53da7b2585f01bc20a2f01e2fe3294adfa09e7a1bef",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 4,
+          "primitive": "psum",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 2048,
+          "shape": [
+            128
+          ],
+          "staging_ns": 990568
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 137463.0625,
+        "variance": {
+          "count": 3,
+          "mad": 8499.5,
+          "max": 2214816.0,
+          "median": 2199409.0,
+          "min": 2190909.5
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/6",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 1.1920928955078125e-07,
+                "passed": true,
+                "shape": [
+                  4,
+                  128
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 14898547.746235467,
+          "metadata": {
+            "compile_ns": 44944261,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "b6ba64b62af5e8687fb253a40f727b609254952513541e8e20f8b5987ec107e2"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "db7af58e6ff6d6c791562689e38eb3cd0dae134031aa189d7364451dcddc5c7c"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1053528,
+            "input_digest": "e60e5245b92eec993db5f53da7b2585f01bc20a2f01e2fe3294adfa09e7a1bef",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 4,
+            "primitive": "psum",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 2048,
+            "shape": [
+              128
+            ],
+            "staging_ns": 990568
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 4,
+            "primitive": "psum",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              128
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 137463.0625,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 23208.0,
+                "max": 2281136.0,
+                "median": 2190909.5,
+                "min": 2090869.0,
+                "relative_mad": 0.010592861092619298
+              },
+              {
+                "count": 30,
+                "mad": 19482.5,
+                "max": 2323375.0,
+                "median": 2214816.0,
+                "min": 2115953.0,
+                "relative_mad": 0.008796441781168278
+              },
+              {
+                "count": 30,
+                "mad": 31306.0,
+                "max": 2301779.0,
+                "median": 2199409.0,
+                "min": 2086356.0,
+                "relative_mad": 0.014233823722645492
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 8499.5,
+              "max": 2214816.0,
+              "median": 2199409.0,
+              "min": 2190909.5
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/7",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 43277723,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0007/optimized_hlo.txt",
+              "sha256": "cf1f1432c5c3b922f9a3f1b7278110bb03bdd9fd2343331c388a4f3d0c841411"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0007/stablehlo.txt",
+              "sha256": "0e7413fe6defbe5fffdd71b32b488bdad97f6f17c850101922572ac0ff16adf3"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1164671,
+          "input_digest": "e60e5245b92eec993db5f53da7b2585f01bc20a2f01e2fe3294adfa09e7a1bef",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 4,
+          "primitive": "all_gather",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 2048,
+          "shape": [
+            128
+          ],
+          "staging_ns": 747519
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 138342.09375,
+        "variance": {
+          "count": 3,
+          "mad": 3453.0,
+          "max": 2238820.5,
+          "median": 2213473.5,
+          "min": 2210020.5
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/7",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  4,
+                  128
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 14803881.772246202,
+          "metadata": {
+            "compile_ns": 43277723,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "cf1f1432c5c3b922f9a3f1b7278110bb03bdd9fd2343331c388a4f3d0c841411"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "0e7413fe6defbe5fffdd71b32b488bdad97f6f17c850101922572ac0ff16adf3"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1164671,
+            "input_digest": "e60e5245b92eec993db5f53da7b2585f01bc20a2f01e2fe3294adfa09e7a1bef",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 4,
+            "primitive": "all_gather",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 2048,
+            "shape": [
+              128
+            ],
+            "staging_ns": 747519
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 4,
+            "primitive": "all_gather",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              128
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 138342.09375,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 45475.0,
+                "max": 3969685.0,
+                "median": 2238820.5,
+                "min": 2084236.0,
+                "relative_mad": 0.020312034841560547
+              },
+              {
+                "count": 30,
+                "mad": 28173.0,
+                "max": 2307448.0,
+                "median": 2213473.5,
+                "min": 2105250.0,
+                "relative_mad": 0.01272795902006507
+              },
+              {
+                "count": 30,
+                "mad": 26746.0,
+                "max": 2324995.0,
+                "median": 2210020.5,
+                "min": 2115853.0,
+                "relative_mad": 0.012102150183674767
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 3453.0,
+              "max": 2238820.5,
+              "median": 2213473.5,
+              "min": 2210020.5
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/8",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 45029882,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0008/optimized_hlo.txt",
+              "sha256": "2e23cb6eb09b02190ff27a33764fbe49545126d5664864cf231465a87c540c87"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0008/stablehlo.txt",
+              "sha256": "6b347f24f496cf71d6c8e172a2db7346171a7d77acc38d2148b8e191e5fa838d"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1203387,
+          "input_digest": "e60e5245b92eec993db5f53da7b2585f01bc20a2f01e2fe3294adfa09e7a1bef",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 4,
+          "primitive": "ppermute",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 2048,
+          "routes": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          "shape": [
+            128
+          ],
+          "staging_ns": 790090
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 137711.4375,
+        "variance": {
+          "count": 3,
+          "mad": 4146.5,
+          "max": 2207529.5,
+          "median": 2203383.0,
+          "min": 2180459.0
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/8",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  4,
+                  128
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 14871676.871429069,
+          "metadata": {
+            "compile_ns": 45029882,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "2e23cb6eb09b02190ff27a33764fbe49545126d5664864cf231465a87c540c87"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "6b347f24f496cf71d6c8e172a2db7346171a7d77acc38d2148b8e191e5fa838d"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1203387,
+            "input_digest": "e60e5245b92eec993db5f53da7b2585f01bc20a2f01e2fe3294adfa09e7a1bef",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 4,
+            "primitive": "ppermute",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 2048,
+            "routes": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                3
+              ],
+              [
+                3,
+                0
+              ]
+            ],
+            "shape": [
+              128
+            ],
+            "staging_ns": 790090
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 4,
+            "primitive": "ppermute",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              128
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 137711.4375,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 41533.5,
+                "max": 2319459.0,
+                "median": 2207529.5,
+                "min": 2012760.0,
+                "relative_mad": 0.01881447110899311
+              },
+              {
+                "count": 30,
+                "mad": 28615.0,
+                "max": 2274107.0,
+                "median": 2180459.0,
+                "min": 2124046.0,
+                "relative_mad": 0.01312338365454246
+              },
+              {
+                "count": 30,
+                "mad": 24774.5,
+                "max": 2286800.0,
+                "median": 2203383.0,
+                "min": 2140750.0,
+                "relative_mad": 0.011243846394385361
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 4146.5,
+              "max": 2207529.5,
+              "median": 2203383.0,
+              "min": 2180459.0
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/9",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 68663341,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0009/optimized_hlo.txt",
+              "sha256": "ba7a5e4036f71b286c927f0c6a4c4160f572e8cea3b22dce5a7b71a68318fe32"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0009/stablehlo.txt",
+              "sha256": "793669c71026c0c2eb923a32a78b494907282cf19ab8814e2d21814ea5c95e29"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1117911,
+          "input_digest": "289820c9229c27f0663ddc32393c99fc89a60a775b73ce162e338ac911b058b4",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 4,
+          "primitive": "psum",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 1048576,
+          "shape": [
+            65536
+          ],
+          "staging_ns": 3450328
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 138589.3125,
+        "variance": {
+          "count": 3,
+          "mad": 2467.5,
+          "max": 2221595.0,
+          "median": 2217429.0,
+          "min": 2214961.5
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/9",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 2.384185791015625e-07,
+                "passed": true,
+                "shape": [
+                  4,
+                  65536
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 7566066827.844319,
+          "metadata": {
+            "compile_ns": 68663341,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "ba7a5e4036f71b286c927f0c6a4c4160f572e8cea3b22dce5a7b71a68318fe32"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "793669c71026c0c2eb923a32a78b494907282cf19ab8814e2d21814ea5c95e29"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1117911,
+            "input_digest": "289820c9229c27f0663ddc32393c99fc89a60a775b73ce162e338ac911b058b4",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 4,
+            "primitive": "psum",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 1048576,
+            "shape": [
+              65536
+            ],
+            "staging_ns": 3450328
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 4,
+            "primitive": "psum",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              65536
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 138589.3125,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 34722.5,
+                "max": 2307204.0,
+                "median": 2217429.0,
+                "min": 1999437.0,
+                "relative_mad": 0.015658900465358755
+              },
+              {
+                "count": 30,
+                "mad": 30636.5,
+                "max": 2298877.0,
+                "median": 2221595.0,
+                "min": 2124521.0,
+                "relative_mad": 0.01379031731706274
+              },
+              {
+                "count": 30,
+                "mad": 29363.0,
+                "max": 4200156.0,
+                "median": 2214961.5,
+                "min": 2132932.0,
+                "relative_mad": 0.013256663829145563
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 2467.5,
+              "max": 2221595.0,
+              "median": 2217429.0,
+              "min": 2214961.5
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/10",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 128449411,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0010/optimized_hlo.txt",
+              "sha256": "8d6c38db0adf6145e00f9a0d37830691db4be2141829b60638f53124bb694805"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0010/stablehlo.txt",
+              "sha256": "6a4bb4ad1f2d683854e775e6473b85e3757cadc0ea4f25609858e6590383d62b"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1358001,
+          "input_digest": "289820c9229c27f0663ddc32393c99fc89a60a775b73ce162e338ac911b058b4",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 4,
+          "primitive": "all_gather",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 1048576,
+          "shape": [
+            65536
+          ],
+          "staging_ns": 3851296
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 138663.1875,
+        "variance": {
+          "count": 3,
+          "mad": 157.5,
+          "max": 2227284.0,
+          "median": 2218611.0,
+          "min": 2218453.5
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/10",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  4,
+                  65536
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 7562035886.417222,
+          "metadata": {
+            "compile_ns": 128449411,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "8d6c38db0adf6145e00f9a0d37830691db4be2141829b60638f53124bb694805"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "6a4bb4ad1f2d683854e775e6473b85e3757cadc0ea4f25609858e6590383d62b"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1358001,
+            "input_digest": "289820c9229c27f0663ddc32393c99fc89a60a775b73ce162e338ac911b058b4",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 4,
+            "primitive": "all_gather",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 1048576,
+            "shape": [
+              65536
+            ],
+            "staging_ns": 3851296
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 4,
+            "primitive": "all_gather",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              65536
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 138663.1875,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 22925.5,
+                "max": 2340368.0,
+                "median": 2218611.0,
+                "min": 2132214.0,
+                "relative_mad": 0.010333267075661304
+              },
+              {
+                "count": 30,
+                "mad": 31189.0,
+                "max": 2344823.0,
+                "median": 2227284.0,
+                "min": 2142646.0,
+                "relative_mad": 0.0140031536166919
+              },
+              {
+                "count": 30,
+                "mad": 28969.0,
+                "max": 2283586.0,
+                "median": 2218453.5,
+                "min": 2113427.0,
+                "relative_mad": 0.01305819572057742
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 157.5,
+              "max": 2227284.0,
+              "median": 2218611.0,
+              "min": 2218453.5
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/11",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 52226420,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0011/optimized_hlo.txt",
+              "sha256": "8c73026a3027607e099826191278e77782fa5a56244c7ae21f657e99e884c4c0"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0011/stablehlo.txt",
+              "sha256": "6d320a1b52a0611d5d31d0aa9411dbe79c746a162f931bf180a88fc1aac5fa4f"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1237825,
+          "input_digest": "289820c9229c27f0663ddc32393c99fc89a60a775b73ce162e338ac911b058b4",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 4,
+          "primitive": "ppermute",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 1048576,
+          "routes": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          "shape": [
+            65536
+          ],
+          "staging_ns": 3310639
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 137823.4375,
+        "variance": {
+          "count": 3,
+          "mad": 2182.0,
+          "max": 2207861.5,
+          "median": 2205175.0,
+          "min": 2202993.0
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/11",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  4,
+                  65536
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 7608110920.901969,
+          "metadata": {
+            "compile_ns": 52226420,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "8c73026a3027607e099826191278e77782fa5a56244c7ae21f657e99e884c4c0"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "6d320a1b52a0611d5d31d0aa9411dbe79c746a162f931bf180a88fc1aac5fa4f"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1237825,
+            "input_digest": "289820c9229c27f0663ddc32393c99fc89a60a775b73ce162e338ac911b058b4",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 4,
+            "primitive": "ppermute",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 1048576,
+            "routes": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                3
+              ],
+              [
+                3,
+                0
+              ]
+            ],
+            "shape": [
+              65536
+            ],
+            "staging_ns": 3310639
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 4,
+            "primitive": "ppermute",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              65536
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 137823.4375,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 27880.5,
+                "max": 2252162.0,
+                "median": 2202993.0,
+                "min": 2122840.0,
+                "relative_mad": 0.01265573699053969
+              },
+              {
+                "count": 30,
+                "mad": 30539.0,
+                "max": 2308630.0,
+                "median": 2207861.5,
+                "min": 2113920.0,
+                "relative_mad": 0.013831936468841004
+              },
+              {
+                "count": 30,
+                "mad": 20556.0,
+                "max": 2272707.0,
+                "median": 2205175.0,
+                "min": 2150146.0,
+                "relative_mad": 0.009321709161404424
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 2182.0,
+              "max": 2207861.5,
+              "median": 2205175.0,
+              "min": 2202993.0
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/12",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 48161051,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0012/optimized_hlo.txt",
+              "sha256": "80a27b79dfebdf7b70084d0fc55c88262514f0a81ea8f70378190f6eb3497749"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0012/stablehlo.txt",
+              "sha256": "1cfe0acb37125b1eb475cd2a7df2cdbf1cab70e279770fbe60a4f4b3bcc6e376"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1492310,
+          "input_digest": "0bbc182aab537fd8d320f1f1224997dba3a2aa5b0a12a7107d56ef53d6f011d1",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 8,
+          "primitive": "psum",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 4096,
+          "shape": [
+            128
+          ],
+          "staging_ns": 1173394
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 224780.0625,
+        "variance": {
+          "count": 3,
+          "mad": 7343.0,
+          "max": 3603824.0,
+          "median": 3596481.0,
+          "min": 3543207.0
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/12",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 2.384185791015625e-07,
+                "passed": true,
+                "shape": [
+                  8,
+                  128
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 18222256.700369056,
+          "metadata": {
+            "compile_ns": 48161051,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "80a27b79dfebdf7b70084d0fc55c88262514f0a81ea8f70378190f6eb3497749"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "1cfe0acb37125b1eb475cd2a7df2cdbf1cab70e279770fbe60a4f4b3bcc6e376"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1492310,
+            "input_digest": "0bbc182aab537fd8d320f1f1224997dba3a2aa5b0a12a7107d56ef53d6f011d1",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 8,
+            "primitive": "psum",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 4096,
+            "shape": [
+              128
+            ],
+            "staging_ns": 1173394
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 8,
+            "primitive": "psum",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              128
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 224780.0625,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 40775.5,
+                "max": 3771683.0,
+                "median": 3603824.0,
+                "min": 3379987.0,
+                "relative_mad": 0.011314509254613988
+              },
+              {
+                "count": 30,
+                "mad": 25864.0,
+                "max": 3722331.0,
+                "median": 3596481.0,
+                "min": 3435453.0,
+                "relative_mad": 0.007191474110387348
+              },
+              {
+                "count": 30,
+                "mad": 57289.0,
+                "max": 3748992.0,
+                "median": 3543207.0,
+                "min": 3442159.0,
+                "relative_mad": 0.01616868560036148
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 7343.0,
+              "max": 3603824.0,
+              "median": 3596481.0,
+              "min": 3543207.0
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/13",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 362608650,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0013/optimized_hlo.txt",
+              "sha256": "8c88c4c355034a8c5947695f5d82620b44b962a6c8aff01cd432f3a3cf0a250c"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0013/stablehlo.txt",
+              "sha256": "7fa03db27220f4d32a9ad1f778983c079789b45f5b5b015d7ff6bb93ee8c4248"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1146660,
+          "input_digest": "0bbc182aab537fd8d320f1f1224997dba3a2aa5b0a12a7107d56ef53d6f011d1",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 8,
+          "primitive": "all_gather",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 4096,
+          "shape": [
+            128
+          ],
+          "staging_ns": 840909
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 219242.21875,
+        "variance": {
+          "count": 3,
+          "mad": 3764.5,
+          "max": 3511640.0,
+          "median": 3507875.5,
+          "min": 3462160.5
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/13",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  8,
+                  128
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 18682533.060252566,
+          "metadata": {
+            "compile_ns": 362608650,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "8c88c4c355034a8c5947695f5d82620b44b962a6c8aff01cd432f3a3cf0a250c"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "7fa03db27220f4d32a9ad1f778983c079789b45f5b5b015d7ff6bb93ee8c4248"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1146660,
+            "input_digest": "0bbc182aab537fd8d320f1f1224997dba3a2aa5b0a12a7107d56ef53d6f011d1",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 8,
+            "primitive": "all_gather",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 4096,
+            "shape": [
+              128
+            ],
+            "staging_ns": 840909
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 8,
+            "primitive": "all_gather",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              128
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 219242.21875,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 63672.5,
+                "max": 3648493.0,
+                "median": 3462160.5,
+                "min": 3281358.0,
+                "relative_mad": 0.018390972919944064
+              },
+              {
+                "count": 30,
+                "mad": 63307.0,
+                "max": 3683985.0,
+                "median": 3511640.0,
+                "min": 3341961.0,
+                "relative_mad": 0.01802775910970373
+              },
+              {
+                "count": 30,
+                "mad": 58348.5,
+                "max": 3975197.0,
+                "median": 3507875.5,
+                "min": 3314710.0,
+                "relative_mad": 0.01663357208658061
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 3764.5,
+              "max": 3511640.0,
+              "median": 3507875.5,
+              "min": 3462160.5
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/14",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 44712720,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0014/optimized_hlo.txt",
+              "sha256": "9162987a5e4e053f3f54e3d5dfe8667163317863b3e8271546911fee84619a26"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0014/stablehlo.txt",
+              "sha256": "46524df99c2ecb0375c9b47af93f54ace87574618ba763c71c22733ef08325e6"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1210798,
+          "input_digest": "0bbc182aab537fd8d320f1f1224997dba3a2aa5b0a12a7107d56ef53d6f011d1",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 8,
+          "primitive": "ppermute",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 4096,
+          "routes": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              0
+            ]
+          ],
+          "shape": [
+            128
+          ],
+          "staging_ns": 932481
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 225846.25,
+        "variance": {
+          "count": 3,
+          "mad": 6756.0,
+          "max": 3620296.0,
+          "median": 3613540.0,
+          "min": 3601996.0
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/14",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  8,
+                  128
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 18136232.060527902,
+          "metadata": {
+            "compile_ns": 44712720,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "9162987a5e4e053f3f54e3d5dfe8667163317863b3e8271546911fee84619a26"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "46524df99c2ecb0375c9b47af93f54ace87574618ba763c71c22733ef08325e6"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1210798,
+            "input_digest": "0bbc182aab537fd8d320f1f1224997dba3a2aa5b0a12a7107d56ef53d6f011d1",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 8,
+            "primitive": "ppermute",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 4096,
+            "routes": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                3
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                4,
+                5
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                6,
+                7
+              ],
+              [
+                7,
+                0
+              ]
+            ],
+            "shape": [
+              128
+            ],
+            "staging_ns": 932481
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 8,
+            "primitive": "ppermute",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              128
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 225846.25,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 58384.0,
+                "max": 4354866.0,
+                "median": 3601996.0,
+                "min": 3310383.0,
+                "relative_mad": 0.016208790903710055
+              },
+              {
+                "count": 30,
+                "mad": 47050.5,
+                "max": 3792853.0,
+                "median": 3613540.0,
+                "min": 3465381.0,
+                "relative_mad": 0.013020611367246523
+              },
+              {
+                "count": 30,
+                "mad": 37675.0,
+                "max": 5310540.0,
+                "median": 3620296.0,
+                "min": 3503410.0,
+                "relative_mad": 0.010406607636502651
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 6756.0,
+              "max": 3620296.0,
+              "median": 3613540.0,
+              "min": 3601996.0
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/15",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 711574546,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0015/optimized_hlo.txt",
+              "sha256": "cd064c9e89295f64488f60c4fa408f0aab7399742b0980fa931918bc395e2a7b"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0015/stablehlo.txt",
+              "sha256": "3ccdc5e4aa42ea129b570bae07fa030518d426a48b34c2b3146b2cbd5c5b8894"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1709141,
+          "input_digest": "64129a9f1182bbfedcbb298a006c5501d54dc690232aa34534ac91453d89f702",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 8,
+          "primitive": "psum",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 2097152,
+          "shape": [
+            65536
+          ],
+          "staging_ns": 5868921
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 205166.875,
+        "variance": {
+          "count": 3,
+          "mad": 35745.0,
+          "max": 3318415.0,
+          "median": 3282670.0,
+          "min": 3229308.5
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/15",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 4.76837158203125e-07,
+                "passed": true,
+                "shape": [
+                  8,
+                  65536
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 10221689051.899824,
+          "metadata": {
+            "compile_ns": 711574546,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "cd064c9e89295f64488f60c4fa408f0aab7399742b0980fa931918bc395e2a7b"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "3ccdc5e4aa42ea129b570bae07fa030518d426a48b34c2b3146b2cbd5c5b8894"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1709141,
+            "input_digest": "64129a9f1182bbfedcbb298a006c5501d54dc690232aa34534ac91453d89f702",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 8,
+            "primitive": "psum",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 2097152,
+            "shape": [
+              65536
+            ],
+            "staging_ns": 5868921
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 8,
+            "primitive": "psum",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              65536
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 205166.875,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 81651.0,
+                "max": 3760012.0,
+                "median": 3229308.5,
+                "min": 3029272.0,
+                "relative_mad": 0.02528436041338262
+              },
+              {
+                "count": 30,
+                "mad": 81757.5,
+                "max": 4560584.0,
+                "median": 3282670.0,
+                "min": 3071327.0,
+                "relative_mad": 0.02490579315008819
+              },
+              {
+                "count": 30,
+                "mad": 110068.5,
+                "max": 3981858.0,
+                "median": 3318415.0,
+                "min": 3116990.0,
+                "relative_mad": 0.033168997849877126
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 35745.0,
+              "max": 3318415.0,
+              "median": 3282670.0,
+              "min": 3229308.5
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/16",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 544592987,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0016/optimized_hlo.txt",
+              "sha256": "943877633d6ac36d37ea4ef03f258e1a5fdc0d1ce7e2590203517264c161b576"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0016/stablehlo.txt",
+              "sha256": "d9df88843e47b79fc9b2a9af901f96cfd852f9526771d672211ab06b9ea98860"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1479299,
+          "input_digest": "64129a9f1182bbfedcbb298a006c5501d54dc690232aa34534ac91453d89f702",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 8,
+          "primitive": "all_gather",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 2097152,
+          "shape": [
+            65536
+          ],
+          "staging_ns": 6032783
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 217317.125,
+        "variance": {
+          "count": 3,
+          "mad": 1872.5,
+          "max": 3478946.5,
+          "median": 3477074.0,
+          "min": 3435720.5
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/16",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  8,
+                  65536
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 9650192086.794817,
+          "metadata": {
+            "compile_ns": 544592987,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "943877633d6ac36d37ea4ef03f258e1a5fdc0d1ce7e2590203517264c161b576"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "d9df88843e47b79fc9b2a9af901f96cfd852f9526771d672211ab06b9ea98860"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1479299,
+            "input_digest": "64129a9f1182bbfedcbb298a006c5501d54dc690232aa34534ac91453d89f702",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 8,
+            "primitive": "all_gather",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 2097152,
+            "shape": [
+              65536
+            ],
+            "staging_ns": 6032783
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 8,
+            "primitive": "all_gather",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              65536
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 217317.125,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 42846.5,
+                "max": 3985773.0,
+                "median": 3478946.5,
+                "min": 3304000.0,
+                "relative_mad": 0.012315941047095724
+              },
+              {
+                "count": 30,
+                "mad": 33881.0,
+                "max": 3597897.0,
+                "median": 3435720.5,
+                "min": 3328203.0,
+                "relative_mad": 0.009861395884793307
+              },
+              {
+                "count": 30,
+                "mad": 61463.0,
+                "max": 5174226.0,
+                "median": 3477074.0,
+                "min": 3273263.0,
+                "relative_mad": 0.017676644212921554
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 1872.5,
+              "max": 3478946.5,
+              "median": 3477074.0,
+              "min": 3435720.5
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "interconnect.collectives",
+        "interpretation": {
+          "case_id": "interconnect.collectives/17",
+          "generation": "tpu7x",
+          "status": "passed",
+          "time_domain": "synchronized_host"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "interconnect.collectives",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 48944337,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0017/optimized_hlo.txt",
+              "sha256": "6b1f25965986df24f14db9346a04c36a7979630fe8ed6f1d97c4bcde9973d033"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0017/stablehlo.txt",
+              "sha256": "89bfa05f5982cbd769e10277733c24d5720d8e646e9b74bb9d6066c99db07003"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 1125902,
+          "input_digest": "64129a9f1182bbfedcbb298a006c5501d54dc690232aa34534ac91453d89f702",
+          "kind": "collective",
+          "matrix": false,
+          "mode": "shard_map",
+          "participants": 8,
+          "primitive": "ppermute",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 2097152,
+          "routes": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              0
+            ]
+          ],
+          "shape": [
+            65536
+          ],
+          "staging_ns": 6205723
+        },
+        "mode": "shard_map"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "dispatch_to_completion_ns",
+        "uncertainty": "stable_scalar",
+        "unit": "ns",
+        "value": 223945.3125,
+        "variance": {
+          "count": 3,
+          "mad": 6793.5,
+          "max": 3589918.5,
+          "median": 3583125.0,
+          "min": 3562800.0
+        }
+      },
+      "raw_observation": {
+        "evidence_tier": "timing_direct",
+        "metrics": {},
+        "source": "synchronized host timing",
+        "units": {
+          "dispatch_to_completion_ns": "ns"
+        },
+        "values": {
+          "case_id": "interconnect.collectives/17",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  8,
+                  65536
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "effective_bytes_per_second": 9364571986.743416,
+          "metadata": {
+            "compile_ns": 48944337,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "6b1f25965986df24f14db9346a04c36a7979630fe8ed6f1d97c4bcde9973d033"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "89bfa05f5982cbd769e10277733c24d5720d8e646e9b74bb9d6066c99db07003"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 1125902,
+            "input_digest": "64129a9f1182bbfedcbb298a006c5501d54dc690232aa34534ac91453d89f702",
+            "kind": "collective",
+            "matrix": false,
+            "mode": "shard_map",
+            "participants": 8,
+            "primitive": "ppermute",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 2097152,
+            "routes": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                3
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                4,
+                5
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                6,
+                7
+              ],
+              [
+                7,
+                0
+              ]
+            ],
+            "shape": [
+              65536
+            ],
+            "staging_ns": 6205723
+          },
+          "probe_id": "interconnect.collectives",
+          "spec": {
+            "devices": 8,
+            "primitive": "ppermute",
+            "probe_id": "interconnect.collectives",
+            "shape": [
+              65536
+            ]
+          },
+          "status": "passed",
+          "timing": {
+            "allocation_policy": "outputs allocated by executable; all outputs retained until drain",
+            "batch_size": 16,
+            "input_donation": false,
+            "measured_samples_per_repeat": 30,
+            "median_ns_per_invocation": 223945.3125,
+            "output_reuse": false,
+            "repeat_summaries": [
+              {
+                "count": 30,
+                "mad": 41828.0,
+                "max": 3662591.0,
+                "median": 3583125.0,
+                "min": 3409006.0,
+                "relative_mad": 0.011673608930751788
+              },
+              {
+                "count": 30,
+                "mad": 40695.0,
+                "max": 3781622.0,
+                "median": 3562800.0,
+                "min": 3421314.0,
+                "relative_mad": 0.011422196025597844
+              },
+              {
+                "count": 30,
+                "mad": 34028.5,
+                "max": 3700153.0,
+                "median": 3589918.5,
+                "min": 3458031.0,
+                "relative_mad": 0.009478905997448132
+              }
+            ],
+            "repeats": 3,
+            "stable": true,
+            "summary": {
+              "count": 3,
+              "mad": 6793.5,
+              "max": 3589918.5,
+              "median": 3583125.0,
+              "min": 3562800.0
+            },
+            "time_domain": "synchronized_host",
+            "timed_unit": "batched_invocations",
+            "warmup_iterations": 5
+          }
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    }
+  ],
+  "schema_version": 1
+}

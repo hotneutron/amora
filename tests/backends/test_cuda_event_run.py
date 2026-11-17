@@ -239,6 +239,7 @@ def test_run_cuda_events_uses_real_process_isolation(tmp_path):
     ] == ["0", "1"]
 
 
+@pytest.mark.cuda
 def test_cuda_event_fixture_preserves_environment_measurement_context(tmp_path):
     context = {
         "operation_id": "operation",

@@ -1,0 +1,1014 @@
+{
+  "metadata": {
+    "backend_capabilities": {
+      "architecture": {
+        "generation": "tpu7x",
+        "profile": {
+          "aliases": [
+            "TPU7x",
+            "TPU 7x",
+            "Ironwood",
+            "7x"
+          ],
+          "facts": {
+            "hbm_capacity_bytes": {
+              "evidence": "unknown",
+              "scope": "chip",
+              "value": null
+            },
+            "hbm_capacity_bytes_per_tensorcore": {
+              "evidence": "published_fact",
+              "scope": "TPU TensorCore",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 103000000000
+            },
+            "matrix_tile": {
+              "evidence": "unknown",
+              "scope": "MXU",
+              "value": null
+            },
+            "mxu_column_size": {
+              "evidence": "published_fact",
+              "scope": "architecture",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 256
+            },
+            "num_lanes": {
+              "evidence": "published_fact",
+              "scope": "architecture",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 128
+            },
+            "num_mxus_per_tensorcore": {
+              "evidence": "published_fact",
+              "scope": "TPU TensorCore",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 2
+            },
+            "num_sublanes": {
+              "evidence": "published_fact",
+              "scope": "architecture",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 8
+            },
+            "physical_tensorcores_per_chip": {
+              "evidence": "published_fact",
+              "scope": "chip",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 2
+            },
+            "sparsecore": {
+              "evidence": "published_fact",
+              "scope": "generation",
+              "value": true
+            },
+            "supports_megacore": {
+              "evidence": "published_fact",
+              "scope": "architecture",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": false
+            },
+            "vmem_capacity_bytes": {
+              "evidence": "unknown",
+              "scope": "TPU TensorCore",
+              "value": null
+            },
+            "vmem_capacity_bytes_per_tensorcore": {
+              "evidence": "published_fact",
+              "scope": "TPU TensorCore",
+              "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+              "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+              "value": 67108864
+            }
+          },
+          "generation": "tpu7x",
+          "policy": {
+            "device_core_mapping": "runtime observation required",
+            "pallas": "compile-and-execute qualification required",
+            "profiling": "trace qualification required"
+          },
+          "profile_digest": "6302a3fe1aa76595e76a8827555998569c57751f4c36feed645a8fb654c54d1d",
+          "revision": 1,
+          "sources": [
+            {
+              "consulted": "2026-11-17",
+              "role": "generation identity and architecture",
+              "url": "https://cloud.google.com/tpu/docs/tpu7x"
+            },
+            {
+              "role": "TPU TensorCore, logical device and SparseCore scopes",
+              "url": "https://docs.jax.dev/en/latest/pallas/tpu/core_map.html"
+            }
+          ]
+        },
+        "raw_chip_version": "7x",
+        "raw_device_kind": "TPU7x",
+        "resolution": "runtime"
+      },
+      "backend": "tpu_jax",
+      "devices": [
+        {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 1,
+          "id": 1,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            1,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 2,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            1,
+            0,
+            0
+          ],
+          "core_on_chip": 1,
+          "id": 3,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            0,
+            1,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 4,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            0,
+            1,
+            0
+          ],
+          "core_on_chip": 1,
+          "id": 5,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            1,
+            1,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 6,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        {
+          "addressable": true,
+          "coords": [
+            1,
+            1,
+            0
+          ],
+          "core_on_chip": 1,
+          "id": 7,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        }
+      ],
+      "features": {
+        "collectives": {
+          "state": "declared"
+        },
+        "jax_jit": {
+          "state": "observed"
+        },
+        "pallas": {
+          "state": "declared"
+        },
+        "profiling": {
+          "state": "unknown"
+        },
+        "runtime": {
+          "state": "observed"
+        }
+      },
+      "ownership": {
+        "holders": [],
+        "inaccessible": 0,
+        "privileged": true,
+        "scope": "all visible accelerator nodes",
+        "state": "exclusive"
+      },
+      "runtime": {
+        "packages": {
+          "jax": "0.12.0.1",
+          "jaxlib": "0.12.0.1",
+          "libtpu": "0.0.50.1",
+          "numpy": "2.5.5",
+          "xprof": null
+        },
+        "platform": "Linux-6.8.0-1061-gke-x86_64-with-glibc2.39",
+        "python": "3.12.3",
+        "runtime_digest": "f2160dbc42ad690e562353729f9538ea05e5deac477c2da445827c29dbc8a71c",
+        "runtime_lock_sha256": "7cd241d382bb7be16d125bb837f1eacf6e19d3d80173f370581353652b737fd6",
+        "runtime_lock_versions_verified": true
+      },
+      "runtime_available": true,
+      "selected_device": {
+        "addressable": true,
+        "coords": [
+          0,
+          0,
+          0
+        ],
+        "core_on_chip": 0,
+        "id": 0,
+        "kind": "TPU7x",
+        "memory_stats": {
+          "bytes_in_use": 65536,
+          "bytes_limit": 101724450816,
+          "bytes_reservable_limit": 101724450816,
+          "bytes_reserved": 0,
+          "largest_alloc_size": 64000,
+          "largest_free_block_bytes": 101724385280,
+          "num_allocs": 2,
+          "peak_bytes_in_use": 65536,
+          "peak_bytes_reserved": 0
+        },
+        "name": "TPU7x",
+        "process_index": 0
+      },
+      "status": "ok",
+      "target": {
+        "devices": [
+          {
+            "addressable": true,
+            "coords": [
+              0,
+              0,
+              0
+            ],
+            "core_on_chip": 0,
+            "id": 0,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              0,
+              0,
+              0
+            ],
+            "core_on_chip": 1,
+            "id": 1,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              1,
+              0,
+              0
+            ],
+            "core_on_chip": 0,
+            "id": 2,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              1,
+              0,
+              0
+            ],
+            "core_on_chip": 1,
+            "id": 3,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              0,
+              1,
+              0
+            ],
+            "core_on_chip": 0,
+            "id": 4,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              0,
+              1,
+              0
+            ],
+            "core_on_chip": 1,
+            "id": 5,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              1,
+              1,
+              0
+            ],
+            "core_on_chip": 0,
+            "id": 6,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          },
+          {
+            "addressable": true,
+            "coords": [
+              1,
+              1,
+              0
+            ],
+            "core_on_chip": 1,
+            "id": 7,
+            "kind": "TPU7x",
+            "memory_stats": {
+              "bytes_in_use": 65536,
+              "bytes_limit": 101724450816,
+              "bytes_reservable_limit": 101724450816,
+              "bytes_reserved": 0,
+              "largest_alloc_size": 64000,
+              "largest_free_block_bytes": 101724385280,
+              "num_allocs": 2,
+              "peak_bytes_in_use": 65536,
+              "peak_bytes_reserved": 0
+            },
+            "name": "TPU7x",
+            "process_index": 0
+          }
+        ],
+        "generation": "tpu7x",
+        "hardware_info": {
+          "chip_version": "7x",
+          "hbm_capacity_bytes": 103000000000,
+          "mxu_column_size": 256,
+          "num_cores": 1,
+          "num_lanes": 128,
+          "num_mxus": 2,
+          "num_sublanes": 8,
+          "smem_capacity_bytes": 1048576,
+          "source": "JAX TPU registry resolved by runtime identity; architecture metadata",
+          "vmem_capacity_bytes": 67108864
+        },
+        "instance": "gke-tpu-f20b10b7-2pbv",
+        "instance_config_sha256": "be356a51bebe34edb3a42c66ba54e3c26c16c00ca96aa1a5cd98b93bfc914c8d",
+        "local_index": 0,
+        "process_count": 1,
+        "process_index": 0,
+        "selected_device_id": 0,
+        "target_config_digest": "3153678c9c78e536c9572ee8937c6820ef992b9c3256ba1d0ed3e5f4d8b81957",
+        "visibility": {
+          "TPU_CHIPS_PER_HOST_BOUNDS": "2,2,1",
+          "TPU_HOST_BOUNDS": "1,1,1",
+          "TPU_LOG_DIR": "/home/maas/amora-tpu-20261116-1659/out/tpu/runtime-logs",
+          "TPU_SKIP_MDS_QUERY": "1",
+          "TPU_TOPOLOGY": "2x2x1",
+          "TPU_WORKER_HOSTNAMES": "localhost",
+          "TPU_WORKER_ID": "0"
+        }
+      },
+      "unsupported_reasons": []
+    },
+    "qualification": {
+      "ownership_final": "exclusive",
+      "runtime_locked": true,
+      "status": "passed"
+    },
+    "recipe": {
+      "batch": 1,
+      "capture_profile": false,
+      "cases": [
+        {
+          "measure": false,
+          "probe_id": "vector.elementwise_throughput",
+          "shape": [
+            128,
+            128
+          ]
+        },
+        {
+          "measure": false,
+          "probe_id": "matrix.matmul_throughput",
+          "shape": [
+            128,
+            128,
+            128
+          ]
+        }
+      ],
+      "device": "tpu:0",
+      "max_buffer_bytes": 268435456,
+      "max_relative_mad": 0.05,
+      "recipe_id": "tpu-smoke-v1",
+      "repeats": 3,
+      "samples": 30,
+      "schema_version": 1,
+      "warmup": 5
+    },
+    "report_identity": {
+      "family": "tpu7x",
+      "runtime_digest": "f2160dbc42ad690e562353729f9538ea05e5deac477c2da445827c29dbc8a71c",
+      "sku": "tpu7x",
+      "target_config_digest": "3153678c9c78e536c9572ee8937c6820ef992b9c3256ba1d0ed3e5f4d8b81957",
+      "vendor": "google_tpu"
+    },
+    "source_evidence": {
+      "artifact_paths_relative_to": "root",
+      "manifest_sha256": "74ef8b689916d4476070497f25631946fa52ce73ac5780829387dc737e0bac97",
+      "report_sha256": "cabf3605a82bc29092cea41f82ad2fad67aa2dfaddf957e761d26818c78ff354",
+      "root": "out/tpu_backend_execution/evidence/native-002/out/tpu/tpu-smoke-v1/8eb82045d34b30112403e6827bc74a8889e67c0348bc7d04310ba1fc03428d4e/native-restore-002-smoke",
+      "run_digest": "2161df04d9704a9d54d9438be2c12bc36f4cee520f887a5ca9eb974d0021630c"
+    }
+  },
+  "results": [
+    {
+      "backend_interpretation": {
+        "concept": "vector.elementwise_throughput",
+        "interpretation": {
+          "case_id": "vector.elementwise_throughput/0",
+          "generation": "tpu7x",
+          "status": "passed"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "vector.elementwise_throughput",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 312844487,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0000/optimized_hlo.txt",
+              "sha256": "3f3cc5603df99e4d95850443838b80988d2bf2be21f8baf4ffcc98ffd8b9acb0"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0000/stablehlo.txt",
+              "sha256": "28861aeb095bd3b001bc90ccbcfabcf6d4e34344d0159c42cf1588e711554c37"
+            }
+          },
+          "dynamic_argument_count": 1,
+          "first_execution_ns": 866227,
+          "input_digest": "cdc1a107d14e0f8289500fff522b2a93c219f55b476cfa6ff0fa8ed5a22ec12e",
+          "kind": "vector",
+          "logical_flops": 32768,
+          "matrix": false,
+          "mode": "jax_jit",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "requested_bytes": 131072,
+          "shape": [
+            128,
+            128
+          ],
+          "staging_ns": 9628488
+        },
+        "mode": "jax_jit"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "correctness",
+        "uncertainty": "behavioral_class",
+        "value": {
+          "atol": 2e-05,
+          "outputs": [
+            {
+              "dtype": "float32",
+              "max_abs_error": 0.0,
+              "passed": true,
+              "shape": [
+                128,
+                128
+              ]
+            }
+          ],
+          "passed": true,
+          "rtol": 0.0002,
+          "tolerance_policy": "portable-core-r1"
+        },
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "direct_metadata",
+        "metrics": {},
+        "source": "compiled correctness",
+        "units": {},
+        "values": {
+          "case_id": "vector.elementwise_throughput/0",
+          "correctness": {
+            "atol": 2e-05,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 0.0,
+                "passed": true,
+                "shape": [
+                  128,
+                  128
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.0002,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "metadata": {
+            "compile_ns": 312844487,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "3f3cc5603df99e4d95850443838b80988d2bf2be21f8baf4ffcc98ffd8b9acb0"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "28861aeb095bd3b001bc90ccbcfabcf6d4e34344d0159c42cf1588e711554c37"
+              }
+            },
+            "dynamic_argument_count": 1,
+            "first_execution_ns": 866227,
+            "input_digest": "cdc1a107d14e0f8289500fff522b2a93c219f55b476cfa6ff0fa8ed5a22ec12e",
+            "kind": "vector",
+            "logical_flops": 32768,
+            "matrix": false,
+            "mode": "jax_jit",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "requested_bytes": 131072,
+            "shape": [
+              128,
+              128
+            ],
+            "staging_ns": 9628488
+          },
+          "probe_id": "vector.elementwise_throughput",
+          "spec": {
+            "measure": false,
+            "probe_id": "vector.elementwise_throughput",
+            "shape": [
+              128,
+              128
+            ]
+          },
+          "status": "passed"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    },
+    {
+      "backend_interpretation": {
+        "concept": "matrix.matmul_throughput",
+        "interpretation": {
+          "case_id": "matrix.matmul_throughput/1",
+          "generation": "tpu7x",
+          "status": "passed"
+        },
+        "metric_resolver": {},
+        "sass_validation": {}
+      },
+      "identity": {
+        "backend": "tpu_jax",
+        "family": "baseline",
+        "probe_id": "matrix.matmul_throughput",
+        "source_hash": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86"
+      },
+      "launch": {
+        "extras": {
+          "compile_ns": 31649700,
+          "compiler_artifacts": {
+            "optimized_hlo": {
+              "path": "compiler/case-0001/optimized_hlo.txt",
+              "sha256": "b593a0792ace2edbf2fe52392e7cc7ceb41d1e9f7c39ac04d47d526a5ddc5b9a"
+            },
+            "stablehlo": {
+              "path": "compiler/case-0001/stablehlo.txt",
+              "sha256": "e86ec563d754aa70c2e990b4e9bb14ddbcac89c683505bc049263f388d60047e"
+            }
+          },
+          "dynamic_argument_count": 2,
+          "first_execution_ns": 634078,
+          "input_digest": "697c61a7a350756e075148d73ab79e2ab61a74c92cef75cf6e72b73e7dc4d0e1",
+          "kind": "matmul",
+          "logical_flops": 4194304,
+          "matrix": true,
+          "mode": "jax_jit",
+          "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+          "shape": [
+            128,
+            128,
+            128
+          ],
+          "staging_ns": 30684453
+        },
+        "mode": "jax_jit"
+      },
+      "normalized_measurement": {
+        "assumptions": [
+          "includes host dispatch and completion overhead",
+          "IR/correctness do not prove ISA instruction counts or physical memory traffic"
+        ],
+        "coupled_with": [],
+        "fit_status": "direct",
+        "name": "correctness",
+        "uncertainty": "behavioral_class",
+        "value": {
+          "atol": 0.0005,
+          "outputs": [
+            {
+              "dtype": "float32",
+              "max_abs_error": 4.76837158203125e-07,
+              "passed": true,
+              "shape": [
+                128,
+                128
+              ]
+            }
+          ],
+          "passed": true,
+          "rtol": 0.005,
+          "tolerance_policy": "portable-core-r1"
+        },
+        "variance": {}
+      },
+      "raw_observation": {
+        "evidence_tier": "direct_metadata",
+        "metrics": {},
+        "source": "compiled correctness",
+        "units": {},
+        "values": {
+          "case_id": "matrix.matmul_throughput/1",
+          "correctness": {
+            "atol": 0.0005,
+            "outputs": [
+              {
+                "dtype": "float32",
+                "max_abs_error": 4.76837158203125e-07,
+                "passed": true,
+                "shape": [
+                  128,
+                  128
+                ]
+              }
+            ],
+            "passed": true,
+            "rtol": 0.005,
+            "tolerance_policy": "portable-core-r1"
+          },
+          "metadata": {
+            "compile_ns": 31649700,
+            "compiler_artifacts": {
+              "optimized_hlo": {
+                "path": "optimized_hlo.txt",
+                "sha256": "b593a0792ace2edbf2fe52392e7cc7ceb41d1e9f7c39ac04d47d526a5ddc5b9a"
+              },
+              "stablehlo": {
+                "path": "stablehlo.txt",
+                "sha256": "e86ec563d754aa70c2e990b4e9bb14ddbcac89c683505bc049263f388d60047e"
+              }
+            },
+            "dynamic_argument_count": 2,
+            "first_execution_ns": 634078,
+            "input_digest": "697c61a7a350756e075148d73ab79e2ab61a74c92cef75cf6e72b73e7dc4d0e1",
+            "kind": "matmul",
+            "logical_flops": 4194304,
+            "matrix": true,
+            "mode": "jax_jit",
+            "probe_source_sha256": "0d4bf8170374e240d82ffa995e711caa51b91f47d73160d11e0786d9950a3d86",
+            "shape": [
+              128,
+              128,
+              128
+            ],
+            "staging_ns": 30684453
+          },
+          "probe_id": "matrix.matmul_throughput",
+          "spec": {
+            "measure": false,
+            "probe_id": "matrix.matmul_throughput",
+            "shape": [
+              128,
+              128,
+              128
+            ]
+          },
+          "status": "passed"
+        }
+      },
+      "simulator_estimate": {
+        "assumptions": [],
+        "coupled_with": [],
+        "evidence_tier": "unsupported",
+        "fit_status": "unsupported",
+        "mapping_contract": "unsupported",
+        "parameter": "unsupported",
+        "uncertainty": "indeterminate",
+        "unsupported_reason": "unsupported"
+      },
+      "tool_context": {
+        "device": {
+          "addressable": true,
+          "coords": [
+            0,
+            0,
+            0
+          ],
+          "core_on_chip": 0,
+          "id": 0,
+          "kind": "TPU7x",
+          "memory_stats": {
+            "bytes_in_use": 65536,
+            "bytes_limit": 101724450816,
+            "bytes_reservable_limit": 101724450816,
+            "bytes_reserved": 0,
+            "largest_alloc_size": 64000,
+            "largest_free_block_bytes": 101724385280,
+            "num_allocs": 2,
+            "peak_bytes_in_use": 65536,
+            "peak_bytes_reserved": 0
+          },
+          "name": "TPU7x",
+          "process_index": 0
+        },
+        "environment": {},
+        "tools": {
+          "$ref": "metadata.backend_capabilities"
+        }
+      }
+    }
+  ],
+  "schema_version": 1
+}

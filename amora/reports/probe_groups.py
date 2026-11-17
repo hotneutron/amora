@@ -57,9 +57,19 @@ def group_for_probe(vendor: str, probe_id: str) -> tuple[str, str]:
 # --------------------------------------------------------------------------- #
 # NVIDIA registration
 #
-# 30 probes (baseline P0 + P1 + P2 + P3) combined across tiers into 5 thematic
+# 36 probes (baseline P0 + P1 + P2 + P3) combined across tiers into 5 thematic
 # groups of 6-8 probes each.
 # --------------------------------------------------------------------------- #
+
+register_vendor_groups("google_tpu", (
+    ProbeGroup("topology_runtime", "Topology & Runtime",
+               ("topology.device_attributes", "runtime.dispatch_latency")),
+    ProbeGroup("compute", "Matrix & Vector",
+               ("matrix.matmul_throughput", "matrix.dependent_chain", "vector.elementwise_throughput", "portable_core")),
+    ProbeGroup("memory_transfer", "Memory & Transfer",
+               ("global_memory.streaming", "local_memory.transfer_sweep", "transfer.host_device")),
+    ProbeGroup("interconnect", "Interconnect", ("interconnect.collectives",)),
+))
 
 
 register_vendor_groups(

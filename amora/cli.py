@@ -561,9 +561,83 @@ def _add_backend_subparser(subparsers, name: str, baseline, discover, run_func,
     return backend, sub, run_parser
 
 
+def _cmd_tpu(args: argparse.Namespace) -> int:
+    from amora.backends.tpu.capabilities import discover_capabilities
+    from amora.probes.tpu.baseline import PROBES, list_probes
+    if args.command == "list":
+        _print_json({"probes": list_probes()})
+        return 0
+    if args.command == "inspect-capabilities":
+        _print_json(discover_capabilities(args.device, args.profile, args.timeout))
+        return 0
+    if args.command == "report":
+        from amora.backends.tpu.reporting import write_tpu_report
+        from amora.backends.tpu.artifacts import validate_manifest
+        manifest = Path(args.input).parent / "manifest.json"
+        if manifest.exists():
+            validate_manifest(manifest)
+        report = json.loads(Path(args.input).read_text())
+        _print_json({"report": str(write_tpu_report(report, args.out_dir,
+            family=args.family, sku=args.sku, run_id=args.run_id,source_report=args.input))})
+        return 0
+    from amora.backends.tpu.measurement import execute_recipe, load_recipe
+    if args.command == "measure":
+        recipe = load_recipe(args.recipe)
+        if args.device is not None:
+            recipe["device"] = args.device
+        if args.profile is not None:
+            recipe["architecture_profile"] = args.profile
+    else:
+        selected = list(PROBES) if args.all else [args.probe]
+        recipe = {"schema_version": 1, "recipe_id": "tpu-probes-v1",
+                  "device": args.device, "architecture_profile": args.profile,
+                  "cases": [{"probe_id": name} for name in selected]}
+    directory, manifest = execute_recipe(recipe, args.out_root, args.run_id, args.timeout)
+    if getattr(args, "output", None) and (directory / "report.json").exists():
+        destination = Path(args.output)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes((directory / "report.json").read_bytes())
+    _print_json({"run_dir": str(directory), "manifest": str(directory / "manifest.json"),
+                 "status": manifest["status"], "reason": manifest.get("reason"),
+                 "run_digest": manifest["run_digest"]})
+    return 0 if manifest["status"] == "passed" else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="amora")
     subparsers = parser.add_subparsers(dest="backend")
+
+    tpu_parser = subparsers.add_parser("tpu")
+    tpu_sub = tpu_parser.add_subparsers(dest="command")
+    tpu_list = tpu_sub.add_parser("list")
+    tpu_list.set_defaults(func=_cmd_tpu)
+    tpu_caps = tpu_sub.add_parser("inspect-capabilities")
+    tpu_caps.add_argument("--device", default="tpu:0")
+    tpu_caps.add_argument("--profile", default=None)
+    tpu_caps.add_argument("--timeout", type=float, default=120)
+    tpu_caps.set_defaults(func=_cmd_tpu)
+    from amora.probes.tpu.baseline import PROBES as TPU_PROBES
+    tpu_run = tpu_sub.add_parser("run")
+    selection = tpu_run.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--probe", choices=tuple(TPU_PROBES))
+    selection.add_argument("--all", action="store_true")
+    tpu_run.add_argument("--output")
+    tpu_measure = tpu_sub.add_parser("measure")
+    tpu_measure.add_argument("--recipe", type=Path, required=True)
+    for command in (tpu_run, tpu_measure):
+        command.add_argument("--device", default="tpu:0" if command is tpu_run else None)
+        command.add_argument("--profile", default=None)
+        command.add_argument("--out-root", default="out/tpu")
+        command.add_argument("--run-id")
+        command.add_argument("--timeout", type=float, default=900)
+        command.set_defaults(func=_cmd_tpu)
+    tpu_report = tpu_sub.add_parser("report")
+    tpu_report.add_argument("--input", required=True)
+    tpu_report.add_argument("--out-dir", default="reports")
+    tpu_report.add_argument("--family")
+    tpu_report.add_argument("--sku")
+    tpu_report.add_argument("--run-id")
+    tpu_report.set_defaults(func=_cmd_tpu)
 
     # --- benchmarks ---
     benchmarks_parser = subparsers.add_parser("benchmarks")

@@ -85,7 +85,7 @@ class NormalizedMeasurement:
 
 @dataclass(frozen=True)
 class BackendInterpretation:
-    """NVIDIA-specific interpretation of a normalized measurement."""
+    """Backend-specific interpretation of a normalized measurement."""
 
     concept: str
     interpretation: Mapping[str, Any] = field(default_factory=dict)

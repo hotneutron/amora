@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "recipe_id": "tpu-single-device-v1",
+  "device": "tpu:0",
+  "warmup": 5,
+  "samples": 30,
+  "repeats": 3,
+  "batch": 1,
+  "max_relative_mad": 0.05,
+  "cases": [
+    {"probe_id": "topology.device_attributes"},
+    {"probe_id": "runtime.dispatch_latency"},
+    {"probe_id": "matrix.matmul_throughput", "shape": [128, 128, 128], "seed": 1},
+    {"probe_id": "matrix.matmul_throughput", "shape": [256, 256, 256], "seed": 1},
+    {"probe_id": "matrix.matmul_throughput", "shape": [511, 513, 257], "seed": 1},
+    {"probe_id": "vector.elementwise_throughput", "shape": [128, 128], "seed": 2},
+    {"probe_id": "vector.elementwise_throughput", "shape": [1024, 1024], "seed": 2},
+    {"probe_id": "transfer.host_device", "shape": [128, 128], "seed": 3},
+    {"probe_id": "transfer.host_device", "shape": [1024, 1024], "seed": 3},
+    {"probe_id": "transfer.host_device", "shape": [1024, 1024], "seed": 3, "direction": "device_to_host"}
+  ]
+}
