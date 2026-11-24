@@ -26,6 +26,7 @@ include = ["amora*", "benchmark_generators*"]
 "amora.backends.tpu" = ["profiles/*.json"]
 "benchmark_generators.ppp_canonical" = ["templates/*.cu"]
 "benchmark_generators.portable_core" = ["LICENSE.Apache-2.0", "NOTICE", "PROVENANCE.json", "SEMANTIC_FINGERPRINTS.json", "README.md"]
+"benchmark_generators.portable_core.expanded.v2" = ["data/*.json.gz", "data/NOTICE.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

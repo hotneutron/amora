@@ -56,7 +56,45 @@ GEMM. Tier28 adds inclusive scan, deterministic segmented sum, zero-initialized
 scatter-add and signed per-channel zero-boundary3x3 stencil. All casts, reduction
 axes, group/offset metadata and tuple/empty outputs are explicit.
 
-## Scope and integrity
+## V2 suites
+
+V1 is still selected by `--tier` and uses the unchanged legacy payloads. Select
+v2 with `--suite`:
+
+| Suite | Reference | Development |
+|---|---|---|
+| `operation-gate-v2` | 720 cases from the pinned 240-motif registry | 288 development-only source cases |
+| `mechanism-controls` | The same 288 development specs, for independent selection | 9 diagnostic softmax, variance and top-k controls |
+| `h3-semantics` | Blocked pending approved case-source export | 40 separately identified semantic and indexed-access controls |
+| `h3-programs` | Blocked pending approved case-source export | 50 directed pair/size cases, 32 topology/shape cases and two fork/chain cases |
+
+Each suite has a bounded `smoke` profile. To freeze and check a v2 shard:
+
+```bash
+amora-portable-core list --suite operation-gate-v2
+amora-portable-core freeze --suite operation-gate-v2 --profile reference \
+  --out out/portable_core/v2-gate
+amora-portable-core check --frozen out/portable_core/v2-gate \
+  --start 0 --stop 48 --out out/portable_core/v2-gate-first
+```
+
+V2 checks use NumPy and, for required parity rows, Torch CPU. They compare
+node outputs against an independent oracle and fail if a required backend or
+row is missing. The [CPU parity lane](../../.github/workflows/portable-core-v2-cpu.yml)
+pins Torch 2.8.0 and runs the complete source-available matrix in bounded shards.
+A shard pass is not whole-snapshot coverage; aggregate disjoint shards with
+`aggregate --frozen ... --shard ...`. There is no v2 JAX/accelerator fallback.
+
+The v2 snapshot carries versioned typed programs, canonical program/case hashes,
+source crosswalk and coverage receipts. Graph ports and historical case identity
+are preserved separately from new portable input bytes. The archived Gate-v2
+FP16 CUDA RNG sequence and native timing are **not** replayed. H3 development
+controls do not close exact-reference rows. Consumer-side verification can use
+[verify_export.py](../../tools/portable_core_v2/verify_export.py) with a manifest
+SHA-256 pinned independently of the export. The [tracker](../../.plan/trackers/20261123-1522-portable-core-h3-operation-coverage.md)
+records release evidence and remaining external gates.
+
+## Legacy scope and integrity
 
 - BF16-rounded matrix operands, FP32 accumulation/output; PyTorch's current
   implementation promotes BF16 values to FP32 before matrix arithmetic.
@@ -87,3 +125,4 @@ machine-local request text is kept in JSON, not planning/design Markdown paths.
 |Revision|Timestamp|Change|
 |---|---|---|
 |r1|2026-10-22|Packaged the portable workloads under AMORA's benchmark-definition namespace,with a dedicated API/CLI,optional array dependency,Apache provenance and no bulk campaign/model import or inherited native-performance claim.|
+|r2|2026-11-23|Documented the isolated v2 suite selector, frozen Gate-v2 sources, mandatory CPU coverage and source-blocked H3 reference boundary.|

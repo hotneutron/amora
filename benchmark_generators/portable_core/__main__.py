@@ -5,7 +5,7 @@ import argparse
 import json
 from pathlib import Path
 import time
-from . import create_backend, describe, evaluate, freeze, make_inputs, oracle, verify_snapshot
+from . import _CORE20_SNAPSHOT_SCHEMA, create_backend, describe, evaluate, freeze, make_inputs, oracle, verify_snapshot
 
 
 def check(folder, output, profile, backends, device):
@@ -49,26 +49,58 @@ def check(folder, output, profile, backends, device):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
+    from .expanded.v2.suites import BlockedSource, PROFILES, SUITES
+
     listing = sub.add_parser("list")
-    listing.add_argument("--tier", type=int, choices=(20, 24, 28), default=28)
     materialize = sub.add_parser("freeze")
-    materialize.add_argument("--tier", type=int, choices=(20, 24, 28), default=28)
+    for selector in (listing, materialize):
+        group = selector.add_mutually_exclusive_group()
+        group.add_argument("--tier", type=int, choices=(20, 24, 28))
+        group.add_argument("--suite", choices=SUITES)
+    materialize.add_argument("--profile", choices=PROFILES)
     materialize.add_argument("--out", type=Path, required=True)
     checking = sub.add_parser("check")
     checking.add_argument("--frozen", type=Path, required=True)
     checking.add_argument("--out", type=Path, required=True)
-    checking.add_argument("--profile", choices=("smoke", "native"), default="smoke")
-    checking.add_argument("--backends", default="numpy,torch,jax")
+    checking.add_argument("--profile", choices=("smoke", "native", "reference", "development"))
+    checking.add_argument("--suite", choices=SUITES)
+    checking.add_argument("--backends")
     checking.add_argument("--device", default="cpu")
+    checking.add_argument("--start", type=int)
+    checking.add_argument("--stop", type=int)
+    checking.add_argument("--timeout", type=float)
+    combine = sub.add_parser("aggregate")
+    combine.add_argument("--frozen", type=Path, required=True)
+    combine.add_argument("--shard", type=Path, action="append", required=True)
     args = parser.parse_args(argv)
-    if args.command == "list":
-        result = describe(args.tier)
-    elif args.command == "freeze":
-        result = freeze(args.out, args.tier)
-    else:
-        result = check(args.frozen, args.out, args.profile, args.backends.split(","), args.device)
+    try:
+        if args.command == "list":
+            result = describe(args.tier or 28, suite=args.suite)
+        elif args.command == "freeze":
+            result = freeze(args.out, args.tier or 28, suite=args.suite, profile=args.profile)
+        elif args.command == "aggregate":
+            from .expanded.v2.runner import aggregate
+            result = aggregate(args.frozen, args.shard)
+        else:
+            receipt = json.loads((args.frozen / "freeze_receipt.json").read_text())
+            if receipt.get("schema") not in (None, _CORE20_SNAPSHOT_SCHEMA):
+                from .expanded.v2.runner import check as check_v2
+                result = check_v2(args.frozen, args.out, args.backends.split(",") if args.backends else None,
+                                  args.device, start=0 if args.start is None else args.start, stop=args.stop,
+                                  timeout=120 if args.timeout is None else args.timeout,
+                                  profile=args.profile, suite=args.suite)
+            else:
+                if (args.suite is not None or args.start is not None or args.stop is not None
+                        or args.timeout is not None or args.profile not in (None, "smoke", "native")):
+                    raise ValueError("this option requires a v2 snapshot")
+                result = check(args.frozen, args.out, args.profile or "smoke",
+                               (args.backends or "numpy,torch,jax").split(","), args.device)
+    except BlockedSource as error:
+        result = {"status": "BLOCKED", "reason": str(error), "native_performance_qualified": False}
+    except (OSError, ValueError, RuntimeError) as error:
+        result = {"status": "FAIL", "reason": str(error), "native_performance_qualified": False}
     print(json.dumps(result, indent=2, sort_keys=True))
-    return int(result.get("status") == "FAIL")
+    return int(result.get("status") in ("FAIL", "BLOCKED"))
 
 
 if __name__ == "__main__":

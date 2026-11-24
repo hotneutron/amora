@@ -1,0 +1,418 @@
+{
+  "schema_version": 1,
+  "kind": "portable_core_reconstruction_plan_evidence_lock",
+  "prompt_verbatim": "given the current H3 and previous passed operation gates, write a plan to re-construct the portable_core of the benchmark_generators of ~/wk/amora, so the expanded cases will be able to cover the H3 and operations.",
+  "scope": "Read-only planning references; no new labels, timing, case generation, or gate adoption. File hashes are over exact Git blob bytes, not semantic IDs. Report references do not guarantee that raw source, sealed inputs, or timing can be released or recovered.",
+  "checked_out_commits": {
+    "amora": "f67fb13b838cd96fd0c69783588c237b4e38c7fb",
+    "accorde": "bf4650993f80523d44fc2e3585521a89b8ac5c83"
+  },
+  "legacy_amora_baseline": [
+    {
+      "repo": "hotneutron/amora",
+      "commit": "f67fb13b838cd96fd0c69783588c237b4e38c7fb",
+      "path": "benchmark_generators/portable_core/README.md",
+      "file_sha256": "5099c7d0d0edbad1aaf963576c9ab1c1342be502947d509fa9d0653707a6357a"
+    },
+    {
+      "repo": "hotneutron/amora",
+      "commit": "f67fb13b838cd96fd0c69783588c237b4e38c7fb",
+      "path": "benchmark_generators/portable_core/PROVENANCE.json",
+      "file_sha256": "838ef019a8ada87c8bef72d5056ccd744ce05155014b7b643426d994293a06ef"
+    },
+    {
+      "repo": "hotneutron/amora",
+      "commit": "f67fb13b838cd96fd0c69783588c237b4e38c7fb",
+      "path": "benchmark_generators/portable_core/SEMANTIC_FINGERPRINTS.json",
+      "file_sha256": "5f7afbc850c20fdd82ae099f1faf8efc725061e58d422fe02fcf19ba2f1955ea"
+    },
+    {
+      "repo": "hotneutron/amora",
+      "commit": "f67fb13b838cd96fd0c69783588c237b4e38c7fb",
+      "path": "benchmark_generators/portable_core/base/runner.py",
+      "file_sha256": "a781695cfbe3f655552b1569bc7848fbaf0bd3bfb1b59cc1ad8014bb4fc76bb4"
+    },
+    {
+      "repo": "hotneutron/amora",
+      "commit": "f67fb13b838cd96fd0c69783588c237b4e38c7fb",
+      "path": "benchmark_generators/portable_core/expanded/runner.py",
+      "file_sha256": "7ca29208557892e02578307ae546ce7e50ee0a618cbf7d5c23f48f077673017c"
+    },
+    {
+      "repo": "hotneutron/amora",
+      "commit": "f67fb13b838cd96fd0c69783588c237b4e38c7fb",
+      "path": ".plan/20261022-portable-core-kernel-package.md",
+      "file_sha256": "a7b8b4b3042c4d658a3a65a4cedd70d2ad5e21e78d9f4f761851a636718590ba"
+    },
+    {
+      "repo": "hotneutron/amora",
+      "commit": "f67fb13b838cd96fd0c69783588c237b4e38c7fb",
+      "path": "tests/benchmarks/test_portable_core.py",
+      "file_sha256": "40f36e659a8109cde394fcafbe6691b953b97eb3e16435dcff6fcab77001a4b6"
+    }
+  ],
+  "operation_gate_v2": {
+    "status": "historical_promoted_operation_only",
+    "operations": [
+      "weighted_embedding_bag_mean",
+      "multi_hash_embedding_sum",
+      "indexed_group_min",
+      "indexed_group_l2",
+      "rotary_pair_transform",
+      "row_logsumexp",
+      "cumulative_max_scan",
+      "bilinear_resample",
+      "grouped_threshold_count",
+      "dequantize_bias_gelu"
+    ],
+    "relation_families": [
+      "dependent_chain",
+      "independent_merge",
+      "shared_fork_join",
+      "residual_bypass",
+      "nested_diamond",
+      "multi_step_branches",
+      "recurrence",
+      "nested_shared_join"
+    ],
+    "square_shape_anchors": [
+      128,
+      256,
+      512
+    ],
+    "motif_count": 240,
+    "case_count": 720,
+    "case_registry_canonical_sha256": "ffe87f905067c8cb44932eeb2721cd4fee6bd6a8400d0f70158279e30eac5106",
+    "historical_admitted": 144,
+    "historical_gt_6pct_failures": 91,
+    "historical_admitted_failures": 0,
+    "historical_input_recipe": {
+      "entrypoint": "tools/ppp_profiling/multi_axis_ood_fixture.py:prepare_inputs",
+      "seed_reset_per_case": 20260925,
+      "sampler": "torch.randn on CUDA with dtype=torch.float16, multiplied by 0.025",
+      "tensor_order": "ordered executable_program.external_shapes",
+      "historical_input_byte_parity": "not_verified",
+      "qualification": "Pinning recipe sources does not pin the CUDA/Torch RNG output. Verify against approved input digests or a verified matching replay; CPU fixtures are independently identified."
+    },
+    "historical_oracle_contract": {
+      "entrypoint": "tools/ppp_profiling/operation_gate_v2_external_fixture.py:oracle",
+      "historical_correctness_tolerance": {"atol": 0.05, "rtol": 0.03},
+      "boundary": "Archived oracle retains some intermediate values in FP32. The native fixture stores intermediates in FP16, including the reduction temporary before a separate broadcast launch. These are distinct checks."
+    },
+    "refused_operation_categories": [
+      "indexed_group_l2",
+      "indexed_group_min",
+      "multi_hash_embedding_sum",
+      "weighted_embedding_bag_mean"
+    ],
+    "references": [
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/operation_gate_v2_v1/REPORT.md",
+        "file_sha256": "c3e6eba7af310c4ee5570de79378cc51c2e6b61872341feb71464e6c04350c73"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/operation_gate_v2_v1/operations.json",
+        "file_sha256": "a8bf9bd61cca6a538886a90bbb0440209f9ebd897d1a2b648cd4eaf3f289f2fd"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/operation_gate_v2_v1/motifs.json",
+        "file_sha256": "0fb4387972ed7bbb9d4d905109795952a9b865a4bad10d4604bba38bdada82f2"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/operation_gate_v2_v1/registry.json",
+        "file_sha256": "ea24f35def020bb08368976ef44a1ee6c151feffd94b4a7821c322647bb20c77"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/operation_gate_v2_v1/gate_v2_assignments.json",
+        "file_sha256": "fe9fb84d50b8bb136c018391f42125526ad1acfe52c4a72e1e9bdf7292f22828"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/operation_gate_v2_v1/motif_scorecard.jsonl",
+        "file_sha256": "9b2c0ecbd3ebc5cc6060722ef11513ae29050a5dc92ce91c806546e5a9ccfa18"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/operation_gate_v2_v1/corpus_audit.json",
+        "file_sha256": "ef0e8ca11747fb7759616a0a2339d6ad209e95a9c36005e3ba365a1e1aed81f5"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "tools/ppp_profiling/operation_gate_v2_external_corpus.py",
+        "file_sha256": "8a7620599cea888a157f5cda77d25aafecd91c1107ab162c337b78af226e0918"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "tools/ppp_profiling/operation_gate_v2_external_feasibility.py",
+        "file_sha256": "895a3b8d5ade0db117e74c087f4acaf8950f5d5df9f4819fcb45218f65d69f1f"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "tools/ppp_profiling/operation_gate_v2_external_fixture.py",
+        "file_sha256": "3570a0c99fb33986c0d46b7e3091f8e64255eadef9a07c11b15ea06a460a4c6a"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "tools/ppp_profiling/hardware_384_meta_motif_corpus.py",
+        "file_sha256": "2b5b122ddb73f36913ff5bfd99242095174a151abdbbadc3844cd42dec52d889"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "tools/ppp_profiling/multi_axis_ood_fixture.py",
+        "file_sha256": "54ff0dfafea25fa461998f6f69ce86b2956d5b5aa30cbcd7e768baca1c8a98a2"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "tools/ppp_profiling/native_b_fixture.py",
+        "file_sha256": "d1b66f1188b0312a4cc28ea399cdf917bb25bf621c6d7fbe637d1a6668853b87"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "tools/ppp_profiling/native_b_corpus.py",
+        "file_sha256": "82fab51681e3d81683f4b55e44c6cf7b51ee79b188b7684618387dedaf6be66d"
+      },
+      {
+        "repo": "hotneutron/accorde",
+        "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+        "path": "tools/ppp_profiling/native_b_meta_motif_ood.py",
+        "file_sha256": "2e8f12f1ec7e07e1e73f69d13c79899e5151aa37e3dca7dfcdf6f80b036b797c"
+      }
+    ]
+  },
+  "older_operation_and_development_references": [
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/hardware_384_meta_motif_lomo_v1/REPORT.md",
+      "file_sha256": "dd0e257f686380a74035980b3528b8a3cf38617b1e9e78ef97c3029bbd6d9032"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/operation_18_retraining_v1/REPORT.md",
+      "file_sha256": "f5ff0a3d2d8b4cce57f12cd89d90f263b7a4241478d594c30eac39d62e1f154e"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/fresh_external_ood_gate_confirmation_v1/REPORT.md",
+      "file_sha256": "2f2d53e384b4604715e4baa92250dc6edf44780ef3fd8fc06609efa5db0e15b8"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/operation_18_future_external_v1/REPORT.md",
+      "file_sha256": "ce91fedc5cfaf96f682045ac1cac16cca0ee84d6ab076b019985b7f5a10feccb"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/operation_gate_v2_development_v1/REPORT.md",
+      "file_sha256": "172e4fd16039fab595019ef533f723c80810a84fa33205c76d64336356806d31"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "tools/ppp_profiling/operation_18_future_feasibility.py",
+      "file_sha256": "7ddc67749b6283cae92a26db2c10583a5de969234562ae2c56515b9227768ded"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "tools/ppp_profiling/operation_gate_v2_support_feasibility.py",
+      "file_sha256": "9298ccfd469aa57e51282aef81c18a6c4ec6f83edaa73dff73f00b373346a7b7"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "tools/ppp_profiling/operation_gate_v2_support_corpus.py",
+      "file_sha256": "e1d7f249b3e77049739aac2381cf1d3ef1075f491ef73871dbb32ebf555ba6dd"
+    }
+  ],
+  "h3_exact_reference_availability": {
+    "status_in_this_lock": "blocked_missing_source",
+    "owner_for_source_export": "Accorde",
+    "required_source_per_row": [
+      "upstream_case_id",
+      "ordered_graph_with_operand_and_output_ports",
+      "numeric_shapes_and_domain_bindings",
+      "access_contract_and_input_recipe",
+      "oracle_revision",
+      "approved_git_blob_or_export_with_sha256"
+    ],
+    "report_only_panels": [
+      {"panel": "seven_scoped_semantic_routes", "reported_sealed_cases": 28},
+      {"panel": "ordered_kind_pairs", "reported_cases": 50},
+      {"panel": "whole_graph_supervision", "reported_cases": 32},
+      {"panel": "three_step_confirmation", "reported_cases": 16},
+      {"panel": "joint_graph_edge_compound", "reported_cases": 16},
+      {"panel": "new_topology", "reported_cases": 8},
+      {"panel": "large_topology", "reported_cases": 8},
+      {"panel": "unified_h3_target", "reported_cases": 42}
+    ],
+    "counting": "Reported counts are expectations, not released rows; panels may overlap. Freeze a per-panel crosswalk keyed by upstream case ID when approved sources exist. Do not sum these counts into a corpus size."
+  },
+  "h3_scoped_supported_route_references": [
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "docs/shape_ood_study_comprehensive_report-en.md",
+      "file_sha256": "29bc94a5a535b1c64166398b197a33cd47513f651a71a05d31781fb58efbe576"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/ordered_transition_edge_latency_v1/REPORT.md",
+      "file_sha256": "c66b53d5a5c1eb456db6a44db582c3c2cbe447a49f0c41e5247b129643bce7b0"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/three_step_direct_latency_confirmation_v1/REPORT.md",
+      "file_sha256": "4338fca60feef561a9b3f3f28a4ee605f2fa4b1f728b57577e52aa32899f9a27"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/joint_graph_edge_sealed_confirmation_v1/REPORT.md",
+      "file_sha256": "91ed06f063f2e498c859ca8265704779382762a6c04704dd35abca57cb2ea18d"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/topology_descriptor_sealed_confirmation_v1/REPORT.md",
+      "file_sha256": "0b06805a73d1c81fbf887a76fa7b606314f2262305de7fd5c8a7bf20b087b870"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/large_topology_sealed_confirmation_v1/REPORT.md",
+      "file_sha256": "bc9bf9e812516c25aa95ce0ac9e8f1437de41302cbac7909a21400a646ea5c7d"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/affine_scan_profiler_confirmation_v1/REPORT.md",
+      "file_sha256": "4b0a22efc4457988f5734d2661350cf51a63ba64009e72a1809a937d5a06769c"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/embedding_bag_profiler_confirmation_v1/REPORT.md",
+      "file_sha256": "e88b214d2894b2c49b3b18a6ba90339a745adde626e64acbc4068c9b70a9af8b"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/depthwise_weighted_stencil_confirmation_v1/REPORT.md",
+      "file_sha256": "b130ca2181703e0e8b83fa691fedcb680e2f5d589f788bdfe88dae3709665915"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/indexed_many_to_one_accumulation_confirmation_v1/REPORT.md",
+      "file_sha256": "2692eb260de5fd0a94e8795de8cecc4467671c009e8dd7349806597692fd1883"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/contiguous_segmented_reduction_confirmation_v1/REPORT.md",
+      "file_sha256": "f2d87d0f20e4f725708e5168bcd399fb1146079ae4384f1ca8df5ed2ac3952c8"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/two_input_gated_nonlinear_confirmation_v1/REPORT.md",
+      "file_sha256": "8249016cf401d346229fb95b1e0436c6f4c5b8f58620f938bbf545516640c8d6"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/scaled_round_clip_confirmation_v1/REPORT.md",
+      "file_sha256": "0b3dcdf8ffaa70cc142e59b46db3c368fe74580c2bbb7b4e5658c83d3ac2b364"
+    }
+  ],
+  "h3_unified_and_static_diagnostic_references": [
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "4473ecccde93838e60fc4739b7fe4167094a095a",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/unified_h3_continuation_v1/REPORT.md",
+      "file_sha256": "88f99b72f12e1f67d9c4735cce6d631f01534f2e9206156f76472b10b54425f4"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "4473ecccde93838e60fc4739b7fe4167094a095a",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/unified_h3_continuation_v1/SOURCE-ARCHIVE.md",
+      "file_sha256": "5e0ac3b63821f4cc4882bd0ccb52ac7d74fae9c5717112df53619ce2fc2720d9"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "4473ecccde93838e60fc4739b7fe4167094a095a",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/unified_h3_continuation_v1/source-manifest.json",
+      "file_sha256": "1fb35af6d54c5cc38932c866695205d1624c4f959e931fbc0e73659f4732b228"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "4473ecccde93838e60fc4739b7fe4167094a095a",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/unified_h3_continuation_v1/source/program_graph_adapter.py",
+      "file_sha256": "42fc84dbf43548bc5a3795030fb64d1de4aecfaeab731064b26e706f81e947a2"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "4473ecccde93838e60fc4739b7fe4167094a095a",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/unified_h3_continuation_v1/checkpoint-evidence/context-availability-exhaustion-audit/summary.json",
+      "file_sha256": "410214b15b9d0a1cbeb94e78ef1a89aa64c761257de6ad84ab16b34d7064e26b"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/h3_static_heldout_validation_v1/REPORT.md",
+      "file_sha256": "e4867a1773fb5c86bd0beaf74ecb8d4106e1f518d19632cce7cde88c318e54ce"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "7c85e7541a3d8dfbb25fec46d96ff644c1ae72b5",
+      "path": "reports/ppp_ir_mlp/roadmap_b_native_contraction_gather_v1/h3_expanded_static_label_corpus_v1/REPORT.md",
+      "file_sha256": "150243786220a18669f7c136c147332969ca11f46a72e62707fcd073f29445c1"
+    }
+  ],
+  "h3_follow_up_pilot_references": [
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "c3b208143193f48837dac342dd92cf2023833ab9",
+      "path": ".plan/trackers/261112-0004-dsh-research-adoption.md",
+      "file_sha256": "fdbbec0de682a282b11952e09d5c1838b3159e234213b44ee147c41077aec0e4"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "c3b208143193f48837dac342dd92cf2023833ab9",
+      "path": "tools/dsh_research/value_context.py",
+      "file_sha256": "3dec6ea900f939d1f6987a5102d42048a5005e164fb244f4d7ea4ee87f93a6a6"
+    },
+    {
+      "repo": "hotneutron/accorde",
+      "commit": "c3b208143193f48837dac342dd92cf2023833ab9",
+      "path": "tools/dsh_research/scientific_value_pilot.py",
+      "file_sha256": "00e036c029493af25f370c00d60277348dac8cf455dbdd2f632cdab5e2565482"
+    }
+  ]
+}

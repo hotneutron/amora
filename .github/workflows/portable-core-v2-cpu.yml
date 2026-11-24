@@ -1,0 +1,33 @@
+name: Portable-core v2 CPU parity
+
+on:
+  pull_request:
+    paths:
+      - 'benchmark_generators/portable_core/**'
+      - 'tests/benchmarks/test_portable_core*.py'
+      - 'tools/portable_core_v2/**'
+      - 'pyproject.toml'
+      - '.github/workflows/portable-core-v2-cpu.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cpu-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      JAX_PLATFORMS: cpu
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu 'torch==2.8.0'
+          python -m pip install -e . 'numpy==2.3.5' 'pytest==8.4.2'
+      - run: python -m pytest -q tests/benchmarks/test_portable_core.py tests/benchmarks/test_portable_core_v2.py
+      - run: PYTHONPATH=. python tools/portable_core_v2/qualify.py --out out/portable_core_v2/ci --shard-size 48
