@@ -20,12 +20,10 @@ the first TPU lane is a single-device JAX executable. CUDA Graph, Torch
 compilation, Pallas and distributed execution are separate realizations, not
 fallbacks or requirements for the initial connectors.
 
-This review plan is published separately from the V2 CPU implementation and
-experiment notes. The local V2 tracker
-(`.plan/trackers/20261123-1522-portable-core-h3-operation-coverage.md`) records
-1,505 required CPU checks; those checks qualify neither accelerator. The local
-V2 executor (`benchmark_generators/portable_core/expanded/v2/execution.py`)
-is CPU-only. The committed [TPU legacy bridge](../amora/backends/tpu/portable_core.py)
+The [V2 tracker](trackers/20261123-1522-portable-core-h3-operation-coverage.md)
+records 1,505 required CPU checks; those checks qualify neither accelerator.
+The [V2 executor](../benchmark_generators/portable_core/expanded/v2/execution.py)
+is CPU-only. The [TPU legacy bridge](../amora/backends/tpu/portable_core.py)
 and [measurement entrypoint](../amora/backends/tpu/measurement.py) still
 consume the legacy tier manifests. Exact historical H3 stays
 `blocked_missing_source` until Accorde supplies approved per-case sources.
@@ -36,9 +34,8 @@ sequence, labels, or admission decisions.
 ## 1. Integration and compatibility
 
 - **One loader:** consume the output of `amora-portable-core freeze --suite`
-  via the V2 snapshot verifier in the pending CPU implementation
-  (`benchmark_generators/portable_core/expanded/v2/runner.py`). Check the
-  separately pinned manifest digest for imported handoffs. Select
+  via [V2 snapshot verification](../benchmark_generators/portable_core/expanded/v2/runner.py).
+  Check the separately pinned manifest digest for imported handoffs. Select
   case IDs from that snapshot or a frozen selection manifest, not a parallel
   CUDA/TPU catalogue. Preserve the program, case, input recipe, and upstream
   identities without embedding backend options in them.
@@ -129,10 +126,9 @@ GEMM path. A dense, non-identity performance control needs its own case ID.
   Do not identify a Torch call or CUDA-event span with one kernel or SM cycles.
 - **TPU:** use [synchronized runner semantics](../amora/backends/tpu/runner.py)
   (dispatch through readiness of all output leaves) for the first timing lane.
-  Keep `device_duration_ns` unset. The local study in
-  `.plan/20261123-1319-tpu-findings-timestamp-normalization.md` verified host
-  arithmetic but not host/device alignment. The local execution-ID pilot in
-  `.plan/20261123-1437-tpu-findings-execution-join-scalesim.md` supports a
+  Keep `device_duration_ns` unset. The [timestamp study](20261123-1319-tpu-findings-timestamp-normalization.md)
+  verified host arithmetic but not host/device alignment. The [execution-ID
+  pilot](20261123-1437-tpu-findings-execution-join-scalesim.md) supports a
   sequencer-corroborated module-span diagnostic on one pinned stack only. Admit
   it under its own name only after repeating the identity, clock and device
   scope controls for the new runtime and workload. Never sum overlapping
@@ -171,4 +167,5 @@ comparable just because both report microseconds.
 | Revision | Date | Change |
 |---|---|---|
 | r1 | 2026-11-23 | Proposed isolated CUDA and TPU adapters using frozen V2 cases, separate device-correctness and timing gates, per-generation admission, and fail-closed layout/rounding policies. No implementation or runs. |
-| r2 | 2026-11-23 | Marked the local CPU implementation and experiment references so the separately published plan does not present dead links. Technical decisions are unchanged. |
+| r2 | 2026-11-23 | Marked the local CPU implementation and experiment references in the plan-only commit. Technical decisions are unchanged. |
+| r3 | 2026-11-23 | Restored the links when the existing implementation and experiment findings were added to the same branch. |
