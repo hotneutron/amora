@@ -148,6 +148,23 @@ def _cmd_inspect_benchmark(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_inspect_portable_v2(_args: argparse.Namespace) -> int:
+    from amora.benchmarking.portable_v2.contracts import inspect
+
+    _print_json(inspect())
+    return 0
+
+
+def _cmd_qualify_portable_v2(args: argparse.Namespace) -> int:
+    from amora.benchmarking.portable_v2.runner import qualify
+
+    result = qualify(args.frozen, args.out, args.backend, args.device, cases=args.case,
+                     manifest_sha256=args.manifest_sha256, expected_generation=args.expected_generation,
+                     timeout=args.timeout)
+    _print_json(result)
+    return int(result["status"] != "passed")
+
+
 def _cmd_materialize_benchmark(args: argparse.Namespace) -> int:
     from amora.benchmarking.materialize import materialize_benchmark, write_manifest
     from amora.benchmarking.registry import get_benchmark
@@ -647,6 +664,18 @@ def build_parser() -> argparse.ArgumentParser:
     benchmarks_inspect = benchmarks_sub.add_parser("inspect")
     benchmarks_inspect.add_argument("benchmark_id")
     benchmarks_inspect.set_defaults(func=_cmd_inspect_benchmark)
+    benchmarks_v2_inspect = benchmarks_sub.add_parser("inspect-v2")
+    benchmarks_v2_inspect.set_defaults(func=_cmd_inspect_portable_v2)
+    benchmarks_v2_qualify = benchmarks_sub.add_parser("qualify-v2")
+    benchmarks_v2_qualify.add_argument("--frozen", type=Path, required=True)
+    benchmarks_v2_qualify.add_argument("--out", type=Path, required=True)
+    benchmarks_v2_qualify.add_argument("--backend", choices=("cuda_torch", "tpu_jax"), required=True)
+    benchmarks_v2_qualify.add_argument("--device", required=True)
+    benchmarks_v2_qualify.add_argument("--case", action="append")
+    benchmarks_v2_qualify.add_argument("--manifest-sha256")
+    benchmarks_v2_qualify.add_argument("--expected-generation")
+    benchmarks_v2_qualify.add_argument("--timeout", type=float, default=120)
+    benchmarks_v2_qualify.set_defaults(func=_cmd_qualify_portable_v2)
     benchmarks_materialize = benchmarks_sub.add_parser("materialize")
     benchmarks_materialize.add_argument("benchmark_id")
     benchmarks_materialize.add_argument("--cases", type=int, default=None)

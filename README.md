@@ -152,11 +152,11 @@ invocation writes an immutable `runs/<rank>/<classification-digest>/<run-id>/`
 directory containing raw hardware/GCoM JSONL, the comparison, and `run.json`;
 existing evidence is never overwritten.
 
-### Portable core workloads
+### Portable-core workloads
 
-`benchmark_generators.portable_core` provides the versioned core20, core24, and
-core28 mathematical workload tiers. It includes deterministic inputs,
-independent oracles, and NumPy, PyTorch, and optional JAX execution backends:
+`benchmark_generators.portable_core` provides the legacy core20, core24, and
+core28 tiers and the V2 suite catalogue. Both use deterministic inputs, frozen
+manifests, and independent oracles. The legacy commands are unchanged:
 
 ```bash
 pip install -e '.[portable-core,test]'
@@ -173,12 +173,27 @@ Frozen manifests and runtime sources are hash-bound and are never overwritten.
 PyTorch, JAX, and accelerator runtimes must be installed separately when those
 backends are needed.
 
-Portable-core checks establish mathematical correctness only. They do not
-qualify native lowering, accelerator instructions, compiler fusion, or
-performance, and the package is intentionally separate from the existing
-CUDA-template classification/detail runner. See the
-[portable-core documentation](benchmark_generators/portable_core/README.md) for
-the API, tier contents, provenance, licensing, and scope details.
+V2 selects workloads by `--suite` instead of `--tier`. Its CPU checker is
+separate from `amora benchmarks qualify-v2`, which runs bounded correctness
+checks on explicit CUDA or TPU devices without CPU fallback:
+
+```bash
+amora benchmarks inspect-v2
+amora-portable-core list --suite h3-programs
+amora-portable-core freeze --suite h3-programs --profile smoke \
+  --out out/portable_v2/h3-smoke
+```
+
+The frozen V2 matrix was checked on H100 and TPU7x: each target produced 1,130
+passes and 11 expected denials. A separate TPU7x run collected verified
+host dispatch-to-ready latency labels for the 1,130 eligible cases. These are
+not device-only cycles or evidence of transfer to other generations.
+
+See the [portable-core documentation](benchmark_generators/portable_core/README.md)
+for the catalogue and provenance, and the
+[V2 accelerator and latency guide](docs/development/portable-core-v2-accelerators.md)
+for CUDA/TPU requirements, qualification, label collection and the Accorde
+handoff. This path is separate from CUDA-template classification and detail runs.
 
 ## Layout
 
