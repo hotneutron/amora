@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "recipe_id": "tpu-pallas-stream-v1",
+  "device": "tpu:0",
+  "warmup": 5,
+  "samples": 30,
+  "repeats": 3,
+  "batch": 1,
+  "cases": [
+    {"probe_id": "global_memory.streaming", "shape": [128, 128], "tile": [128, 128]},
+    {"probe_id": "global_memory.streaming", "shape": [1024, 1024], "tile": [128, 128]},
+    {"probe_id": "local_memory.transfer_sweep", "shape": [1024, 1024], "tile": [256, 128]}
+  ]
+}

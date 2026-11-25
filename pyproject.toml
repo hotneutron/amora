@@ -13,6 +13,7 @@ license = {file = "LICENSE"}
 [project.optional-dependencies]
 test = ["pytest>=7"]
 portable-core = ["numpy>=1.24"]
+tpu = ["numpy>=1.24", "jax[tpu]"]
 
 [project.scripts]
 amora = "amora.cli:main"
@@ -22,8 +23,10 @@ amora-portable-core = "benchmark_generators.portable_core.__main__:main"
 include = ["amora*", "benchmark_generators*"]
 
 [tool.setuptools.package-data]
+"amora.backends.tpu" = ["profiles/*.json"]
 "benchmark_generators.ppp_canonical" = ["templates/*.cu"]
 "benchmark_generators.portable_core" = ["LICENSE.Apache-2.0", "NOTICE", "PROVENANCE.json", "SEMANTIC_FINGERPRINTS.json", "README.md"]
+"benchmark_generators.portable_core.expanded.v2" = ["data/*.json.gz", "data/NOTICE.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -31,4 +34,7 @@ markers = [
   "cuda: requires a CUDA-capable NVIDIA GPU",
   "ncu: requires Nsight Compute CLI",
   "nvbit: requires NVBit",
+  "tpu: requires a real TPU and JAX/libtpu",
+  "tpu_pallas: requires qualified Pallas TPU execution",
+  "tpu_profile: requires TPU profiler traces",
 ]

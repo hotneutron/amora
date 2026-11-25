@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "recipe_id": "tpu-d2h-completion-v1",
+  "warmup": 20,
+  "samples": 30,
+  "repeats": 3,
+  "batch": 1,
+  "cases": [
+    {
+      "probe_id": "transfer.host_device",
+      "direction": "device_to_host",
+      "shape": [
+        1024,
+        1024
+      ],
+      "seed": 3
+    }
+  ]
+}

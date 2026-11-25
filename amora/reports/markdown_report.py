@@ -69,6 +69,10 @@ def _shape(launch: dict[str, Any]) -> str:
     grid = launch.get("grid")
     block = launch.get("block")
     if grid is None and block is None:
+        extras = launch.get("extras", {})
+        details = {key: extras[key] for key in ("shape", "tile", "participants", "memory_spaces") if key in extras}
+        if details:
+            return f"{launch.get('mode', 'metadata')} {json.dumps(details, sort_keys=True)}"
         return "—"
     return f"grid={grid} block={block}"
 
@@ -197,7 +201,7 @@ def _render_values(values: dict[str, Any]) -> list[str]:
 # --------------------------------------------------------------------------- #
 
 
-_VENDOR_BY_BACKEND = {"nvidia_cuda": "nvidia"}
+_VENDOR_BY_BACKEND = {"nvidia_cuda": "nvidia", "tpu_jax": "google_tpu"}
 
 # (regex on device name) -> (family, model_or_fn)
 # model_or_fn can be a static slug string or a callable(re.Match) -> str
@@ -243,6 +247,9 @@ def derive_vendor(report: dict[str, Any]) -> str:
 
 
 def _primary_device_name(report: dict[str, Any]) -> str:
+    selected = _get(report, "metadata", "backend_capabilities", "selected_device", default={})
+    if selected.get("name"):
+        return selected["name"]
     devices = _get(report, "metadata", "backend_capabilities", "devices", default=[]) or []
     return devices[0].get("name", "") if devices else ""
 
@@ -271,6 +278,9 @@ def derive_sku(name: str, model: str) -> str:
 
 def derive_layout(report: dict[str, Any]) -> tuple[str, str, str]:
     """Return (vendor, family, sku) derived from the report."""
+    identity = _get(report, "metadata", "report_identity", default={})
+    if derive_vendor(report) == "google_tpu" and identity:
+        return "google_tpu", identity.get("family", "unknown"), identity.get("sku", "unknown")
     name = _primary_device_name(report)
     family, model = derive_family_model(name)
     return derive_vendor(report), family, derive_sku(name, model)
@@ -530,10 +540,28 @@ def _build_family_environment(manifest: dict[str, Any], *, vendor: str, family: 
     lines: list[str] = [f"# {vendor} / {family} — Host Environments", ""]
     for sku in sorted(manifest.get("skus", {})):
         caps = manifest["skus"][sku].get("capabilities", {})
+        if caps.get("backend")=="tpu_jax":
+            runtime=caps.get("runtime",{});target=caps.get("target",{})
+            lines += [f"## `{sku}`","",f"- Backend: `tpu_jax` · Runtime: `{caps.get('runtime_available')}`",
+                      f"- Instance: `{target.get('instance','unknown')}` · Generation: `{target.get('generation','unknown')}`",
+                      f"- Python: `{runtime.get('python','unknown')}` · Runtime digest: `{runtime.get('runtime_digest','unknown')}`",
+                      "","| package | version |","|---|---|"]
+            lines.extend(f"| `{name}` | {_fmt_cell(version)} |" for name,version in sorted(runtime.get("packages",{}).items()))
+            lines += ["","| id | name | process | addressable | chip coordinates | core on chip | memory limit bytes |",
+                      "|---:|---|---:|---|---|---:|---:|"]
+            for device in caps.get("devices",[]):
+                memory=device.get("memory_stats") or {}
+                lines.append("| "+" | ".join(_fmt_cell(value) for value in (
+                    device.get("id"),device.get("name"),device.get("process_index"),device.get("addressable"),
+                    device.get("coords"),device.get("core_on_chip"),memory.get("bytes_limit")))+" |")
+            lines.append("")
+            continue
+        readiness = (f"Runtime: `{caps.get('runtime_available')}`" if caps.get("backend") == "tpu_jax"
+                     else f"CUDA: `{caps.get('cuda_available')}`  ·  GPU: `{caps.get('gpu_available')}`")
         lines += [
             f"## `{sku}`",
             "",
-            f"- Backend: `{caps.get('backend')}`  ·  CUDA: `{caps.get('cuda_available')}`  ·  GPU: `{caps.get('gpu_available')}`",
+            f"- Backend: `{caps.get('backend')}`  ·  {readiness}",
             "",
             "| tool | available | path | version |",
             "| --- | :-: | --- | --- |",

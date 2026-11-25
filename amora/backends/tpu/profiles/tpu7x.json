@@ -1,0 +1,104 @@
+{
+  "generation": "tpu7x",
+  "revision": 1,
+  "aliases": [
+    "TPU7x",
+    "TPU 7x",
+    "Ironwood",
+    "7x"
+  ],
+  "sources": [
+    {
+      "url": "https://cloud.google.com/tpu/docs/tpu7x",
+      "role": "generation identity and architecture",
+      "consulted": "2026-11-17"
+    },
+    {
+      "url": "https://docs.jax.dev/en/latest/pallas/tpu/core_map.html",
+      "role": "TPU TensorCore, logical device and SparseCore scopes"
+    }
+  ],
+  "facts": {
+    "physical_tensorcores_per_chip": {
+      "value": 2,
+      "evidence": "published_fact",
+      "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+      "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+      "scope": "chip"
+    },
+    "supports_megacore": {
+      "value": false,
+      "evidence": "published_fact",
+      "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+      "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+      "scope": "architecture"
+    },
+    "num_lanes": {
+      "value": 128,
+      "evidence": "published_fact",
+      "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+      "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+      "scope": "architecture"
+    },
+    "num_sublanes": {
+      "value": 8,
+      "evidence": "published_fact",
+      "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+      "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+      "scope": "architecture"
+    },
+    "mxu_column_size": {
+      "value": 256,
+      "evidence": "published_fact",
+      "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+      "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+      "scope": "architecture"
+    },
+    "num_mxus_per_tensorcore": {
+      "value": 2,
+      "evidence": "published_fact",
+      "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+      "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+      "scope": "TPU TensorCore"
+    },
+    "vmem_capacity_bytes_per_tensorcore": {
+      "value": 67108864,
+      "evidence": "published_fact",
+      "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+      "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+      "scope": "TPU TensorCore"
+    },
+    "hbm_capacity_bytes_per_tensorcore": {
+      "value": 103000000000,
+      "evidence": "published_fact",
+      "source": "JAX 0.12.0.1 jax/_src/tpu_info.py",
+      "source_sha256": "ae2ca34b595a5749cee2f9d9c71078694800cf873352db60289be2d3392da80e",
+      "scope": "TPU TensorCore"
+    },
+    "sparsecore": {
+      "value": true,
+      "scope": "generation",
+      "evidence": "published_fact"
+    },
+    "matrix_tile": {
+      "value": null,
+      "scope": "MXU",
+      "evidence": "unknown"
+    },
+    "vmem_capacity_bytes": {
+      "value": null,
+      "scope": "TPU TensorCore",
+      "evidence": "unknown"
+    },
+    "hbm_capacity_bytes": {
+      "value": null,
+      "scope": "chip",
+      "evidence": "unknown"
+    }
+  },
+  "policy": {
+    "pallas": "compile-and-execute qualification required",
+    "profiling": "trace qualification required",
+    "device_core_mapping": "runtime observation required"
+  }
+}

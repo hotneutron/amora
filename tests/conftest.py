@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+import os
 
 from amora.backends.nvidia.cuda import discover_capabilities
 
@@ -44,6 +45,9 @@ def pytest_collection_modifyitems(config, items):  # noqa: D401 - pytest hook
         "nvbit": pytest.mark.skip(reason=_NVBIT_SKIP) if _NVBIT_SKIP else None,
     }
     for item in items:
+        for marker in ("tpu", "tpu_pallas", "tpu_profile"):
+            if item.get_closest_marker(marker) is not None and os.environ.get("AMORA_TEST_TPU") != "1":
+                item.add_marker(pytest.mark.skip(reason="set AMORA_TEST_TPU=1 on an exclusive TPU host"))
         for marker_name, skip in skip_map.items():
             if skip is None:
                 continue

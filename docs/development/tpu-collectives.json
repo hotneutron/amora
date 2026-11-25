@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "recipe_id": "tpu-local-collectives-v1",
+  "device": "tpu:0",
+  "warmup": 5,
+  "samples": 30,
+  "repeats": 3,
+  "batch": 1,
+  "cases": [
+    {"probe_id": "interconnect.collectives", "shape": [128], "devices": 2, "primitive": "psum"},
+    {"probe_id": "interconnect.collectives", "shape": [128], "devices": 2, "primitive": "all_gather"},
+    {"probe_id": "interconnect.collectives", "shape": [128], "devices": 2, "primitive": "ppermute"}
+  ]
+}
