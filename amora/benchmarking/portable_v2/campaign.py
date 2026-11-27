@@ -8,7 +8,7 @@ from pathlib import Path
 import statistics
 
 from .corpus import prepare_corpus, verify_corpus, write_json
-from amora.backends.nvidia.portable_core_v2 import build_driver, pilot_indices, run_group
+from amora.backends.nvidia.portable_cuda_v2 import build_driver, pilot_indices, run_group
 
 def build(root, cuda_root):
     result = build_driver((1<<31)-1, build_root=root/"build", evidence_root=root,

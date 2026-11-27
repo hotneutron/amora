@@ -1,4 +1,4 @@
-# Portable core20/core24/core28 workloads
+# Portable-core workloads: legacy tiers and V2 suites
 
 A lightweight workload-definition package hosted by AMORA. It provides typed
 mathematical programs, deterministic inputs, independent oracles and portable
@@ -94,6 +94,44 @@ controls do not close exact-reference rows. Consumer-side verification can use
 SHA-256 pinned independently of the export. The [tracker](../../.plan/trackers/20261123-1522-portable-core-h3-operation-coverage.md)
 records release evidence and remaining external gates.
 
+## V2 accelerator correctness
+
+The CPU checker above is unchanged. The separate accelerator CLI consumes the
+same immutable snapshot and executes one bounded shard on an explicit device:
+
+```bash
+amora benchmarks inspect-v2
+amora-portable-core freeze --suite h3-programs --profile smoke \
+  --out out/portable_core/v2-h3-smoke
+amora benchmarks qualify-v2 --frozen out/portable_core/v2-h3-smoke \
+  --backend cuda_torch --device cuda:0 --out out/portable_core/v2-cuda-check
+amora benchmarks qualify-v2 --frozen out/portable_core/v2-h3-smoke \
+  --backend tpu_jax --device tpu:0 --expected-generation tpu7x \
+  --out out/portable_core/v2-tpu-check
+```
+
+Install a compatible CUDA-enabled Torch separately for the CUDA worker; a CPU or
+ROCm build is not accepted. For TPU, run through the existing
+[host-specific launch wrapper](../../tools/tpu/instance.py) in a verified
+JAX/jaxlib/libtpu environment with its `runtime-lock.txt` and approved ownership.
+Use `--case` repeatedly to select at most 32 cases from larger snapshots, and
+`--manifest-sha256` to bind a previously approved snapshot. Do not reuse an
+output directory. Library-free `inspect-v2` declares adapter capability only;
+it does not open a device or assert native support.
+
+Each result requires verified device placement and CPU-oracle parity for the
+output-only program and its node-capture control, plus a separate FP16/FP32
+rounding witness. Only packed layouts and unique scatter destinations are
+admitted. Unsupported rows remain unqualified and the command returns nonzero
+if any requested case does not pass. The TPU worker retains separate StableHLO
+and optimized HLO artifacts for its two executables, not native ISA/disassembly.
+The [device gate tracker](../../.plan/trackers/20261123-1650-portable-core-v2-cuda-tpu-backends.md)
+records 1,130 passes and 11 expected denials on each of H100 and TPU7x.
+`qualify-v2` does not time workloads. The separate
+[V2 accelerator and latency guide](../../docs/development/portable-core-v2-accelerators.md)
+explains the verified TPU7x latency dataset and Accorde handoff. CUDA latency
+and other TPU generations are not qualified by those measurements.
+
 ## Legacy scope and integrity
 
 - BF16-rounded matrix operands, FP32 accumulation/output; PyTorch's current
@@ -126,3 +164,5 @@ machine-local request text is kept in JSON, not planning/design Markdown paths.
 |---|---|---|
 |r1|2026-10-22|Packaged the portable workloads under AMORA's benchmark-definition namespace,with a dedicated API/CLI,optional array dependency,Apache provenance and no bulk campaign/model import or inherited native-performance claim.|
 |r2|2026-11-23|Documented the isolated v2 suite selector, frozen Gate-v2 sources, mandatory CPU coverage and source-blocked H3 reference boundary.|
+|r3|2026-11-23|Documented bounded CUDA/TPU correctness commands, the packed/unique-index contract and native evidence limits. The CPU checker is unchanged.|
+|r4|2026-11-25|Recorded full H100 and TPU7x correctness coverage and linked the separate TPU latency workflow.|

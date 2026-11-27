@@ -13,7 +13,7 @@ import sys
 
 from amora.backends.gcom_cuda import portable_v2 as lane
 from amora.backends.gcom_cuda import portable_v2_resources as resources
-from amora.backends.nvidia.portable_core_v2 import pilot_indices
+from amora.backends.nvidia.portable_cuda_v2 import pilot_indices
 from .corpus import OPS,verify_corpus
 
 

@@ -117,3 +117,5 @@ python -m pytest tests/benchmarks/test_portable_cuda_v2.py \
 - 2026-11-24 17:12 -0800: Documented the standalone v2 CUDA realization, GPU 7 selection, sealed corpus, runtime/measurement contracts and public CLI.
 
 - 2026-11-24 19:35 -0800: Documented deterministic completed-observation precedence, raw observation links and grouped span summaries; 51 regression tests passed against the completed source-available validation campaign.
+
+- 2026-11-27T15:58:55-08:00: Integrated the upstream Torch CUDA qualification adapter alongside the standalone program realization. `amora/backends/nvidia/portable_cuda_v2.py` owns program builds/runs; `portable_core_v2.py` retains the upstream device Target and public program exports. Existing CUDA workload source bytes are preserved.

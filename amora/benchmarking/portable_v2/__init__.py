@@ -1,1 +1,1 @@
-"""Adapters for source-pinned portable_core v2 validation."""
+"""Portable V2 device qualification, simulator campaigns and reporting."""

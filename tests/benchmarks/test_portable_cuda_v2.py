@@ -6,7 +6,7 @@ import pytest
 
 np=pytest.importorskip("numpy")
 from amora.benchmarking.portable_v2.corpus import prepare_corpus,verify_corpus
-from amora.backends.nvidia import portable_core_v2 as cuda
+from amora.backends.nvidia import portable_cuda_v2 as cuda
 
 def test_portable_campaign_cli_is_isolated_from_cpu_release_checker():
     from amora.cli import build_parser
