@@ -769,6 +769,9 @@ def build_parser() -> argparse.ArgumentParser:
     compare_parser.add_argument("--sku", default=gcfg.DEFAULT_SKU)
     compare_parser.set_defaults(func=_cmd_compare_gcom)
 
+    from amora.backends.flashgpu_sim.cli import register_backend
+    register_backend(subparsers)
+
     return parser
 
 

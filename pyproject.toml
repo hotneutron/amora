@@ -24,6 +24,8 @@ include = ["amora*", "benchmark_generators*"]
 
 [tool.setuptools.package-data]
 "amora.backends.tpu" = ["profiles/*.json"]
+"amora.backends.nvidia" = ["portable_core_v2.cu", "portable_v2_cupti.cpp"]
+"amora.probes.nvidia.feature_validation" = ["*.cu", "*.cc"]
 "benchmark_generators.ppp_canonical" = ["templates/*.cu"]
 "benchmark_generators.portable_core" = ["LICENSE.Apache-2.0", "NOTICE", "PROVENANCE.json", "SEMANTIC_FINGERPRINTS.json", "README.md"]
 "benchmark_generators.portable_core.expanded.v2" = ["data/*.json.gz", "data/NOTICE.md"]
